@@ -1,0 +1,131 @@
+# =========================
+# Operating System Files
+# =========================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# =========================
+# IDE and Editor Files
+# =========================
+.idea/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+
+# =========================
+# .NET Backend
+# =========================
+# Build results
+backend/**/bin/
+backend/**/obj/
+backend/**/out/
+
+# NuGet
+backend/**/*.nupkg
+backend/**/packages/
+backend/**/.nuget/
+
+# User-specific files
+backend/**/*.rsuser
+backend/**/*.suo
+backend/**/*.user
+backend/**/*.userosscache
+backend/**/*.sln.docstates
+
+# Publish output
+backend/**/publish/
+
+# ASP.NET Scaffolding
+backend/**/ScaffoldingReadMe.txt
+
+# Entity Framework Migrations
+backend/**/**/Migrations/*_*.Designer.cs
+
+# Secrets
+backend/**/appsettings.Development.json
+backend/**/appsettings.Local.json
+backend/**/secrets.json
+
+# =========================
+# Angular Frontend
+# =========================
+# Dependencies
+frontend/**/node_modules/
+
+# Build output
+frontend/**/dist/
+frontend/**/tmp/
+frontend/**/out-tsc/
+frontend/**/bazel-out/
+
+# Angular cache
+frontend/**/.angular/
+
+# Profiling files
+frontend/**/chrome-profiler-events*.json
+
+# Test output
+frontend/**/coverage/
+frontend/**/.nyc_output/
+
+# Environment files
+frontend/**/src/environments/environment.local.ts
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Secrets and Credentials
+# =========================
+*.env
+*.env.local
+*.env.*.local
+.env.development
+.env.production
+credentials.json
+secrets/
+*.pem
+*.key
+*.pfx
+*.p12
+
+# =========================
+# Database
+# =========================
+*.mdf
+*.ldf
+*.sqlite
+*.db
+
+# =========================
+# Temporary Files
+# =========================
+*.tmp
+*.temp
+*.cache
+.cache/
+
+# =========================
+# Package Manager Locks (Optional)
+# =========================
+# Uncomment if you want to ignore lock files
+# package-lock.json
+# yarn.lock
+
+# =========================
+# Documentation Build
+# =========================
+docs/_build/
+site/

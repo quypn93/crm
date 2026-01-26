@@ -1,0 +1,152 @@
+{
+  "app": {
+    "name": "CRM - Quản lý Khách hàng",
+    "dashboard": "Tổng quan",
+    "customers": "Khách hàng",
+    "deals": "Giao dịch",
+    "tasks": "Tác vụ",
+    "reports": "Báo cáo",
+    "settings": "Cài đặt"
+  },
+  "auth": {
+    "login": "Đăng nhập",
+    "logout": "Đăng xuất",
+    "register": "Đăng ký",
+    "email": "Email",
+    "password": "Mật khẩu",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "firstName": "Họ",
+    "lastName": "Tên",
+    "forgotPassword": "Quên mật khẩu?",
+    "rememberMe": "Ghi nhớ đăng nhập",
+    "noAccount": "Chưa có tài khoản?",
+    "haveAccount": "Đã có tài khoản?"
+  },
+  "common": {
+    "search": "Tìm kiếm",
+    "filter": "Lọc",
+    "add": "Thêm",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "confirm": "Xác nhận",
+    "yes": "Có",
+    "no": "Không",
+    "loading": "Đang tải...",
+    "noData": "Không có dữ liệu",
+    "actions": "Thao tác",
+    "status": "Trạng thái",
+    "createdAt": "Ngày tạo",
+    "updatedAt": "Ngày cập nhật",
+    "active": "Hoạt động",
+    "inactive": "Không hoạt động",
+    "all": "Tất cả"
+  },
+  "customer": {
+    "title": "Khách hàng",
+    "name": "Tên khách hàng",
+    "email": "Email",
+    "phone": "Số điện thoại",
+    "company": "Công ty",
+    "address": "Địa chỉ",
+    "city": "Thành phố",
+    "country": "Quốc gia",
+    "notes": "Ghi chú",
+    "assignedTo": "Người phụ trách",
+    "addCustomer": "Thêm khách hàng",
+    "editCustomer": "Sửa khách hàng",
+    "deleteConfirm": "Bạn có chắc muốn xóa khách hàng này?"
+  },
+  "deal": {
+    "title": "Giao dịch",
+    "name": "Tên giao dịch",
+    "value": "Giá trị",
+    "customer": "Khách hàng",
+    "stage": "Giai đoạn",
+    "expectedCloseDate": "Ngày dự kiến đóng",
+    "probability": "Xác suất",
+    "notes": "Ghi chú",
+    "assignedTo": "Người phụ trách",
+    "addDeal": "Thêm giao dịch",
+    "editDeal": "Sửa giao dịch",
+    "markWon": "Đánh dấu Thắng",
+    "markLost": "Đánh dấu Thua",
+    "lostReason": "Lý do thua",
+    "stages": {
+      "lead": "Tiềm năng",
+      "qualified": "Đủ điều kiện",
+      "proposal": "Đề xuất",
+      "negotiation": "Đàm phán",
+      "won": "Thắng",
+      "lost": "Thua"
+    }
+  },
+  "task": {
+    "title": "Tác vụ",
+    "name": "Tên tác vụ",
+    "description": "Mô tả",
+    "dueDate": "Ngày đến hạn",
+    "priority": "Độ ưu tiên",
+    "status": "Trạng thái",
+    "customer": "Khách hàng",
+    "deal": "Giao dịch",
+    "assignedTo": "Người thực hiện",
+    "addTask": "Thêm tác vụ",
+    "editTask": "Sửa tác vụ",
+    "myTasks": "Tác vụ của tôi",
+    "overdue": "Quá hạn",
+    "dueToday": "Đến hạn hôm nay",
+    "priorities": {
+      "low": "Thấp",
+      "medium": "Trung bình",
+      "high": "Cao",
+      "urgent": "Khẩn cấp"
+    },
+    "statuses": {
+      "pending": "Chờ xử lý",
+      "inProgress": "Đang thực hiện",
+      "completed": "Hoàn thành",
+      "cancelled": "Đã hủy"
+    }
+  },
+  "dashboard": {
+    "title": "Tổng quan",
+    "totalCustomers": "Tổng khách hàng",
+    "totalDeals": "Tổng giao dịch",
+    "totalRevenue": "Tổng doanh thu",
+    "pendingTasks": "Tác vụ chờ xử lý",
+    "wonDeals": "Giao dịch thắng",
+    "lostDeals": "Giao dịch thua",
+    "conversionRate": "Tỷ lệ chuyển đổi",
+    "recentActivities": "Hoạt động gần đây",
+    "revenueChart": "Biểu đồ doanh thu",
+    "dealsByStage": "Giao dịch theo giai đoạn"
+  },
+  "reports": {
+    "title": "Báo cáo",
+    "revenue": "Doanh thu",
+    "deals": "Giao dịch",
+    "customers": "Khách hàng",
+    "tasks": "Tác vụ",
+    "dateRange": "Khoảng thời gian",
+    "export": "Xuất báo cáo",
+    "exportExcel": "Xuất Excel",
+    "exportPdf": "Xuất PDF"
+  },
+  "validation": {
+    "required": "Trường này là bắt buộc",
+    "email": "Email không hợp lệ",
+    "minLength": "Tối thiểu {{min}} ký tự",
+    "maxLength": "Tối đa {{max}} ký tự",
+    "passwordMismatch": "Mật khẩu không khớp"
+  },
+  "messages": {
+    "saveSuccess": "Lưu thành công",
+    "deleteSuccess": "Xóa thành công",
+    "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
+    "confirmDelete": "Bạn có chắc muốn xóa?",
+    "loginSuccess": "Đăng nhập thành công",
+    "logoutSuccess": "Đăng xuất thành công"
+  }
+}
