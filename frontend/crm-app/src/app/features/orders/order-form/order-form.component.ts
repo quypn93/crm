@@ -28,6 +28,8 @@ export class OrderFormComponent implements OnInit {
   filteredCustomers: Customer[] = [];
   colorFabrics: ColorFabric[] = [];
   materials: ShirtComponent[] = [];
+  shirtForms: ShirtComponent[] = [];
+  styleSpecs: ShirtComponent[] = [];
   users: UserListItem[] = [];
   designers: UserListItem[] = [];
   customerSearchText = '';
@@ -105,6 +107,8 @@ export class OrderFormComponent implements OnInit {
       customers: this.customerService.getCustomers({ page: 1, pageSize: 200 }),
       colors: this.designService.getAllColorFabrics(),
       materials: this.designService.getActiveShirtComponentsByType(ComponentType.Fabric),
+      shirtForms: this.designService.getActiveShirtComponentsByType(ComponentType.Form),
+      styleSpecs: this.designService.getActiveShirtComponentsByType(ComponentType.StyleSpec),
       users: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true }),
       designers: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true, role: 'Designer' })
     }).subscribe({
@@ -112,6 +116,8 @@ export class OrderFormComponent implements OnInit {
         this.customers = res.customers?.items || [];
         this.colorFabrics = res.colors || [];
         this.materials = res.materials || [];
+        this.shirtForms = res.shirtForms || [];
+        this.styleSpecs = res.styleSpecs || [];
         this.users = res.users?.items || [];
         this.designers = res.designers?.items || [];
 

@@ -245,6 +245,20 @@ public class OrdersController : ControllerBase
         try
         {
             var userId = GetCurrentUserId();
+            var userRoles = GetCurrentUserRoles().ToList();
+            var isSalesRepOnly = userRoles.Contains(RoleNames.SalesRep)
+                && !userRoles.Contains(RoleNames.Admin)
+                && !userRoles.Contains(RoleNames.SalesManager);
+
+            if (isSalesRepOnly)
+            {
+                var order = await _orderService.GetByIdAsync(id);
+                if (order == null)
+                    return NotFound(ApiResponse.Fail("Không tìm thấy đơn hàng."));
+                if (order.CreatedByUserId != userId)
+                    return Forbid();
+            }
+
             await _orderService.DeleteAsync(id, userId);
             return Ok(ApiResponse.Ok("Xóa đơn hàng thành công."));
         }

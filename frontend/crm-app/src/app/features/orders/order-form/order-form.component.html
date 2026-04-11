@@ -115,13 +115,19 @@
           <!-- Form dáng -->
           <div class="form-group">
             <label>Form</label>
-            <input type="text" formControlName="styleForm" placeholder="VD: Oversize, Regular, Slim...">
+            <select formControlName="styleForm">
+              <option value="">-- Chọn form áo --</option>
+              <option *ngFor="let f of shirtForms" [value]="f.name">{{ f.name }}</option>
+            </select>
           </div>
 
           <!-- Quy cách -->
           <div class="form-group">
             <label>Quy cách</label>
-            <input type="text" formControlName="styleSpec" placeholder="VD: ĐP4M, ĐP2M...">
+            <select formControlName="styleSpec">
+              <option value="">-- Chọn quy cách --</option>
+              <option *ngFor="let s of styleSpecs" [value]="s.name">{{ s.name }}</option>
+            </select>
           </div>
 
           <div class="form-group">

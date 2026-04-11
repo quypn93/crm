@@ -97,7 +97,7 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager));
 
     options.AddPolicy(Policies.CanDeleteOrders, policy =>
-        policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager));
+        policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager, RoleNames.SalesRep));
 
     options.AddPolicy(Policies.CanViewOrderSummary, policy =>
         policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager));

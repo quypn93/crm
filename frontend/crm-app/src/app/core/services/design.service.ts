@@ -12,7 +12,9 @@ export enum ComponentType {
   Color = 7,
   Body = 8,
   Stripe = 9,
-  CollarStripe = 10
+  CollarStripe = 10,
+  Form = 11,
+  StyleSpec = 12
 }
 
 export const ComponentTypeNames: { [key: number]: string } = {
@@ -24,7 +26,9 @@ export const ComponentTypeNames: { [key: number]: string } = {
   [ComponentType.Color]: 'Màu sắc',
   [ComponentType.Body]: 'Thân áo',
   [ComponentType.Stripe]: 'Sọc',
-  [ComponentType.CollarStripe]: 'Sọc cổ áo'
+  [ComponentType.CollarStripe]: 'Sọc cổ áo',
+  [ComponentType.Form]: 'Form áo',
+  [ComponentType.StyleSpec]: 'Quy cách'
 };
 
 // Interfaces

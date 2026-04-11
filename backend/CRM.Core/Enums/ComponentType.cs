@@ -10,5 +10,7 @@ public enum ComponentType
     Color = 7,          // Màu sắc
     Body = 8,           // Thân áo
     Stripe = 9,         // Sọc
-    CollarStripe = 10   // Sọc cổ áo
+    CollarStripe = 10,  // Sọc cổ áo
+    Form = 11,          // Form áo (Oversize, Regular, Slim...)
+    StyleSpec = 12      // Quy cách (ĐP4M, ĐP2M...)
 }

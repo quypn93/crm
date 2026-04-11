@@ -47,6 +47,10 @@ const routes: Routes = [
         loadChildren: () => import('./features/production/production.module').then(m => m.ProductionModule)
       },
       {
+        path: 'catalog',
+        loadChildren: () => import('./features/catalog/catalog.module').then(m => m.CatalogModule)
+      },
+      {
         path: 'settings',
         loadChildren: () => import('./features/settings/settings.module').then(m => m.SettingsModule)
       }

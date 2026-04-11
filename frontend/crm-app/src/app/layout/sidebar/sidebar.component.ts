@@ -24,9 +24,9 @@ export class SidebarComponent implements OnInit {
     { label: 'Giao dịch', icon: 'briefcase', route: '/deals', roles: RoleGroups.SalesRoles },
     { label: 'Đơn hàng', icon: 'orders', route: '/orders' },
     { label: 'Sản xuất', icon: 'factory', route: '/production', roles: RoleGroups.ProductionRoles },
-    { label: 'Kiểm tra CL', icon: 'check-circle', route: '/dashboard/quality', roles: RoleGroups.QualityRoles },
-    { label: 'Giao hàng', icon: 'truck', route: '/dashboard/delivery', roles: RoleGroups.DeliveryRoles },
     { label: 'Báo cáo', icon: 'chart', route: '/reports', roles: RoleGroups.ManagerRoles },
+    { label: 'Form áo', icon: 'list', route: '/catalog/forms', roles: RoleGroups.ManagerRoles },
+    { label: 'Quy cách', icon: 'list', route: '/catalog/style-specs', roles: RoleGroups.ManagerRoles },
     { label: 'Người dùng', icon: 'user-manage', route: '/settings/users', roles: [RoleNames.Admin], exact: false },
     { label: 'Vai trò', icon: 'shield', route: '/settings/roles', roles: [RoleNames.Admin], exact: true },
     { label: 'Cài đặt', icon: 'settings', route: '/settings', roles: [RoleNames.Admin], exact: true }
