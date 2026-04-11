@@ -17,6 +17,13 @@ public class CrmDbContext : DbContext
     public DbSet<Deal> Deals => Set<Deal>();
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<ColorFabric> ColorFabrics => Set<ColorFabric>();
+    public DbSet<ShirtComponent> ShirtComponents => Set<ShirtComponent>();
+    public DbSet<Design> Designs => Set<Design>();
+    public DbSet<ProductionStage> ProductionStages => Set<ProductionStage>();
+    public DbSet<OrderProductionStep> OrderProductionSteps => Set<OrderProductionStep>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

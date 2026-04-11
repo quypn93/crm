@@ -1,0 +1,88 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Báo cáo</h1>
+      <p class="subtitle">Thống kê và phân tích dữ liệu</p>
+    </div>
+  </div>
+
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="reports-content" *ngIf="!isLoading">
+    <!-- Deals by Stage -->
+    <div class="report-card">
+      <h3>Giao dịch theo giai đoạn</h3>
+      <div class="table-container" *ngIf="dealsByStage?.length">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Giai đoạn</th>
+              <th>Số lượng</th>
+              <th>Giá trị</th>
+              <th>Tỷ lệ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of dealsByStage">
+              <td>
+                <span class="stage-indicator" [style.background-color]="item.stageColor"></span>
+                {{ item.stageName }}
+              </td>
+              <td>{{ item.count }}</td>
+              <td>{{ formatCurrency(item.totalValue) }}</td>
+              <td>{{ item.percentage | number:'1.0-1' }}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="empty-state" *ngIf="!dealsByStage?.length">
+        <p>Chưa có dữ liệu giao dịch</p>
+      </div>
+    </div>
+
+    <!-- Customers by Industry -->
+    <div class="report-card">
+      <h3>Khách hàng theo ngành nghề</h3>
+      <div class="table-container" *ngIf="customersByIndustry?.length">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Ngành nghề</th>
+              <th>Số lượng</th>
+              <th>Tỷ lệ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of customersByIndustry">
+              <td>{{ item.industry || 'Khác' }}</td>
+              <td>{{ item.count }}</td>
+              <td>{{ item.percentage | number:'1.0-1' }}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="empty-state" *ngIf="!customersByIndustry?.length">
+        <p>Chưa có dữ liệu khách hàng</p>
+      </div>
+    </div>
+
+    <!-- Revenue by Month -->
+    <div class="report-card full-width">
+      <h3>Doanh thu theo tháng</h3>
+      <div class="chart-container" *ngIf="revenueByMonth?.length">
+        <div class="bar-chart">
+          <div class="bar-item" *ngFor="let item of revenueByMonth">
+            <div class="bar" [style.height.%]="getBarHeight(item.revenue)"></div>
+            <span class="bar-label">{{ item.month }}/{{ item.year }}</span>
+            <span class="bar-value">{{ formatCurrency(item.revenue) }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="empty-state" *ngIf="!revenueByMonth?.length">
+        <p>Chưa có dữ liệu doanh thu</p>
+      </div>
+    </div>
+  </div>
+</div>

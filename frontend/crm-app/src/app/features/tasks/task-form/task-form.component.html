@@ -1,0 +1,108 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="cancel()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
+      <div>
+        <h1>{{ isEditMode ? 'Chỉnh sửa công việc' : 'Thêm công việc mới' }}</h1>
+        <p class="subtitle">{{ isEditMode ? 'Cập nhật thông tin công việc' : 'Nhập thông tin công việc mới' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-container">
+    <div class="loading-overlay" *ngIf="isLoading">
+      <div class="spinner"></div>
+    </div>
+
+    <form [formGroup]="taskForm" (ngSubmit)="onSubmit()">
+      <div class="form-section">
+        <h3>Thông tin công việc</h3>
+
+        <div class="form-group">
+          <label for="title">Tiêu đề <span class="required">*</span></label>
+          <input
+            type="text"
+            id="title"
+            formControlName="title"
+            placeholder="VD: Gọi điện xác nhận đơn hàng"
+            [class.error]="f['title'].touched && f['title'].invalid">
+          <div class="error-message" *ngIf="f['title'].touched && f['title'].errors?.['required']">
+            Tiêu đề là bắt buộc
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="description">Mô tả</label>
+          <textarea
+            id="description"
+            formControlName="description"
+            rows="3"
+            placeholder="Mô tả chi tiết công việc..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="priority">Mức độ ưu tiên <span class="required">*</span></label>
+            <select id="priority" formControlName="priority">
+              <option *ngFor="let option of priorityOptions" [value]="option.value">{{ option.label }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="isEditMode">
+            <label for="status">Trạng thái</label>
+            <select id="status" formControlName="status">
+              <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="dueDate">Hạn chót</label>
+            <input
+              type="date"
+              id="dueDate"
+              formControlName="dueDate">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>Liên kết</h3>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="customerId">Khách hàng</label>
+            <select id="customerId" formControlName="customerId">
+              <option value="">-- Chọn khách hàng --</option>
+              <option *ngFor="let customer of customers" [value]="customer.id">{{ customer.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="dealId">Giao dịch</label>
+            <select id="dealId" formControlName="dealId">
+              <option value="">-- Chọn giao dịch --</option>
+              <option *ngFor="let deal of deals" [value]="deal.id">{{ deal.title }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-error" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">Hủy</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+          <span *ngIf="!isLoading">{{ isEditMode ? 'Cập nhật' : 'Thêm công việc' }}</span>
+          <span *ngIf="isLoading" class="spinner-small"></span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

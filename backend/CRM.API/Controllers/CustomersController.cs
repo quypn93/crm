@@ -1,7 +1,8 @@
 using System.Security.Claims;
 using CRM.Application.DTOs.Common;
 using CRM.Application.DTOs.Customer;
-using CRM.Core.Interfaces.Services;
+using CRM.Application.Interfaces;
+using CRM.API.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -80,6 +81,7 @@ public class CustomersController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Policy = Policies.CanDeleteCustomers)]
     public async Task<ActionResult<ApiResponse>> Delete(Guid id)
     {
         try

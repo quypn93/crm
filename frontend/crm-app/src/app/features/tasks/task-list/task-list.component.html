@@ -1,0 +1,153 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Công việc</h1>
+      <p class="subtitle">Quản lý danh sách công việc</p>
+    </div>
+    <button class="btn btn-primary" (click)="addTask()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Thêm công việc
+    </button>
+  </div>
+
+  <div class="filters-bar">
+    <div class="search-input-wrapper">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="onSearch()"
+        placeholder="Tìm kiếm công việc...">
+    </div>
+
+    <select (change)="onStatusChange($event)">
+      <option value="">Tất cả trạng thái</option>
+      <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
+    </select>
+
+    <select (change)="onPriorityChange($event)">
+      <option value="">Tất cả mức độ</option>
+      <option *ngFor="let option of priorityOptions" [value]="option.value">{{ option.label }}</option>
+    </select>
+
+    <button class="btn btn-secondary" (click)="onSearch()">Tìm kiếm</button>
+  </div>
+
+  <div class="table-container">
+    <div class="loading-overlay" *ngIf="isLoading">
+      <div class="spinner"></div>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 40px;"></th>
+          <th>Công việc</th>
+          <th>Trạng thái</th>
+          <th>Mức độ</th>
+          <th>Hạn chót</th>
+          <th>Khách hàng</th>
+          <th class="actions-col">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let task of tasks" [class.overdue]="isOverdue(task)">
+          <td>
+            <button
+              class="check-btn"
+              [class.checked]="isTaskCompleted(task)"
+              [disabled]="isTaskDisabled(task)"
+              (click)="toggleStatus(task)">
+              <svg *ngIf="isTaskCompleted(task)" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </button>
+          </td>
+          <td>
+            <div class="task-title" [class.completed]="isTaskCompleted(task)">
+              {{ task.title }}
+            </div>
+            <div class="task-description" *ngIf="task.description">
+              {{ task.description }}
+            </div>
+          </td>
+          <td>
+            <span class="status-badge" [class]="getStatusClass(task.status)">
+              {{ getStatusLabel(task.status) }}
+            </span>
+          </td>
+          <td>
+            <span class="priority-badge" [class]="getPriorityClass(task.priority)">
+              {{ getPriorityLabel(task.priority) }}
+            </span>
+          </td>
+          <td>
+            <span [class.overdue-text]="isOverdue(task)">
+              {{ task.dueDate ? (task.dueDate | date:'dd/MM/yyyy') : '-' }}
+            </span>
+          </td>
+          <td>{{ task.customerName || '-' }}</td>
+          <td class="actions-col">
+            <div class="action-buttons">
+              <button class="btn-icon" title="Chỉnh sửa" (click)="editTask(task)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button class="btn-icon btn-danger" title="Xóa" (click)="deleteTask(task)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="tasks.length === 0 && !isLoading">
+          <td colspan="7" class="empty-state">
+            <div class="empty-content">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+              </svg>
+              <p>Chưa có công việc nào</p>
+              <button class="btn btn-primary" (click)="addTask()">Thêm công việc đầu tiên</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button
+      class="page-btn"
+      [disabled]="currentPage === 1"
+      (click)="onPageChange(currentPage - 1)">
+      Trước
+    </button>
+    <button
+      *ngFor="let page of getPages()"
+      class="page-btn"
+      [class.active]="page === currentPage"
+      (click)="onPageChange(page)">
+      {{ page }}
+    </button>
+    <button
+      class="page-btn"
+      [disabled]="currentPage === totalPages"
+      (click)="onPageChange(currentPage + 1)">
+      Sau
+    </button>
+    <span class="page-info">
+      Hiển thị {{ (currentPage - 1) * pageSize + 1 }} - {{ currentPage * pageSize > totalItems ? totalItems : currentPage * pageSize }} / {{ totalItems }}
+    </span>
+  </div>
+</div>

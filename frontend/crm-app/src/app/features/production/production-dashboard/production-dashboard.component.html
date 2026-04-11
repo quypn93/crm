@@ -1,0 +1,158 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="page-title">
+      <h1>Sản xuất</h1>
+      <p class="subtitle">Theo dõi và cập nhật tiến độ các đơn hàng</p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="stages" class="btn btn-outline" *ngIf="canComplete()">
+        <span class="icon">⚙️</span> Quản lý khâu
+      </a>
+      <button class="btn btn-primary" (click)="load()">🔄 Làm mới</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row" *ngIf="!isLoading && !errorMessage">
+    <div class="stat-card">
+      <div class="stat-value">{{ orders.length }}</div>
+      <div class="stat-label">Tổng đơn</div>
+    </div>
+    <div class="stat-card active">
+      <div class="stat-value">{{ inProgress.length }}</div>
+      <div class="stat-label">Đang sản xuất</div>
+    </div>
+    <div class="stat-card done">
+      <div class="stat-value">{{ completed.length }}</div>
+      <div class="stat-label">Hoàn thành</div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div><p>Đang tải...</p>
+  </div>
+
+  <!-- Error -->
+  <div class="error-state" *ngIf="!isLoading && errorMessage">
+    <p>{{ errorMessage }}</p>
+    <button class="btn btn-primary" (click)="load()">Thử lại</button>
+  </div>
+
+  <!-- Empty -->
+  <div class="empty-state" *ngIf="!isLoading && !errorMessage && orders.length === 0">
+    <div class="empty-icon">🏭</div>
+    <p>Không có đơn hàng nào đang sản xuất.</p>
+  </div>
+
+  <!-- In-progress orders -->
+  <div *ngIf="!isLoading && !errorMessage && inProgress.length > 0">
+    <h2 class="section-title">Đang sản xuất ({{ inProgress.length }})</h2>
+    <div class="order-grid">
+      <div class="order-card" *ngFor="let order of inProgress">
+
+        <div class="card-header">
+          <span class="order-number">{{ order.orderNumber }}</span>
+          <span class="stage-badge">{{ order.currentStageName || 'Chờ xử lý' }}</span>
+        </div>
+        <div class="customer-name" *ngIf="order.customerName">{{ order.customerName }}</div>
+
+        <!-- Progress bar -->
+        <div class="progress-wrap">
+          <div class="progress-track">
+            <div class="progress-fill" [style.width.%]="order.progressPercent"></div>
+          </div>
+          <span class="progress-text">{{ order.completedSteps }}/{{ order.totalSteps }} khâu</span>
+        </div>
+
+        <!-- Steps list -->
+        <div class="steps-list">
+          <div class="step-item" *ngFor="let step of order.steps" [class.done]="step.isCompleted">
+            <span class="step-dot" [class.done]="step.isCompleted">
+              {{ step.isCompleted ? '✓' : step.stageOrder }}
+            </span>
+            <div class="step-info">
+              <span class="step-name">{{ step.stageName }}</span>
+              <span class="step-by" *ngIf="step.isCompleted && step.completedByUserName">
+                {{ step.completedByUserName }}
+                <span *ngIf="step.completedAt"> · {{ step.completedAt | date:'dd/MM HH:mm' }}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card-footer">
+          <a [routerLink]="['/orders', order.orderId]" class="btn-link">Xem đơn →</a>
+          <button
+            *ngIf="canComplete() && nextStep(order)"
+            class="btn-complete"
+            (click)="openCompleteModal(order, nextStep(order)!)">
+            ✓ Hoàn thành: {{ nextStep(order)?.stageName }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Completed orders -->
+  <div *ngIf="!isLoading && !errorMessage && completed.length > 0">
+    <h2 class="section-title completed-title">Hoàn thành khâu sản xuất ({{ completed.length }})</h2>
+    <div class="order-grid">
+      <div class="order-card done-card" *ngFor="let order of completed">
+        <div class="card-header">
+          <span class="order-number">{{ order.orderNumber }}</span>
+          <span class="done-badge">✓ Xong</span>
+        </div>
+        <div class="customer-name" *ngIf="order.customerName">{{ order.customerName }}</div>
+        <div class="progress-wrap">
+          <div class="progress-track">
+            <div class="progress-fill done-fill" style="width:100%"></div>
+          </div>
+          <span class="progress-text">{{ order.totalSteps }}/{{ order.totalSteps }} khâu</span>
+        </div>
+        <div class="card-footer">
+          <a [routerLink]="['/orders', order.orderId]" class="btn-link">Xem đơn →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Modal hoàn thành khâu ═══ -->
+<div class="modal-overlay" *ngIf="showCompleteModal" (click)="closeCompleteModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Hoàn thành khâu sản xuất</h3>
+      <button class="btn-close" (click)="closeCompleteModal()">✕</button>
+    </div>
+    <div class="modal-body" *ngIf="completing">
+      <div class="complete-info">
+        <div class="ci-row">
+          <span class="ci-lbl">Đơn hàng</span>
+          <span class="ci-val">{{ completing.order.orderNumber }}</span>
+        </div>
+        <div class="ci-row">
+          <span class="ci-lbl">Khâu</span>
+          <span class="ci-val stage-name">{{ completing.step.stageName }}</span>
+        </div>
+        <div class="ci-row" *ngIf="completing.order.customerName">
+          <span class="ci-lbl">Khách hàng</span>
+          <span class="ci-val">{{ completing.order.customerName }}</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Ghi chú (không bắt buộc)</label>
+        <textarea [(ngModel)]="completeNotes" rows="3" placeholder="Ghi chú về khâu vừa hoàn thành..."></textarea>
+      </div>
+      <div class="error-msg" *ngIf="completeError">{{ completeError }}</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeCompleteModal()" [disabled]="isCompleting">Hủy</button>
+      <button class="btn btn-success" (click)="confirmComplete()" [disabled]="isCompleting">
+        {{ isCompleting ? 'Đang xử lý...' : '✓ Xác nhận hoàn thành' }}
+      </button>
+    </div>
+  </div>
+</div>

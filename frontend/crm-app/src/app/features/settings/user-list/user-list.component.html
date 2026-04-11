@@ -1,0 +1,154 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Quản lý người dùng</h1>
+      <p class="subtitle">Quản lý tài khoản và phân quyền người dùng</p>
+    </div>
+    <button class="btn btn-primary" (click)="addUser()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Thêm người dùng
+    </button>
+  </div>
+
+  <div class="filter-bar">
+    <div class="search-input-wrapper">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="onSearch()"
+        placeholder="Tìm kiếm theo tên, email...">
+    </div>
+
+    <select [(ngModel)]="filterRole" (change)="onFilterChange()" class="filter-select">
+      <option value="">Tất cả vai trò</option>
+      <option *ngFor="let role of roles" [value]="role.name">{{ getRoleLabel(role.name) }}</option>
+    </select>
+
+    <select [(ngModel)]="filterActive" (change)="onFilterChange()" class="filter-select">
+      <option value="">Tất cả trạng thái</option>
+      <option value="true">Đang hoạt động</option>
+      <option value="false">Đã vô hiệu hóa</option>
+    </select>
+
+    <button class="btn btn-secondary" (click)="onSearch()">Tìm kiếm</button>
+  </div>
+
+  <div class="table-container">
+    <div class="loading-overlay" *ngIf="isLoading">
+      <div class="spinner"></div>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Người dùng</th>
+          <th>Email</th>
+          <th>Số điện thoại</th>
+          <th>Vai trò</th>
+          <th>Trạng thái</th>
+          <th>Ngày tạo</th>
+          <th>Đăng nhập lần cuối</th>
+          <th class="actions-col">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users">
+          <td>
+            <div class="user-info">
+              <div class="avatar">{{ getInitials(user) }}</div>
+              <div>
+                <div class="user-name">{{ user.fullName }}</div>
+              </div>
+            </div>
+          </td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.phoneNumber || '-' }}</td>
+          <td>
+            <div class="roles-list">
+              <span
+                *ngFor="let role of user.roles"
+                class="role-badge"
+                [ngClass]="getRoleBadgeClass(role)">
+                {{ getRoleLabel(role) }}
+              </span>
+              <span *ngIf="user.roles.length === 0" class="no-role">Chưa có vai trò</span>
+            </div>
+          </td>
+          <td>
+            <span class="status-badge" [class.active]="user.isActive" [class.inactive]="!user.isActive">
+              {{ user.isActive ? 'Hoạt động' : 'Vô hiệu hóa' }}
+            </span>
+          </td>
+          <td>{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
+          <td>{{ user.lastLoginAt ? (user.lastLoginAt | date:'dd/MM/yyyy HH:mm') : 'Chưa đăng nhập' }}</td>
+          <td class="actions-col">
+            <div class="action-buttons">
+              <button class="btn-icon" title="Chỉnh sửa" (click)="editUser(user.id)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button
+                class="btn-icon"
+                [title]="user.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'"
+                [class.btn-warning]="user.isActive"
+                [class.btn-success]="!user.isActive"
+                (click)="toggleActive(user)">
+                <svg *ngIf="user.isActive" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                </svg>
+                <svg *ngIf="!user.isActive" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </button>
+              <button class="btn-icon btn-danger" title="Xóa" (click)="deleteUser(user)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="users.length === 0 && !isLoading">
+          <td colspan="8" class="empty-state">
+            <div class="empty-content">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <p>Không tìm thấy người dùng nào</p>
+              <button class="btn btn-primary" (click)="addUser()">Thêm người dùng đầu tiên</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button class="page-btn" [disabled]="currentPage === 1" (click)="onPageChange(currentPage - 1)">Trước</button>
+    <button
+      *ngFor="let page of getPages()"
+      class="page-btn"
+      [class.active]="page === currentPage"
+      (click)="onPageChange(page)">
+      {{ page }}
+    </button>
+    <button class="page-btn" [disabled]="currentPage === totalPages" (click)="onPageChange(currentPage + 1)">Sau</button>
+    <span class="page-info">
+      Hiển thị {{ (currentPage - 1) * pageSize + 1 }} - {{ currentPage * pageSize > totalItems ? totalItems : currentPage * pageSize }} / {{ totalItems }}
+    </span>
+  </div>
+</div>

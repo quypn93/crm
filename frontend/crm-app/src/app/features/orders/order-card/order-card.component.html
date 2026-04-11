@@ -1,0 +1,175 @@
+<div class="card-scroll-wrapper">
+  <div class="card-root" #cardRef>
+
+    <!-- ═══ HEADER ═══ -->
+    <div class="hdr">
+      <div class="hdr-left">
+        <img src="/assets/logo.png" class="hdr-logo" alt="4Mùa">
+        <div class="hdr-brand">
+          <div>ĐỒNG PHỤC</div>
+          <div>BỐN MÙA</div>
+        </div>
+      </div>
+      <div class="hdr-mid">
+        <div class="hdr-order-num">{{ order.orderNumber }}</div>
+      </div>
+      <div class="hdr-right">
+        <div class="hdr-meta-item">
+          <span class="meta-lbl">KH:</span>
+          <span class="meta-val">{{ order.customerName || '—' }}</span>
+        </div>
+        <div class="hdr-sep"></div>
+        <div class="hdr-meta-item">
+          <span class="meta-lbl">DESIGN:</span>
+          <span class="meta-val">{{ order.designerUserName || '—' }}</span>
+        </div>
+        <div class="hdr-sep"></div>
+        <div class="hdr-meta-item">
+          <span class="meta-lbl">SALE:</span>
+          <span class="meta-val">{{ order.assignedToUserName || '—' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ BODY ═══ -->
+    <div class="body">
+
+      <!-- LEFT: NGÀY LÊN ĐƠN + QUÀ TẶNG -->
+      <div class="col-left">
+        <div class="date-badge-wrap">
+          <div class="date-badge">
+            NGÀY LÊN ĐƠN:
+            <span class="date-v">{{ fmt(order.orderDate) }}</span>
+          </div>
+        </div>
+        <div class="gift-box">
+          <div class="gift-title">QUÀ TẶNG</div>
+          <!-- [IMAGE SLOT] user sẽ thêm ảnh -->
+          <div class="img-slot"></div>
+        </div>
+      </div>
+
+      <!-- CENTER: ảnh áo (placeholder) -->
+      <div class="col-center"></div>
+
+      <!-- RIGHT: CHẾ TÁC + TÊN RIÊNG -->
+      <div class="col-right">
+        <div class="craft-row">
+          <div class="craft-box">
+            <div class="craft-lbl">CHẾ TÁC MẶT TRƯỚC</div>
+            <!-- [IMAGE SLOT] -->
+            <div class="craft-img-slot"></div>
+            <div class="craft-sub">KỸ THUẬT SỐ</div>
+          </div>
+          <div class="craft-box">
+            <div class="craft-lbl">CHẾ TÁC MẶT SAU</div>
+            <!-- [IMAGE SLOT] -->
+            <div class="craft-img-slot"></div>
+            <div class="craft-sub">KỸ THUẬT SỐ</div>
+          </div>
+        </div>
+
+        <div class="names-box">
+          <div class="names-title">TÊN RIÊNG IN DƯỚI LOGO NGỰC</div>
+          <!-- [IMAGE SLOT] user sẽ thêm ảnh -->
+          <div class="names-img-slot">
+            <!-- Fallback: render từ dữ liệu nếu có -->
+            <div class="names-grid" *ngIf="parsePersonNames().length">
+              <div class="names-col" *ngFor="let grp of parsePersonNames()">
+                <div class="nm-size-hdr" [style.color]="sizeColor(grp.size)">SIZE {{ grp.size }}</div>
+                <div class="nm-line" *ngFor="let n of grp.names">{{ n }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══ BOTTOM ═══ -->
+    <div class="btm">
+
+      <!-- Info table: CHẤT LIỆU / MÀU SẮC / KIỂU DÁNG -->
+      <div class="info-tbl">
+        <div class="info-row">
+          <div class="info-lbl">CHẤT LIỆU</div>
+          <div class="info-val">{{ getMaterial() }}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-lbl">MÀU SẮC</div>
+          <div class="info-val" style="white-space:pre-line">{{ getColorText() }}</div>
+        </div>
+        <div class="info-row info-row-tall">
+          <div class="info-lbl">KIỂU DÁNG</div>
+          <div class="info-val" style="white-space:pre-line">{{ getStyleText() }}</div>
+        </div>
+      </div>
+
+      <!-- Right: size table + dates + note + QR -->
+      <div class="btm-right">
+
+        <!-- Size table -->
+        <div class="sz-tbl">
+          <div class="sz-hdr-row">
+            <div class="sz-cell sz-hdr-cell" *ngFor="let s of SIZES">{{ s }}</div>
+            <div class="sz-cell sz-hdr-cell sz-col-total">TỔNG</div>
+          </div>
+          <div class="sz-val-row">
+            <div class="sz-cell sz-val-cell" *ngFor="let s of SIZES">
+              <span [class.has-val]="getSizeQty(s) > 0">
+                {{ getSizeQty(s) > 0 ? getSizeQty(s) : '' }}
+              </span>
+            </div>
+            <div class="sz-cell sz-val-cell sz-col-total">
+              <span [class.has-val]="getTotalQty() > 0">
+                {{ getTotalQty() > 0 ? getTotalQty() : '' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dates + Note + QR -->
+        <div class="btm-footer">
+          <div class="dates-col">
+            <div class="date-btn">
+              NGÀY XONG :
+              <span class="date-btn-val">{{ fmt(order.completionDate) }}</span>
+            </div>
+            <div class="date-btn">
+              NGÀY TRẢ :
+              <span class="date-btn-val">{{ fmt(order.returnDate) }}</span>
+            </div>
+          </div>
+          <div class="note-col">
+            <div class="note-lbl">LƯU Ý:</div>
+            <div class="note-val">{{ order.internalNotes }}</div>
+          </div>
+          <div class="qr-col">
+            <img *ngIf="qrDataUrl" [src]="qrDataUrl" class="qr-img" alt="QR">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ DISCLAIMER ═══ -->
+    <div class="disclaimer">
+      <span class="disc-bar"></span>
+      Chú ý: Quý khách vui lòng kiểm tra kỹ mẫu áo &amp; nội dung in trước khi sản xuất.
+      Đơn hàng sẽ được sản xuất chuẩn theo maket này.
+    </div>
+
+  </div>
+</div>
+
+<!-- Export button -->
+<div class="export-actions">
+  <button class="btn-export" (click)="exportImage()" [disabled]="isRendering">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+    {{ isRendering ? 'Đang xuất...' : 'Xuất ảnh đơn hàng' }}
+  </button>
+</div>

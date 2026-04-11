@@ -22,6 +22,8 @@ public class User : BaseEntity
     public virtual ICollection<TaskItem> CreatedTasks { get; set; } = new List<TaskItem>();
     public virtual ICollection<TaskItem> AssignedTasks { get; set; } = new List<TaskItem>();
     public virtual ICollection<ActivityLog> ActivityLogs { get; set; } = new List<ActivityLog>();
+    public virtual ICollection<Order> CreatedOrders { get; set; } = new List<Order>();
+    public virtual ICollection<Order> AssignedOrders { get; set; } = new List<Order>();
 
     public string FullName => $"{FirstName} {LastName}";
 }

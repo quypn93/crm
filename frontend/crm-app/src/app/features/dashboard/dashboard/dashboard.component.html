@@ -1,0 +1,415 @@
+<div class="dashboard">
+  <div class="page-header">
+    <h1>Tổng quan</h1>
+    <p *ngIf="isSalesDashboard()">Chào mừng trở lại! Đây là tổng quan về hoạt động kinh doanh của bạn.</p>
+    <p *ngIf="isProductionDashboard()">Tổng quan tình hình sản xuất đơn hàng.</p>
+    <p *ngIf="isQualityDashboard()">Tổng quan kiểm tra chất lượng sản phẩm.</p>
+    <p *ngIf="isDeliveryDashboard()">Tổng quan tình hình giao hàng.</p>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Đang tải dữ liệu...</p>
+  </div>
+
+  <!-- Sales Dashboard (Admin, SalesManager, SalesRep) -->
+  <ng-container *ngIf="!isLoading && isSalesDashboard() && stats">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Tổng khách hàng</span>
+          <span class="stat-value">{{ stats.totalCustomers }}</span>
+          <span class="stat-change positive">+{{ stats.newCustomersThisMonth }} tháng này</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Giao dịch đang xử lý</span>
+          <span class="stat-value">{{ stats.dealsInPipeline }}</span>
+          <span class="stat-change">{{ formatCurrency(stats.pipelineValue) }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon purple">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="1" x2="12" y2="23"></line>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Doanh thu</span>
+          <span class="stat-value">{{ formatCurrency(stats.totalRevenue) }}</span>
+          <span class="stat-change positive">{{ stats.conversionRate }}% tỷ lệ chuyển đổi</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon orange">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Công việc</span>
+          <span class="stat-value">{{ stats.pendingTasksCount }}</span>
+          <span class="stat-change negative" *ngIf="stats.overdueTasksCount > 0">{{ stats.overdueTasksCount }} quá hạn</span>
+          <span class="stat-change positive" *ngIf="stats.overdueTasksCount === 0">Tất cả đúng hạn</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Secondary Stats -->
+    <div class="secondary-stats">
+      <div class="stat-card small">
+        <span class="label">Giao dịch thắng</span>
+        <span class="value positive">{{ stats.wonDealsCount }}</span>
+      </div>
+      <div class="stat-card small">
+        <span class="label">Giao dịch thua</span>
+        <span class="value negative">{{ stats.lostDealsCount }}</span>
+      </div>
+      <div class="stat-card small">
+        <span class="label">Tổng giao dịch</span>
+        <span class="value">{{ stats.totalDeals }}</span>
+      </div>
+      <div class="stat-card small">
+        <span class="label">Tổng công việc</span>
+        <span class="value">{{ stats.totalTasks }}</span>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h2>Thao tác nhanh</h2>
+      <div class="actions-grid">
+        <a routerLink="/customers" [queryParams]="{action: 'new'}" class="action-card">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <line x1="19" y1="8" x2="19" y2="14"></line>
+            <line x1="22" y1="11" x2="16" y2="11"></line>
+          </svg>
+          <span>Thêm khách hàng</span>
+        </a>
+        <a routerLink="/deals" [queryParams]="{action: 'new'}" class="action-card">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            <line x1="12" y1="11" x2="12" y2="17"></line>
+            <line x1="15" y1="14" x2="9" y2="14"></line>
+          </svg>
+          <span>Tạo giao dịch</span>
+        </a>
+        <a routerLink="/tasks" [queryParams]="{action: 'new'}" class="action-card">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+          <span>Tạo công việc</span>
+        </a>
+        <a routerLink="/reports" class="action-card">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>Xem báo cáo</span>
+        </a>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Production Dashboard -->
+  <ng-container *ngIf="!isLoading && isProductionDashboard() && productionData">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon orange">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Chờ sản xuất</span>
+          <span class="stat-value">{{ productionData.ordersWaitingProduction }}</span>
+          <span class="stat-change">Đơn hàng đã xác nhận</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Đang sản xuất</span>
+          <span class="stat-value">{{ productionData.ordersInProduction }}</span>
+          <span class="stat-change">{{ productionData.totalItemsInProduction }} sản phẩm</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Hoàn thành hôm nay</span>
+          <span class="stat-value">{{ productionData.ordersCompletedToday }}</span>
+          <span class="stat-change positive">Chuyển sang kiểm tra CL</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon purple">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Tổng sản phẩm</span>
+          <span class="stat-value">{{ productionData.totalItemsInProduction }}</span>
+          <span class="stat-change">Trong quy trình</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="recent-orders" *ngIf="productionData.recentOrders.length > 0">
+      <h2>Đơn hàng gần đây</h2>
+      <div class="orders-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Mã đơn</th>
+              <th>Khách hàng</th>
+              <th>Trạng thái</th>
+              <th>Số sản phẩm</th>
+              <th>Ngày đặt</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of productionData.recentOrders">
+              <td><a [routerLink]="['/orders', order.id]">{{ order.orderNumber }}</a></td>
+              <td>{{ order.customerName }}</td>
+              <td><span class="status-badge">{{ order.statusName }}</span></td>
+              <td>{{ order.totalItems }}</td>
+              <td>{{ order.orderDate | date:'dd/MM/yyyy' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Quality Dashboard -->
+  <ng-container *ngIf="!isLoading && isQualityDashboard() && qualityData">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon orange">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Chờ kiểm tra</span>
+          <span class="stat-value">{{ qualityData.ordersWaitingQC }}</span>
+          <span class="stat-change">Đơn hàng chờ QC</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Đạt chuẩn hôm nay</span>
+          <span class="stat-value">{{ qualityData.ordersPassedToday }}</span>
+          <span class="stat-change positive">Sẵn sàng giao hàng</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon red">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Cần làm lại</span>
+          <span class="stat-value">{{ qualityData.ordersFailedToday }}</span>
+          <span class="stat-change negative">Chuyển về sản xuất</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 20V10"></path>
+            <path d="M12 20V4"></path>
+            <path d="M6 20v-6"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Tỷ lệ đạt</span>
+          <span class="stat-value">{{ qualityData.passRate }}%</span>
+          <span class="stat-change">Hôm nay</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending QC Orders -->
+    <div class="recent-orders" *ngIf="qualityData.pendingQCOrders.length > 0">
+      <h2>Đơn hàng chờ kiểm tra</h2>
+      <div class="orders-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Mã đơn</th>
+              <th>Khách hàng</th>
+              <th>Số sản phẩm</th>
+              <th>Ngày yêu cầu</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of qualityData.pendingQCOrders">
+              <td><a [routerLink]="['/orders', order.id]">{{ order.orderNumber }}</a></td>
+              <td>{{ order.customerName }}</td>
+              <td>{{ order.totalItems }}</td>
+              <td>{{ order.requiredDate | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <a [routerLink]="['/orders', order.id]" class="btn-small">Kiểm tra</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Delivery Dashboard -->
+  <ng-container *ngIf="!isLoading && isDeliveryDashboard() && deliveryData">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon orange">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="3" width="15" height="13"></rect>
+            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+            <circle cx="5.5" cy="18.5" r="2.5"></circle>
+            <circle cx="18.5" cy="18.5" r="2.5"></circle>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Sẵn sàng giao</span>
+          <span class="stat-value">{{ deliveryData.ordersReadyToShip }}</span>
+          <span class="stat-change">Chờ vận chuyển</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14"></path>
+            <path d="m12 5 7 7-7 7"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Đang giao</span>
+          <span class="stat-value">{{ deliveryData.ordersShipping }}</span>
+          <span class="stat-change">{{ formatCurrency(deliveryData.totalValueShipping) }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Đã giao hôm nay</span>
+          <span class="stat-value">{{ deliveryData.ordersDeliveredToday }}</span>
+          <span class="stat-change positive">Hoàn thành</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon purple">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="1" x2="12" y2="23"></line>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Giá trị đang giao</span>
+          <span class="stat-value">{{ formatCurrency(deliveryData.totalValueShipping) }}</span>
+          <span class="stat-change">Tổng giá trị</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending Delivery Orders -->
+    <div class="recent-orders" *ngIf="deliveryData.pendingDeliveryOrders.length > 0">
+      <h2>Đơn hàng cần giao</h2>
+      <div class="orders-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Mã đơn</th>
+              <th>Khách hàng</th>
+              <th>Địa chỉ</th>
+              <th>SĐT</th>
+              <th>Giá trị</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of deliveryData.pendingDeliveryOrders">
+              <td><a [routerLink]="['/orders', order.id]">{{ order.orderNumber }}</a></td>
+              <td>{{ order.customerName }}</td>
+              <td>{{ order.deliveryAddress }}</td>
+              <td>{{ order.deliveryPhone }}</td>
+              <td>{{ formatCurrency(order.totalAmount) }}</td>
+              <td>
+                <a [routerLink]="['/orders', order.id]" class="btn-small">Chi tiết</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+</div>

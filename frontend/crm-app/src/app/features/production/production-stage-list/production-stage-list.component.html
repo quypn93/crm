@@ -1,0 +1,64 @@
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1>Quản lý khâu sản xuất</h1>
+      <p class="subtitle">Cấu hình các bước trong quy trình sản xuất</p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/production" class="btn btn-outline">← Quay lại</a>
+      <a routerLink="new" class="btn btn-primary">+ Thêm khâu</a>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Đang tải...</p>
+  </div>
+
+  <div class="error-state" *ngIf="!isLoading && errorMessage">
+    <p>{{ errorMessage }}</p>
+    <button class="btn btn-primary" (click)="load()">Thử lại</button>
+  </div>
+
+  <div class="table-card" *ngIf="!isLoading && !errorMessage">
+    <div class="empty-state" *ngIf="stages.length === 0">
+      <p>Chưa có khâu nào. <a routerLink="new">Thêm khâu đầu tiên</a></p>
+    </div>
+
+    <table class="data-table" *ngIf="stages.length > 0">
+      <thead>
+        <tr>
+          <th style="width:60px">Thứ tự</th>
+          <th>Tên khâu</th>
+          <th>Mô tả</th>
+          <th>Vai trò phụ trách</th>
+          <th style="width:80px">Trạng thái</th>
+          <th style="width:100px">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let stage of stages" [class.inactive]="!stage.isActive">
+          <td class="order-cell">{{ stage.stageOrder }}</td>
+          <td class="name-cell">{{ stage.stageName }}</td>
+          <td class="desc-cell">{{ stage.description || '—' }}</td>
+          <td>{{ getRoleLabel(stage.responsibleRole) }}</td>
+          <td>
+            <span class="badge" [class.badge-active]="stage.isActive" [class.badge-inactive]="!stage.isActive">
+              {{ stage.isActive ? 'Hoạt động' : 'Tắt' }}
+            </span>
+          </td>
+          <td class="actions-cell">
+            <a [routerLink]="[stage.id, 'edit']" class="btn-icon" title="Sửa">✏️</a>
+            <button
+              class="btn-icon btn-delete"
+              (click)="deleteStage(stage)"
+              [disabled]="deletingId === stage.id"
+              title="Xoá">
+              🗑️
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

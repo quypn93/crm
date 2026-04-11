@@ -1,0 +1,36 @@
+<div class="settings-wrapper">
+  <aside class="settings-sidebar">
+    <div class="sidebar-header">
+      <h2>Cài đặt</h2>
+    </div>
+    <nav class="settings-nav">
+      <a
+        *ngFor="let item of navItems"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        class="nav-item">
+        <div class="nav-icon">
+          <!-- Users icon -->
+          <svg *ngIf="item.icon === 'users'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <!-- Shield icon -->
+          <svg *ngIf="item.icon === 'shield'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+        </div>
+        <div class="nav-text">
+          <span class="nav-label">{{ item.label }}</span>
+          <span class="nav-desc">{{ item.description }}</span>
+        </div>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="settings-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

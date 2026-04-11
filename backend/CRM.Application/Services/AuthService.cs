@@ -6,7 +6,7 @@ using AutoMapper;
 using CRM.Application.DTOs.Auth;
 using CRM.Core.Entities;
 using CRM.Core.Interfaces;
-using CRM.Core.Interfaces.Services;
+using CRM.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 

@@ -1,0 +1,102 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Quản lý vai trò</h1>
+      <p class="subtitle">Danh sách các vai trò và quyền hạn trong hệ thống</p>
+    </div>
+    <button class="btn btn-primary" (click)="addRole()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Thêm vai trò
+    </button>
+  </div>
+
+  <div class="loading-wrapper" *ngIf="isLoading">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="roles-grid" *ngIf="!isLoading">
+    <div class="role-card" *ngFor="let role of roles" [class.built-in]="isBuiltIn(role.name)">
+      <div class="role-card-header">
+        <span class="role-badge" [ngClass]="getRoleBadgeClass(role.name)">
+          {{ getRoleLabel(role.name) }}
+        </span>
+        <span class="role-system-name">{{ role.name }}</span>
+        <div class="card-actions">
+          <span class="built-in-tag" *ngIf="isBuiltIn(role.name)" title="Vai trò mặc định">Mặc định</span>
+          <button class="btn-icon" title="Chỉnh sửa" (click)="editRole(role.id)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </button>
+          <button
+            class="btn-icon btn-danger"
+            title="Xóa"
+            [disabled]="isBuiltIn(role.name)"
+            (click)="!isBuiltIn(role.name) && deleteRole(role)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <p class="role-description">{{ getDescription(role) }}</p>
+      <div class="role-permissions">
+        <ng-container [ngSwitch]="role.name">
+          <div *ngSwitchCase="'Admin'" class="perm-list">
+            <span class="perm-item perm-full">Toàn quyền hệ thống</span>
+          </div>
+          <div *ngSwitchCase="'SalesManager'" class="perm-list">
+            <span class="perm-item">Xem báo cáo</span>
+            <span class="perm-item">Quản lý giao dịch</span>
+            <span class="perm-item">Duyệt đơn hàng</span>
+            <span class="perm-item">Quản lý khách hàng</span>
+          </div>
+          <div *ngSwitchCase="'SalesRep'" class="perm-list">
+            <span class="perm-item">Quản lý khách hàng</span>
+            <span class="perm-item">Tạo giao dịch</span>
+            <span class="perm-item">Tạo đơn hàng</span>
+            <span class="perm-item">Quản lý công việc</span>
+          </div>
+          <div *ngSwitchCase="'ProductionManager'" class="perm-list">
+            <span class="perm-item">Xem đơn hàng</span>
+            <span class="perm-item">Cập nhật sản xuất</span>
+            <span class="perm-item">Quản lý thiết kế</span>
+          </div>
+          <div *ngSwitchCase="'QualityControl'" class="perm-list">
+            <span class="perm-item">Xem đơn hàng</span>
+            <span class="perm-item">Kiểm tra chất lượng</span>
+          </div>
+          <div *ngSwitchCase="'DeliveryManager'" class="perm-list">
+            <span class="perm-item">Xem đơn hàng</span>
+            <span class="perm-item">Cập nhật giao hàng</span>
+          </div>
+          <div *ngSwitchDefault class="perm-list">
+            <span class="perm-item perm-custom">Vai trò tùy chỉnh</span>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="roles.length === 0">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+      </svg>
+      <p>Chưa có vai trò nào</p>
+      <button class="btn btn-primary" (click)="addRole()">Thêm vai trò đầu tiên</button>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <span>Vai trò <strong>Mặc định</strong> không thể xóa. Để phân quyền người dùng, vào <strong>Quản lý người dùng</strong> và chỉnh sửa vai trò của từng tài khoản.</span>
+  </div>
+</div>

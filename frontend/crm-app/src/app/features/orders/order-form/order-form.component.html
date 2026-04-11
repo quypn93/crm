@@ -1,0 +1,309 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>{{ isEditMode ? 'Chỉnh sửa đơn hàng' : 'Tạo đơn hàng mới' }}</h1>
+      <p class="subtitle">{{ isEditMode ? 'Cập nhật thông tin đơn hàng' : 'Nhập thông tin để tạo đơn hàng mới' }}</p>
+    </div>
+  </div>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <form [formGroup]="orderForm" (ngSubmit)="onSubmit()">
+    <div class="form-sections">
+
+      <!-- ① Khách hàng & Nhân sự -->
+      <div class="form-section">
+        <h2 class="section-title">Thông tin đơn hàng</h2>
+        <div class="form-grid">
+          <div class="form-group customer-autocomplete">
+            <label>Khách hàng <span class="required">*</span></label>
+            <input type="text"
+                   [value]="customerSearchText"
+                   (input)="onCustomerInput($event)"
+                   (focus)="onCustomerFocus()"
+                   (blur)="onCustomerBlur()"
+                   placeholder="Nhập tên khách hàng..."
+                   autocomplete="off">
+            <div class="autocomplete-dropdown" *ngIf="showCustomerDropdown && filteredCustomers.length">
+              <div class="autocomplete-item"
+                   *ngFor="let c of filteredCustomers"
+                   (mousedown)="selectCustomer(c)">
+                <span class="customer-name">{{ c.name }}</span>
+                <span class="customer-company" *ngIf="c.companyName">{{ c.companyName }}</span>
+              </div>
+            </div>
+            <div class="hint">Nhập tên hoặc chọn từ danh sách</div>
+          </div>
+
+          <div class="form-group">
+            <label>Deal liên quan</label>
+            <select formControlName="dealId">
+              <option value="">Không có</option>
+              <option *ngFor="let d of filteredDeals" [value]="d.id">{{ d.title }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Nhân viên Sale phụ trách</label>
+            <input type="text" [value]="getCurrentUserDisplayName()" readonly style="background:#f5f5f5;cursor:default;">
+            <input type="hidden" formControlName="assignedToUserId">
+          </div>
+
+          <div class="form-group">
+            <label>Designer phụ trách</label>
+            <select formControlName="designerUserId">
+              <option value="">Chưa giao</option>
+              <option *ngFor="let u of designers" [value]="u.id">{{ u.firstName }} {{ u.lastName }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Ngày lên đơn</label>
+            <input type="date" formControlName="orderDate">
+          </div>
+
+          <div class="form-group">
+            <label>Ngày xong (sản xuất)</label>
+            <input type="date" formControlName="completionDate">
+          </div>
+
+          <div class="form-group">
+            <label>Ngày trả hàng</label>
+            <input type="date" formControlName="returnDate">
+          </div>
+        </div>
+      </div>
+
+      <!-- ② Sản phẩm -->
+      <div class="form-section">
+        <h2 class="section-title">Sản phẩm</h2>
+
+        <!-- Thông tin chung -->
+        <div class="form-grid" formGroupName="productInfo">
+          <div class="form-group col-span-2">
+            <label>Tên sản phẩm <span class="required">*</span></label>
+            <input type="text" formControlName="productName" placeholder="VD: Áo polo đồng phục">
+          </div>
+
+          <!-- Chất liệu -->
+          <div class="form-group">
+            <label>Chất liệu</label>
+            <input type="text" formControlName="material" list="materialList" placeholder="Chọn hoặc nhập chất liệu">
+            <datalist id="materialList">
+              <option *ngFor="let m of materials" [value]="m.name">{{ m.name }}</option>
+            </datalist>
+          </div>
+
+          <!-- Màu sắc chính -->
+          <div class="form-group">
+            <label>Màu sắc chính</label>
+            <input type="text" formControlName="colorMain" list="colorMainList" placeholder="Chọn hoặc nhập màu chính">
+            <datalist id="colorMainList">
+              <option *ngFor="let c of colorFabrics" [value]="c.name">{{ c.name }}</option>
+            </datalist>
+          </div>
+
+          <!-- Màu phối -->
+          <div class="form-group">
+            <label>Màu phối</label>
+            <input type="text" formControlName="colorSub" list="colorSubList" placeholder="Chọn hoặc nhập màu phối">
+            <datalist id="colorSubList">
+              <option *ngFor="let c of colorFabrics" [value]="c.name">{{ c.name }}</option>
+            </datalist>
+          </div>
+
+          <!-- Form dáng -->
+          <div class="form-group">
+            <label>Form</label>
+            <input type="text" formControlName="styleForm" placeholder="VD: Oversize, Regular, Slim...">
+          </div>
+
+          <!-- Quy cách -->
+          <div class="form-group">
+            <label>Quy cách</label>
+            <input type="text" formControlName="styleSpec" placeholder="VD: ĐP4M, ĐP2M...">
+          </div>
+
+          <div class="form-group">
+            <label>Đơn giá (VNĐ)</label>
+            <input type="number" formControlName="unitPrice" min="0" placeholder="0">
+          </div>
+
+          <div class="form-group">
+            <label>Giảm giá (%)</label>
+            <input type="number" formControlName="itemDiscountPercent" min="0" max="100" placeholder="0">
+          </div>
+        </div>
+
+        <!-- Size grid -->
+        <div class="size-grid-section">
+          <div class="size-grid-label">Số lượng theo size</div>
+          <div class="size-grid">
+            <div class="size-col" *ngFor="let s of SIZE_LIST">
+              <div class="size-name">{{ s }}</div>
+              <input type="number" class="size-qty-input"
+                     [value]="getSizeQtyInput(s)"
+                     (input)="onSizeQtyChange(s, $event)"
+                     min="0" placeholder="0">
+            </div>
+            <div class="size-col total-col">
+              <div class="size-name">TỔNG</div>
+              <div class="size-total">{{ getTotalQtyInput() }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ Kiểu dáng (ghi chú thêm) -->
+      <div class="form-section">
+        <h2 class="section-title">Kiểu dáng (chi tiết)</h2>
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Ghi chú kiểu dáng thêm</label>
+            <textarea formControlName="styleNotes" rows="3"
+              placeholder="VD: Cổ dệt: Trắng gạo 01 | Nẹp trụ cổ: Trắng gạo 08 | Bộ sưu tập: ..."></textarea>
+            <div class="hint">Các chi tiết khác ngoài form và quy cách đã nhập ở trên.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ④ Tên riêng theo size -->
+      <div class="form-section">
+        <h2 class="section-title">Tên riêng in theo size</h2>
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Tên riêng (JSON hoặc text)</label>
+            <textarea formControlName="personNamesBySize" rows="4"
+              placeholder='VD: {"M":["Thị Thuỷ","Kim Si","Hoàng Liên"],"L":["Pjnz 97","Q-Thor"],"XXL":["T. Dươm"]}'></textarea>
+            <div class="hint">Nhập tên từng người theo từng size để in lên ngực áo.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑤ Quà tặng -->
+      <div class="form-section">
+        <h2 class="section-title">Quà tặng kèm theo</h2>
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Danh sách quà tặng</label>
+            <textarea formControlName="giftItems" rows="3"
+              placeholder='VD: [{"description":"Cờ 1M x 1.5M"},{"description":"Sticker 4Mùa"}]'></textarea>
+            <div class="hint">Nhập mô tả các quà tặng kèm theo đơn hàng.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑥ Giao hàng -->
+      <div class="form-section">
+        <h2 class="section-title">Thông tin giao hàng</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Người nhận</label>
+            <input type="text" formControlName="deliveryContactName" placeholder="Tên người nhận">
+          </div>
+          <div class="form-group">
+            <label>Số điện thoại</label>
+            <input type="text" formControlName="deliveryPhone" placeholder="Số điện thoại">
+          </div>
+          <div class="form-group full-width">
+            <label>Địa chỉ</label>
+            <input type="text" formControlName="deliveryAddress" placeholder="Số nhà, đường">
+          </div>
+          <div class="form-group">
+            <label>Phường/Xã</label>
+            <input type="text" formControlName="deliveryWard" placeholder="Phường/Xã">
+          </div>
+          <div class="form-group">
+            <label>Quận/Huyện</label>
+            <input type="text" formControlName="deliveryDistrict" placeholder="Quận/Huyện">
+          </div>
+          <div class="form-group">
+            <label>Tỉnh/Thành phố</label>
+            <input type="text" formControlName="deliveryCity" placeholder="Tỉnh/Thành phố">
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑦ Thanh toán -->
+      <div class="form-section">
+        <h2 class="section-title">Thông tin thanh toán</h2>
+        <div class="pricing-grid">
+          <div class="form-group">
+            <label>Giảm giá tổng (%)</label>
+            <input type="number" formControlName="discountPercent" min="0" max="100">
+          </div>
+          <div class="form-group">
+            <label>Thuế VAT (%)</label>
+            <input type="number" formControlName="taxPercent" min="0" max="100">
+          </div>
+          <div class="form-group">
+            <label>Phí vận chuyển</label>
+            <input type="number" formControlName="shippingFee" min="0">
+          </div>
+          <div class="form-group">
+            <label>Phương thức thanh toán</label>
+            <select formControlName="paymentMethod">
+              <option value="">Chọn phương thức</option>
+              <option value="cash">Tiền mặt</option>
+              <option value="bank_transfer">Chuyển khoản</option>
+              <option value="cod">COD</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="order-summary">
+          <div class="summary-row"><span>Tạm tính</span><span>{{ formatCurrency(calculateSubTotal()) }}</span></div>
+          <div class="summary-row" *ngIf="calculateDiscountAmount() > 0">
+            <span>Giảm giá</span><span class="discount">-{{ formatCurrency(calculateDiscountAmount()) }}</span>
+          </div>
+          <div class="summary-row"><span>Thuế VAT</span><span>{{ formatCurrency(calculateTaxAmount()) }}</span></div>
+          <div class="summary-row" *ngIf="(orderForm.get('shippingFee')?.value || 0) > 0">
+            <span>Vận chuyển</span><span>{{ formatCurrency(orderForm.get('shippingFee')?.value || 0) }}</span>
+          </div>
+          <div class="summary-row total"><span>Tổng cộng</span><span>{{ formatCurrency(calculateTotal()) }}</span></div>
+        </div>
+      </div>
+
+      <!-- ⑧ Ghi chú -->
+      <div class="form-section">
+        <h2 class="section-title">Ghi chú</h2>
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Lưu ý / Ghi chú nội bộ</label>
+            <textarea formControlName="internalNotes" rows="3" placeholder="Ghi chú cho nhân viên (khách hàng không thấy)"></textarea>
+          </div>
+          <div class="form-group full-width">
+            <label>Ghi chú khách hàng</label>
+            <textarea formControlName="customerNotes" rows="2" placeholder="Ghi chú từ khách hàng"></textarea>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Hủy bỏ</button>
+      <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+        <span class="spinner-small" *ngIf="isLoading"></span>
+        {{ isEditMode ? 'Cập nhật đơn hàng' : 'Tạo đơn hàng' }}
+      </button>
+    </div>
+  </form>
+
+  <!-- Shared datalists -->
+  <datalist id="sizeList">
+    <option value="S">
+    <option value="M">
+    <option value="L">
+    <option value="XL">
+    <option value="XXL">
+    <option value="3XL">
+    <option value="4XL">
+    <option value="NC1">
+    <option value="NC2">
+    <option value="NC3">
+    <option value="NC4">
+    <option value="Free Size">
+  </datalist>
+</div>

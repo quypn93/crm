@@ -24,4 +24,5 @@ public class Customer : BaseEntity
     public virtual User? AssignedToUser { get; set; }
     public virtual ICollection<Deal> Deals { get; set; } = new List<Deal>();
     public virtual ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
+    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 }

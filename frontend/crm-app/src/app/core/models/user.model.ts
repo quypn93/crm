@@ -11,6 +11,10 @@ export interface User {
   lastLoginAt?: Date;
 }
 
+export function getUserFullName(user: User): string {
+  return `${user.firstName} ${user.lastName}`.trim();
+}
+
 export interface LoginRequest {
   email: string;
   password: string;

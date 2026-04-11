@@ -23,4 +23,5 @@ public class Deal : BaseEntity
     public virtual User CreatedByUser { get; set; } = null!;
     public virtual User? AssignedToUser { get; set; }
     public virtual ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
+    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 }

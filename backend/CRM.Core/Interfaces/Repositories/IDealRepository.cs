@@ -26,4 +26,8 @@ public interface IDealRepository : IRepository<Deal>
     Task<DealStage?> GetLostStageAsync();
     Task<decimal> GetTotalRevenueAsync(DateTime? from, DateTime? to);
     Task<IEnumerable<(DealStage Stage, int Count, decimal TotalValue)>> GetDealsByStageAsync();
+    Task<int> GetDealsInPipelineCountAsync();
+    Task<decimal> GetPipelineValueAsync();
+    Task<IEnumerable<Deal>> GetWonDealsAsync(DateTime? from, DateTime? to);
+    Task<IEnumerable<(DealStage Stage, IEnumerable<Deal> Deals)>> GetAllStagesWithDealsAsync();
 }

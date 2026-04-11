@@ -3,6 +3,7 @@ using CRM.Core.Enums;
 using CRM.Core.Interfaces.Repositories;
 using CRM.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using TaskStatusEnum = CRM.Core.Enums.TaskStatus;
 
 namespace CRM.Infrastructure.Repositories;
 
@@ -24,7 +25,7 @@ public class TaskRepository : Repository<TaskItem>, ITaskRepository
 
     public async Task<(IEnumerable<TaskItem> Items, int TotalCount)> GetPagedAsync(
         string? search,
-        TaskStatus? status,
+        TaskStatusEnum? status,
         TaskPriority? priority,
         Guid? customerId,
         Guid? dealId,
@@ -78,7 +79,7 @@ public class TaskRepository : Repository<TaskItem>, ITaskRepository
             query = query.Where(t =>
                 t.DueDate.HasValue &&
                 t.DueDate.Value < DateTime.UtcNow &&
-                t.Status != TaskStatus.Completed);
+                t.Status != TaskStatusEnum.Completed);
 
         // Get total count before pagination
         var totalCount = await query.CountAsync();
@@ -151,7 +152,7 @@ public class TaskRepository : Repository<TaskItem>, ITaskRepository
             .Where(t =>
                 t.DueDate.HasValue &&
                 t.DueDate.Value < DateTime.UtcNow &&
-                t.Status != TaskStatus.Completed)
+                t.Status != TaskStatusEnum.Completed)
             .OrderBy(t => t.DueDate)
             .ToListAsync();
     }
@@ -169,14 +170,14 @@ public class TaskRepository : Repository<TaskItem>, ITaskRepository
                 t.DueDate.HasValue &&
                 t.DueDate.Value >= today &&
                 t.DueDate.Value < tomorrow &&
-                t.Status != TaskStatus.Completed)
+                t.Status != TaskStatusEnum.Completed)
             .OrderBy(t => t.DueDate)
             .ToListAsync();
     }
 
     public async Task<int> GetPendingTasksCountAsync(Guid? userId = null)
     {
-        var query = _dbSet.Where(t => t.Status == TaskStatus.Pending || t.Status == TaskStatus.InProgress);
+        var query = _dbSet.Where(t => t.Status == TaskStatusEnum.Pending || t.Status == TaskStatusEnum.InProgress);
 
         if (userId.HasValue)
             query = query.Where(t => t.AssignedToUserId == userId.Value);
@@ -189,7 +190,7 @@ public class TaskRepository : Repository<TaskItem>, ITaskRepository
         var query = _dbSet.Where(t =>
             t.DueDate.HasValue &&
             t.DueDate.Value < DateTime.UtcNow &&
-            t.Status != TaskStatus.Completed);
+            t.Status != TaskStatusEnum.Completed);
 
         if (userId.HasValue)
             query = query.Where(t => t.AssignedToUserId == userId.Value);

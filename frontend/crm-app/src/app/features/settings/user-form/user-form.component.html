@@ -1,0 +1,145 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>{{ isEditMode ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới' }}</h1>
+      <p class="subtitle">{{ isEditMode ? 'Cập nhật thông tin tài khoản' : 'Tạo tài khoản người dùng mới' }}</p>
+    </div>
+  </div>
+
+  <div class="loading-wrapper" *ngIf="isLoading">
+    <div class="spinner"></div>
+  </div>
+
+  <form [formGroup]="userForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading">
+    <div class="form-layout">
+      <!-- Left column: Basic info -->
+      <div class="form-card">
+        <h2 class="card-title">Thông tin cơ bản</h2>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Họ <span class="required">*</span></label>
+            <input
+              type="text"
+              formControlName="firstName"
+              placeholder="Nhập họ"
+              [class.invalid]="f['firstName'].invalid && f['firstName'].touched">
+            <div class="error-msg" *ngIf="f['firstName'].invalid && f['firstName'].touched">
+              Vui lòng nhập họ
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Tên <span class="required">*</span></label>
+            <input
+              type="text"
+              formControlName="lastName"
+              placeholder="Nhập tên"
+              [class.invalid]="f['lastName'].invalid && f['lastName'].touched">
+            <div class="error-msg" *ngIf="f['lastName'].invalid && f['lastName'].touched">
+              Vui lòng nhập tên
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email <span class="required">*</span></label>
+          <input
+            type="email"
+            formControlName="email"
+            placeholder="Nhập địa chỉ email"
+            [class.invalid]="f['email'].invalid && f['email'].touched">
+          <div class="error-msg" *ngIf="f['email'].errors?.['required'] && f['email'].touched">
+            Vui lòng nhập email
+          </div>
+          <div class="error-msg" *ngIf="f['email'].errors?.['email'] && f['email'].touched">
+            Email không hợp lệ
+          </div>
+          <div class="field-hint" *ngIf="isEditMode">Email không thể thay đổi sau khi tạo</div>
+        </div>
+
+        <div class="form-group" *ngIf="!isEditMode">
+          <label>Mật khẩu <span class="required">*</span></label>
+          <input
+            type="password"
+            formControlName="password"
+            placeholder="Tối thiểu 6 ký tự"
+            [class.invalid]="f['password'].invalid && f['password'].touched">
+          <div class="error-msg" *ngIf="f['password'].errors?.['required'] && f['password'].touched">
+            Vui lòng nhập mật khẩu
+          </div>
+          <div class="error-msg" *ngIf="f['password'].errors?.['minlength'] && f['password'].touched">
+            Mật khẩu tối thiểu 6 ký tự
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Số điện thoại</label>
+          <input
+            type="tel"
+            formControlName="phoneNumber"
+            placeholder="Nhập số điện thoại">
+        </div>
+
+        <div class="form-group" *ngIf="isEditMode">
+          <label>Trạng thái</label>
+          <div class="toggle-wrapper">
+            <label class="toggle">
+              <input type="checkbox" formControlName="isActive">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">{{ userForm.value.isActive ? 'Đang hoạt động' : 'Vô hiệu hóa' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: Roles -->
+      <div class="form-card">
+        <h2 class="card-title">Phân quyền</h2>
+        <p class="card-subtitle">Chọn một hoặc nhiều vai trò cho người dùng</p>
+
+        <div class="roles-grid">
+          <div
+            *ngFor="let role of roles"
+            class="role-item"
+            [class.selected]="isRoleSelected(role.name)"
+            (click)="toggleRole(role.name)">
+            <div class="role-check">
+              <svg *ngIf="isRoleSelected(role.name)" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="role-info">
+              <span class="role-name-badge" [ngClass]="getRoleBadgeClass(role.name)">
+                {{ getRoleLabel(role.name) }}
+              </span>
+              <span class="role-system-name">{{ role.name }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="selected-count" *ngIf="selectedRoles.size > 0">
+          Đã chọn {{ selectedRoles.size }} vai trò
+        </div>
+      </div>
+    </div>
+
+    <div class="error-banner" *ngIf="errorMessage">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      {{ errorMessage }}
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Hủy bỏ</button>
+      <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+        <svg *ngIf="isSaving" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+        </svg>
+        {{ isSaving ? 'Đang lưu...' : (isEditMode ? 'Cập nhật' : 'Tạo người dùng') }}
+      </button>
+    </div>
+  </form>
+</div>

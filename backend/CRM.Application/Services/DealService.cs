@@ -3,7 +3,7 @@ using CRM.Application.DTOs.Common;
 using CRM.Application.DTOs.Deal;
 using CRM.Core.Entities;
 using CRM.Core.Interfaces;
-using CRM.Core.Interfaces.Services;
+using CRM.Application.Interfaces;
 
 namespace CRM.Application.Services;
 

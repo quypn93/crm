@@ -66,4 +66,15 @@ public class UserRepository : Repository<User>, IUserRepository
             .ToListAsync();
         _context.UserRoles.RemoveRange(userRoles);
     }
+
+    public async Task<IEnumerable<User>> GetUsersWithAssignmentsAsync()
+    {
+        return await _dbSet
+            .Include(u => u.AssignedDeals)
+                .ThenInclude(d => d.Stage)
+            .Include(u => u.AssignedCustomers)
+            .Include(u => u.AssignedTasks)
+            .Where(u => u.IsActive)
+            .ToListAsync();
+    }
 }

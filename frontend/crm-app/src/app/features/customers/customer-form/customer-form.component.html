@@ -1,0 +1,121 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="cancel()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
+      <div>
+        <h1>{{ isEditMode ? 'Chỉnh sửa khách hàng' : 'Thêm khách hàng mới' }}</h1>
+        <p class="subtitle">{{ isEditMode ? 'Cập nhật thông tin khách hàng' : 'Nhập thông tin khách hàng mới' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-container">
+    <div class="loading-overlay" *ngIf="isLoading">
+      <div class="spinner"></div>
+    </div>
+
+    <form [formGroup]="customerForm" (ngSubmit)="onSubmit()">
+      <div class="form-section">
+        <h3>Thông tin cơ bản</h3>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Tên khách hàng <span class="required">*</span></label>
+            <input
+              type="text"
+              id="name"
+              formControlName="name"
+              placeholder="Nhập tên khách hàng"
+              [class.error]="f['name'].touched && f['name'].invalid">
+            <div class="error-message" *ngIf="f['name'].touched && f['name'].errors?.['required']">
+              Tên khách hàng là bắt buộc
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="companyName">Công ty</label>
+            <input
+              type="text"
+              id="companyName"
+              formControlName="companyName"
+              placeholder="Tên công ty">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Email <span class="required">*</span></label>
+            <input
+              type="email"
+              id="email"
+              formControlName="email"
+              placeholder="email@company.com"
+              [class.error]="f['email'].touched && f['email'].invalid">
+            <div class="error-message" *ngIf="f['email'].touched && f['email'].errors?.['required']">
+              Email là bắt buộc
+            </div>
+            <div class="error-message" *ngIf="f['email'].touched && f['email'].errors?.['email']">
+              Email không hợp lệ
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Số điện thoại</label>
+            <input
+              type="tel"
+              id="phone"
+              formControlName="phone"
+              placeholder="0901234567">
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="address">Địa chỉ</label>
+          <input
+            type="text"
+            id="address"
+            formControlName="address"
+            placeholder="Nhập địa chỉ">
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>Thông tin bổ sung</h3>
+
+        <div class="form-group">
+          <label for="industry">Ngành nghề</label>
+          <select id="industry" formControlName="industry">
+            <option value="">-- Chọn ngành nghề --</option>
+            <option *ngFor="let ind of industries" [value]="ind">{{ ind }}</option>
+          </select>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="notes">Ghi chú</label>
+          <textarea
+            id="notes"
+            formControlName="notes"
+            rows="4"
+            placeholder="Nhập ghi chú về khách hàng..."></textarea>
+        </div>
+      </div>
+
+      <div class="alert alert-error" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">Hủy</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+          <span *ngIf="!isLoading">{{ isEditMode ? 'Cập nhật' : 'Thêm khách hàng' }}</span>
+          <span *ngIf="isLoading" class="spinner-small"></span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

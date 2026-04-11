@@ -1,0 +1,58 @@
+<div class="design-canvas-container">
+  <div class="design-left">
+    <!-- Color Fabric Selection -->
+    <div class="component-group">
+      <label>Mau ao</label>
+      <select class="form-select"
+              [ngModel]="colorFabricId"
+              (ngModelChange)="onColorFabricChange($event)">
+        <option value="">-- Chon mau vai --</option>
+        <option *ngFor="let fabric of colorFabrics" [value]="fabric.id">
+          {{ fabric.name }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Component Selections -->
+    <ng-container *ngFor="let compType of componentTypes">
+      <div class="component-group" *ngIf="componentsByType[compType.type]?.length">
+        <label>{{ compType.label }}</label>
+        <select class="form-select"
+                [ngModel]="getSelectedComponentUrl(compType.type)"
+                (ngModelChange)="onComponentSelect(compType.type, $event)">
+          <option value="">-- Chon --</option>
+          <option *ngFor="let comp of componentsByType[compType.type]" [value]="comp.imageUrl">
+            {{ comp.name }}
+          </option>
+        </select>
+      </div>
+    </ng-container>
+  </div>
+
+  <div class="design-right">
+    <div class="canvas-wrapper">
+      <canvas #designCanvas></canvas>
+    </div>
+
+    <div class="preview-controls">
+      <button type="button" class="btn btn-outline-primary" (click)="addText()">
+        <i class="fas fa-text-height"></i> Them Text
+      </button>
+      <button type="button" class="btn btn-outline-secondary" (click)="zoomIn()">
+        <i class="fas fa-search-plus"></i> Phong to
+      </button>
+      <button type="button" class="btn btn-outline-secondary" (click)="zoomOut()">
+        <i class="fas fa-search-minus"></i> Thu nho
+      </button>
+      <button type="button" class="btn btn-outline-secondary" (click)="resetZoom()">
+        <i class="fas fa-undo"></i> Reset
+      </button>
+      <button type="button" class="btn btn-outline-danger" (click)="deleteSelected()">
+        <i class="fas fa-trash"></i> Xoa
+      </button>
+      <button type="button" class="btn btn-success" (click)="downloadDesign()">
+        <i class="fas fa-download"></i> Tai Design
+      </button>
+    </div>
+  </div>
+</div>

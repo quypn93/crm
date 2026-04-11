@@ -1,0 +1,91 @@
+<div class="kanban-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Pipeline giao dịch</h1>
+      <p class="subtitle">Quản lý giao dịch theo giai đoạn</p>
+    </div>
+    <button class="btn btn-primary" (click)="addDeal()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Thêm giao dịch
+    </button>
+  </div>
+
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="kanban-board" *ngIf="!isLoading">
+    <div class="kanban-column" *ngFor="let column of columns; let i = index">
+      <div class="column-header" [style.border-top-color]="getStageColor(column.stage.color)">
+        <div class="column-title">
+          <span class="stage-name">{{ column.stage.name }}</span>
+          <span class="deal-count">{{ column.deals.length }}</span>
+        </div>
+        <div class="column-value">{{ formatCurrency(column.totalValue) }}</div>
+      </div>
+
+      <div
+        class="column-content"
+        cdkDropList
+        [id]="'stage-' + i"
+        [cdkDropListData]="column.deals"
+        [cdkDropListConnectedTo]="connectedLists"
+        (cdkDropListDropped)="drop($event, column)">
+
+        <div
+          class="deal-card"
+          *ngFor="let deal of column.deals"
+          cdkDrag
+          (click)="viewDeal(deal)">
+
+          <div class="deal-header">
+            <h4>{{ deal.title }}</h4>
+            <button class="btn-icon-sm" (click)="editDeal(deal, $event)" title="Chỉnh sửa">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+          </div>
+
+          <div class="deal-value">{{ formatCurrency(deal.value) }}</div>
+
+          <div class="deal-customer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>{{ deal.customerName }}</span>
+          </div>
+
+          <div class="deal-footer">
+            <div class="deal-probability">
+              <div class="progress-bar">
+                <div class="progress" [style.width.%]="deal.probability"></div>
+              </div>
+              <span>{{ deal.probability }}%</span>
+            </div>
+            <div class="deal-date" *ngIf="deal.expectedCloseDate">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              {{ deal.expectedCloseDate | date:'dd/MM' }}
+            </div>
+          </div>
+
+          <div class="drag-placeholder" *cdkDragPlaceholder></div>
+        </div>
+
+        <div class="empty-column" *ngIf="column.deals.length === 0">
+          <p>Chưa có giao dịch</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

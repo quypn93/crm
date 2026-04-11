@@ -1,7 +1,8 @@
 using System.Security.Claims;
 using CRM.Application.DTOs.Common;
 using CRM.Application.DTOs.Deal;
-using CRM.Core.Interfaces.Services;
+using CRM.Application.Interfaces;
+using CRM.API.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -80,6 +81,7 @@ public class DealsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Policy = Policies.CanDeleteDeals)]
     public async Task<ActionResult<ApiResponse>> Delete(Guid id)
     {
         try
@@ -119,6 +121,7 @@ public class DealsController : ControllerBase
     }
 
     [HttpPost("{id}/won")]
+    [Authorize(Policy = Policies.CanCloseDeal)]
     public async Task<ActionResult<ApiResponse<DealDto>>> MarkAsWon(Guid id, [FromBody] MarkDealWonDto dto)
     {
         try
@@ -138,6 +141,7 @@ public class DealsController : ControllerBase
     }
 
     [HttpPost("{id}/lost")]
+    [Authorize(Policy = Policies.CanCloseDeal)]
     public async Task<ActionResult<ApiResponse<DealDto>>> MarkAsLost(Guid id, [FromBody] MarkDealLostDto dto)
     {
         try

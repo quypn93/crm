@@ -1,0 +1,134 @@
+<div class="design-form">
+  <div class="page-header">
+    <h1>{{ isEditMode ? 'Chinh sua Thiet ke' : 'Tao Thiet ke moi' }}</h1>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">Dang tai...</div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="!isLoading">
+    <div class="form-section">
+      <h2>Thong tin co ban</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="designName">Ten thiet ke *</label>
+          <input type="text" id="designName" formControlName="designName" />
+          <span class="error" *ngIf="form.get('designName')?.touched && form.get('designName')?.errors?.['required']">
+            Ten thiet ke la bat buoc
+          </span>
+        </div>
+        <div class="form-group">
+          <label for="colorFabricId">Mau vai</label>
+          <select id="colorFabricId" formControlName="colorFabricId">
+            <option value="">-- Chon mau vai --</option>
+            <option *ngFor="let fabric of colorFabrics" [value]="fabric.id">{{ fabric.name }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="designer">Designer</label>
+          <input type="text" id="designer" formControlName="designer" />
+        </div>
+        <div class="form-group">
+          <label for="customerFullName">Ten khach hang</label>
+          <input type="text" id="customerFullName" formControlName="customerFullName" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="saleStaff">Nhan vien sales</label>
+          <input type="text" id="saleStaff" formControlName="saleStaff" />
+        </div>
+        <div class="form-group">
+          <label for="orderId">Ma don hang (OrderId)</label>
+          <input type="text" id="orderId" formControlName="orderId" placeholder="Nhap ID don hang neu co" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Design Canvas Section -->
+    <div class="form-section">
+      <h2>Thiet ke ao</h2>
+      <app-design-canvas
+        #designCanvas
+        [colorFabricId]="form.get('colorFabricId')?.value"
+        [initialDesignData]="initialDesignData"
+        [initialSelectedComponents]="initialSelectedComponents"
+        (designDataChange)="onDesignDataChange($event)">
+      </app-design-canvas>
+    </div>
+
+    <div class="form-section">
+      <h2>So luong theo size</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="total">Tong so luong</label>
+          <input type="number" id="total" formControlName="total" />
+        </div>
+        <div class="form-group">
+          <label for="sizeMan">Size Nam (JSON)</label>
+          <input type="text" id="sizeMan" formControlName="sizeMan" placeholder='{"S": 5, "M": 10, "L": 8}' />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="sizeWomen">Size Nu (JSON)</label>
+          <input type="text" id="sizeWomen" formControlName="sizeWomen" placeholder='{"S": 5, "M": 10, "L": 8}' />
+        </div>
+        <div class="form-group">
+          <label for="sizeKid">Size Tre em (JSON)</label>
+          <input type="text" id="sizeKid" formControlName="sizeKid" placeholder='{"S": 5, "M": 10}' />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="oversized">Oversized (JSON)</label>
+          <input type="text" id="oversized" formControlName="oversized" />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>Thong tin san xuat</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="finishedDate">Ngay hoan thanh</label>
+          <input type="date" id="finishedDate" formControlName="finishedDate" />
+        </div>
+        <div class="form-group">
+          <label for="noteOldCodeOrder">Ma don cu</label>
+          <input type="text" id="noteOldCodeOrder" formControlName="noteOldCodeOrder" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="noteConfection">Ghi chu may</label>
+        <textarea id="noteConfection" formControlName="noteConfection" rows="3"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="noteAttachTagLabel">Ghi chu nhan mac</label>
+        <input type="text" id="noteAttachTagLabel" formControlName="noteAttachTagLabel" />
+      </div>
+
+      <div class="form-group">
+        <label for="noteOther">Ghi chu khac</label>
+        <textarea id="noteOther" formControlName="noteOther" rows="3"></textarea>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Huy</button>
+      <button type="button" class="btn btn-info" (click)="downloadDesign()">
+        <i class="fas fa-download"></i> Tai Design
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="form.invalid || isSaving">
+        {{ isSaving ? 'Dang luu...' : (isEditMode ? 'Cap nhat' : 'Tao moi') }}
+      </button>
+    </div>
+  </form>
+</div>

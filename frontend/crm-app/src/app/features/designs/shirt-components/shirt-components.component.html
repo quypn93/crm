@@ -1,0 +1,99 @@
+<div class="shirt-components">
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="goBack()">← Quay lại</button>
+      <h1>Quản lý Thành phần áo</h1>
+    </div>
+    <button class="btn btn-primary" (click)="openAddForm()">+ Thêm thành phần</button>
+  </div>
+
+  <div class="filters">
+    <div class="filter-group">
+      <label>Loại thành phần:</label>
+      <select [(ngModel)]="filterType" (change)="onFilterChange()">
+        <option [ngValue]="null">Tất cả</option>
+        <option *ngFor="let type of getTypeKeys()" [ngValue]="type">{{ componentTypes[type] }}</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>
+        <input type="checkbox" [(ngModel)]="includeDeleted" (change)="onFilterChange()" />
+        Hiển thị đã xóa
+      </label>
+    </div>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">Đang tải...</div>
+
+  <div class="table-container" *ngIf="!isLoading">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Tên</th>
+          <th>Loại</th>
+          <th>Màu vải</th>
+          <th>Trạng thái</th>
+          <th>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let comp of components" [class.deleted]="comp.isDeleted">
+          <td>{{ comp.name }}</td>
+          <td>{{ getComponentTypeName(comp.type) }}</td>
+          <td>{{ comp.colorFabricName || '-' }}</td>
+          <td>
+            <span class="status" [class.active]="!comp.isDeleted" [class.inactive]="comp.isDeleted">
+              {{ comp.isDeleted ? 'Đã xóa' : 'Hoạt động' }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn-icon" title="Sửa" (click)="openEditForm(comp)" *ngIf="!comp.isDeleted">✏️</button>
+            <button class="btn-icon" title="Khôi phục" (click)="restoreComponent(comp)" *ngIf="comp.isDeleted">♻️</button>
+            <button class="btn-icon btn-danger" title="Xóa" (click)="deleteComponent(comp)" *ngIf="!comp.isDeleted">🗑️</button>
+          </td>
+        </tr>
+        <tr *ngIf="components.length === 0">
+          <td colspan="5" class="no-data">Chưa có thành phần nào</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Form Modal -->
+  <div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>{{ isEditing ? 'Sửa thành phần' : 'Thêm thành phần' }}</h2>
+      <div class="form-group">
+        <label for="name">Tên *</label>
+        <input type="text" id="name" [(ngModel)]="formData.name" />
+      </div>
+      <div class="form-group">
+        <label for="type">Loại thành phần *</label>
+        <select id="type" [(ngModel)]="formData.type">
+          <option *ngFor="let type of getTypeKeys()" [ngValue]="type">{{ componentTypes[type] }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="colorFabricId">Màu vải</label>
+        <select id="colorFabricId" [(ngModel)]="formData.colorFabricId">
+          <option value="">-- Không chọn --</option>
+          <option *ngFor="let fabric of colorFabrics" [value]="fabric.id">{{ fabric.name }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="imageUrl">URL hình ảnh (Nam)</label>
+        <input type="text" id="imageUrl" [(ngModel)]="formData.imageUrl" />
+      </div>
+      <div class="form-group">
+        <label for="womenImageUrl">URL hình ảnh (Nữ)</label>
+        <input type="text" id="womenImageUrl" [(ngModel)]="formData.womenImageUrl" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="closeForm()">Hủy</button>
+        <button class="btn btn-primary" (click)="saveComponent()" [disabled]="!formData.name.trim()">
+          {{ isEditing ? 'Cập nhật' : 'Thêm' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,67 @@
+<div class="design-list">
+  <div class="page-header">
+    <h1>Quản lý Thiết kế</h1>
+    <div class="header-actions">
+      <button class="btn btn-outline" (click)="manageColorFabrics()">Màu vải</button>
+      <button class="btn btn-outline" (click)="manageShirtComponents()">Thành phần áo</button>
+      <button class="btn btn-primary" (click)="addDesign()">+ Tạo thiết kế</button>
+    </div>
+  </div>
+
+  <div class="search-bar">
+    <input
+      type="text"
+      placeholder="Tìm kiếm thiết kế..."
+      [(ngModel)]="searchTerm"
+      (keyup.enter)="onSearch()"
+    />
+    <button class="btn btn-search" (click)="onSearch()">Tìm kiếm</button>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">Đang tải...</div>
+
+  <div class="table-container" *ngIf="!isLoading">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Tên thiết kế</th>
+          <th>Màu vải</th>
+          <th>Mã đơn hàng</th>
+          <th>Designer</th>
+          <th>Ngày tạo</th>
+          <th>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let design of designs">
+          <td>{{ design.designName }}</td>
+          <td>{{ design.colorFabricName || '-' }}</td>
+          <td>{{ design.orderNumber || '-' }}</td>
+          <td>{{ design.designer || design.createdByUserName || '-' }}</td>
+          <td>{{ design.createdAt | date:'dd/MM/yyyy' }}</td>
+          <td class="actions">
+            <button class="btn-icon" title="Xem chi tiết" (click)="viewDesign(design.id)">👁️</button>
+            <button class="btn-icon" title="Sửa" (click)="editDesign(design.id)">✏️</button>
+            <button class="btn-icon" title="Nhân bản" (click)="duplicateDesign(design)">📋</button>
+            <button class="btn-icon btn-danger" title="Xóa" (click)="deleteDesign(design)">🗑️</button>
+          </td>
+        </tr>
+        <tr *ngIf="designs.length === 0">
+          <td colspan="6" class="no-data">Không có thiết kế nào</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button [disabled]="currentPage === 1" (click)="onPageChange(currentPage - 1)">Trước</button>
+    <button
+      *ngFor="let page of getPages()"
+      [class.active]="page === currentPage"
+      (click)="onPageChange(page)"
+    >
+      {{ page }}
+    </button>
+    <button [disabled]="currentPage === totalPages" (click)="onPageChange(currentPage + 1)">Sau</button>
+  </div>
+</div>

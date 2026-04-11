@@ -49,6 +49,11 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
             : await _dbSet.CountAsync(predicate);
     }
 
+    public virtual async Task<decimal> SumAsync(Expression<Func<T, bool>> predicate, Expression<Func<T, decimal>> selector)
+    {
+        return await _dbSet.Where(predicate).SumAsync(selector);
+    }
+
     public virtual async Task<T> AddAsync(T entity)
     {
         await _dbSet.AddAsync(entity);
@@ -67,6 +72,11 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
     }
 
     public virtual void Remove(T entity)
+    {
+        _dbSet.Remove(entity);
+    }
+
+    public virtual void Delete(T entity)
     {
         _dbSet.Remove(entity);
     }

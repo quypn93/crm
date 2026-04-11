@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using CRM.Application.DTOs.Auth;
 using CRM.Application.DTOs.Common;
-using CRM.Core.Interfaces.Services;
+using CRM.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

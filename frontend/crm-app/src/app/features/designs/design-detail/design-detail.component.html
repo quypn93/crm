@@ -1,0 +1,123 @@
+<div class="design-detail">
+  <div class="page-header">
+    <button class="btn-back" (click)="goBack()">&#8592; Quay lai</button>
+    <div class="header-actions" *ngIf="design">
+      <button class="btn btn-success" (click)="downloadDesign()">
+        <i class="fas fa-download"></i> Tai Design
+      </button>
+      <button class="btn btn-outline" (click)="duplicateDesign()">Nhan ban</button>
+      <button class="btn btn-primary" (click)="editDesign()">Chinh sua</button>
+      <button class="btn btn-danger" (click)="deleteDesign()">Xoa</button>
+    </div>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">Dang tai...</div>
+
+  <div class="content" *ngIf="!isLoading && design">
+    <div class="main-info">
+      <h1>{{ design.designName }}</h1>
+      <div class="meta">
+        <span *ngIf="design.orderNumber">Don hang: {{ design.orderNumber }}</span>
+        <span>Tao: {{ design.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+        <span *ngIf="design.createdByUserName">Boi: {{ design.createdByUserName }}</span>
+      </div>
+    </div>
+
+    <!-- Design Canvas Preview -->
+    <div class="canvas-section" *ngIf="design.designData || design.selectedComponents">
+      <h2>Hinh anh thiet ke</h2>
+      <app-design-canvas
+        #designCanvas
+        [colorFabricId]="design.colorFabricId || null"
+        [initialDesignData]="design.designData || null"
+        [initialSelectedComponents]="design.selectedComponents || null">
+      </app-design-canvas>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <h2>Thong tin chung</h2>
+        <div class="info-row">
+          <span class="label">Mau vai:</span>
+          <span class="value">{{ design.colorFabricName || '-' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Designer:</span>
+          <span class="value">{{ design.designer || '-' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Ten khach hang:</span>
+          <span class="value">{{ design.customerFullName || '-' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Nhan vien sales:</span>
+          <span class="value">{{ design.saleStaff || '-' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Ngay hoan thanh:</span>
+          <span class="value">{{ design.finishedDate ? (design.finishedDate | date:'dd/MM/yyyy') : '-' }}</span>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h2>Thong tin khach hang (tu don hang)</h2>
+        <div class="info-row">
+          <span class="label">Ten:</span>
+          <span class="value">{{ design.customerName || '-' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">SDT:</span>
+          <span class="value">{{ design.customerPhone || '-' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Email:</span>
+          <span class="value">{{ design.customerEmail || '-' }}</span>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h2>So luong theo size</h2>
+        <div class="info-row">
+          <span class="label">Tong:</span>
+          <span class="value">{{ design.total || '-' }}</span>
+        </div>
+        <div class="info-row" *ngIf="design.sizeMan">
+          <span class="label">Nam:</span>
+          <span class="value">{{ design.sizeMan }}</span>
+        </div>
+        <div class="info-row" *ngIf="design.sizeWomen">
+          <span class="label">Nu:</span>
+          <span class="value">{{ design.sizeWomen }}</span>
+        </div>
+        <div class="info-row" *ngIf="design.sizeKid">
+          <span class="label">Tre em:</span>
+          <span class="value">{{ design.sizeKid }}</span>
+        </div>
+        <div class="info-row" *ngIf="design.oversized">
+          <span class="label">Oversized:</span>
+          <span class="value">{{ design.oversized }}</span>
+        </div>
+      </div>
+
+      <div class="info-card full-width" *ngIf="design.noteConfection || design.noteOther">
+        <h2>Ghi chu san xuat</h2>
+        <div class="info-row" *ngIf="design.noteOldCodeOrder">
+          <span class="label">Ma don cu:</span>
+          <span class="value">{{ design.noteOldCodeOrder }}</span>
+        </div>
+        <div class="info-row" *ngIf="design.noteAttachTagLabel">
+          <span class="label">Nhan mac:</span>
+          <span class="value">{{ design.noteAttachTagLabel }}</span>
+        </div>
+        <div class="note-block" *ngIf="design.noteConfection">
+          <span class="label">Ghi chu may:</span>
+          <p>{{ design.noteConfection }}</p>
+        </div>
+        <div class="note-block" *ngIf="design.noteOther">
+          <span class="label">Ghi chu khac:</span>
+          <p>{{ design.noteOther }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

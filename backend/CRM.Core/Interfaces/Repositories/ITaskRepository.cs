@@ -8,7 +8,7 @@ public interface ITaskRepository : IRepository<TaskItem>
     Task<TaskItem?> GetByIdWithDetailsAsync(Guid id);
     Task<(IEnumerable<TaskItem> Items, int TotalCount)> GetPagedAsync(
         string? search,
-        TaskStatus? status,
+        Enums.TaskStatus? status,
         TaskPriority? priority,
         Guid? customerId,
         Guid? dealId,

@@ -9,7 +9,7 @@ public class TaskItem : BaseEntity
     public DateTime? DueDate { get; set; }
     public DateTime? ReminderDate { get; set; }
     public TaskPriority Priority { get; set; } = TaskPriority.Medium;
-    public TaskStatus Status { get; set; } = TaskStatus.Pending;
+    public Enums.TaskStatus Status { get; set; } = Enums.TaskStatus.Pending;
     public DateTime? CompletedAt { get; set; }
 
     // Foreign keys

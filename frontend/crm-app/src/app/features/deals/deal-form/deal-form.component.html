@@ -1,0 +1,125 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="cancel()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
+      <div>
+        <h1>{{ isEditMode ? 'Chỉnh sửa giao dịch' : 'Thêm giao dịch mới' }}</h1>
+        <p class="subtitle">{{ isEditMode ? 'Cập nhật thông tin giao dịch' : 'Nhập thông tin giao dịch mới' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-container">
+    <div class="loading-overlay" *ngIf="isLoading">
+      <div class="spinner"></div>
+    </div>
+
+    <form [formGroup]="dealForm" (ngSubmit)="onSubmit()">
+      <div class="form-section">
+        <h3>Thông tin giao dịch</h3>
+
+        <div class="form-group">
+          <label for="title">Tên giao dịch <span class="required">*</span></label>
+          <input
+            type="text"
+            id="title"
+            formControlName="title"
+            placeholder="VD: Đơn hàng đồng phục công ty ABC"
+            [class.error]="f['title'].touched && f['title'].invalid">
+          <div class="error-message" *ngIf="f['title'].touched && f['title'].errors?.['required']">
+            Tên giao dịch là bắt buộc
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="value">Giá trị (VND) <span class="required">*</span></label>
+            <input
+              type="number"
+              id="value"
+              formControlName="value"
+              placeholder="0"
+              [class.error]="f['value'].touched && f['value'].invalid">
+            <div class="error-message" *ngIf="f['value'].touched && f['value'].errors?.['required']">
+              Giá trị là bắt buộc
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="probability">Xác suất thành công (%)</label>
+            <input
+              type="number"
+              id="probability"
+              formControlName="probability"
+              min="0"
+              max="100"
+              placeholder="50">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="customerId">Khách hàng <span class="required">*</span></label>
+            <select id="customerId" formControlName="customerId"
+              [class.error]="f['customerId'].touched && f['customerId'].invalid">
+              <option value="">-- Chọn khách hàng --</option>
+              <option *ngFor="let customer of customers" [value]="customer.id">{{ customer.name }}</option>
+            </select>
+            <div class="error-message" *ngIf="f['customerId'].touched && f['customerId'].errors?.['required']">
+              Vui lòng chọn khách hàng
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="stageId">Giai đoạn <span class="required">*</span></label>
+            <select id="stageId" formControlName="stageId"
+              [class.error]="f['stageId'].touched && f['stageId'].invalid">
+              <option value="">-- Chọn giai đoạn --</option>
+              <option *ngFor="let stage of stages" [value]="stage.id">{{ stage.name }}</option>
+            </select>
+            <div class="error-message" *ngIf="f['stageId'].touched && f['stageId'].errors?.['required']">
+              Vui lòng chọn giai đoạn
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="expectedCloseDate">Ngày dự kiến chốt</label>
+          <input
+            type="date"
+            id="expectedCloseDate"
+            formControlName="expectedCloseDate">
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>Ghi chú</h3>
+
+        <div class="form-group full-width">
+          <textarea
+            id="notes"
+            formControlName="notes"
+            rows="4"
+            placeholder="Nhập ghi chú về giao dịch..."></textarea>
+        </div>
+      </div>
+
+      <div class="alert alert-error" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">Hủy</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+          <span *ngIf="!isLoading">{{ isEditMode ? 'Cập nhật' : 'Thêm giao dịch' }}</span>
+          <span *ngIf="isLoading" class="spinner-small"></span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

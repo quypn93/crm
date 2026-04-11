@@ -79,3 +79,56 @@ public class ReportFilterDto
     public string? Period { get; set; } = "monthly"; // daily, weekly, monthly, yearly
     public Guid? UserId { get; set; }
 }
+
+// Role-specific Dashboard DTOs
+
+public class ProductionDashboardDto
+{
+    public int OrdersWaitingProduction { get; set; }      // Confirmed status
+    public int OrdersInProduction { get; set; }           // InProduction status
+    public int OrdersCompletedToday { get; set; }         // Moved to QualityCheck today
+    public int TotalItemsInProduction { get; set; }
+    public decimal AverageProductionDays { get; set; }    // Average days in production
+    public IEnumerable<OrderStatusCountDto> StatusBreakdown { get; set; } = new List<OrderStatusCountDto>();
+    public IEnumerable<RecentOrderDto> RecentOrders { get; set; } = new List<RecentOrderDto>();
+}
+
+public class QualityDashboardDto
+{
+    public int OrdersWaitingQC { get; set; }              // QualityCheck status
+    public int OrdersPassedToday { get; set; }            // Moved to ReadyToShip today
+    public int OrdersFailedToday { get; set; }            // Moved back to InProduction today (rework)
+    public decimal PassRate { get; set; }                 // Pass percentage
+    public IEnumerable<RecentOrderDto> PendingQCOrders { get; set; } = new List<RecentOrderDto>();
+}
+
+public class DeliveryDashboardDto
+{
+    public int OrdersReadyToShip { get; set; }            // ReadyToShip status
+    public int OrdersShipping { get; set; }               // Shipping status
+    public int OrdersDeliveredToday { get; set; }         // Delivered today
+    public decimal TotalValueShipping { get; set; }
+    public IEnumerable<RecentOrderDto> PendingDeliveryOrders { get; set; } = new List<RecentOrderDto>();
+}
+
+public class OrderStatusCountDto
+{
+    public int Status { get; set; }
+    public string StatusName { get; set; } = string.Empty;
+    public int Count { get; set; }
+}
+
+public class RecentOrderDto
+{
+    public Guid Id { get; set; }
+    public string OrderNumber { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = string.Empty;
+    public int Status { get; set; }
+    public string StatusName { get; set; } = string.Empty;
+    public DateTime OrderDate { get; set; }
+    public DateTime? RequiredDate { get; set; }
+    public decimal TotalAmount { get; set; }
+    public int TotalItems { get; set; }
+    public string? DeliveryAddress { get; set; }
+    public string? DeliveryPhone { get; set; }
+}

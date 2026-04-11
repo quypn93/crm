@@ -1,14 +1,16 @@
 using System.Text;
 using CRM.Application.Mappings;
 using CRM.Application.Services;
+using CRM.Application.Interfaces;
 using CRM.Core.Interfaces;
-using CRM.Core.Interfaces.Services;
 using CRM.Infrastructure.Data;
 using CRM.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using CRM.Core.Entities;
+using CRM.API.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -85,7 +87,65 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    // Order Management Policies
+    options.AddPolicy(Policies.CanManageOrders, policy =>
+        policy.RequireRole(RoleNames.AllRoles));
+
+    options.AddPolicy(Policies.CanUpdatePayment, policy =>
+        policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager));
+
+    options.AddPolicy(Policies.CanDeleteOrders, policy =>
+        policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager));
+
+    options.AddPolicy(Policies.CanViewOrderSummary, policy =>
+        policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager));
+
+    // Customer Management Policies
+    options.AddPolicy(Policies.CanDeleteCustomers, policy =>
+        policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager));
+
+    // Deal Management Policies
+    options.AddPolicy(Policies.CanDeleteDeals, policy =>
+        policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager));
+
+    options.AddPolicy(Policies.CanCloseDeal, policy =>
+        policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager, RoleNames.SalesRep));
+
+    // Dashboard Policies
+    options.AddPolicy(Policies.CanViewFullDashboard, policy =>
+        policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager));
+
+    options.AddPolicy(Policies.CanViewProductionDashboard, policy =>
+        policy.RequireRole(RoleNames.Admin, RoleNames.ProductionManager));
+
+    options.AddPolicy(Policies.CanViewQCDashboard, policy =>
+        policy.RequireRole(RoleNames.Admin, RoleNames.QualityControl));
+
+    options.AddPolicy(Policies.CanViewDeliveryDashboard, policy =>
+        policy.RequireRole(RoleNames.Admin, RoleNames.DeliveryManager));
+
+    // Reports Policies
+    options.AddPolicy(Policies.CanViewReports, policy =>
+        policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager));
+
+    options.AddPolicy(Policies.CanExportReports, policy =>
+        policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager));
+
+    // Design Management Policies
+    options.AddPolicy(Policies.CanManageDesigns, policy =>
+        policy.RequireRole(RoleNames.AllRoles));
+
+    options.AddPolicy(Policies.CanDeleteDesigns, policy =>
+        policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager));
+
+    options.AddPolicy(Policies.CanManageColorFabrics, policy =>
+        policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager));
+
+    options.AddPolicy(Policies.CanManageShirtComponents, policy =>
+        policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager));
+});
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -106,11 +166,19 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Register Services
+builder.Services.AddScoped<IQrCodeService, QrCodeService>();
+builder.Services.AddScoped<IProductionStageService, ProductionStageService>();
+builder.Services.AddScoped<IOrderProductionService, OrderProductionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IDealService, DealService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IColorFabricService, ColorFabricService>();
+builder.Services.AddScoped<IShirtComponentService, ShirtComponentService>();
+builder.Services.AddScoped<IDesignService, DesignService>();
 
 var app = builder.Build();
 
@@ -131,12 +199,13 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Apply migrations automatically in development
+// Apply migrations and seed data in development
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<CrmDbContext>();
     db.Database.Migrate();
+    await DataSeeder.SeedAsync(db);
 }
 
 app.Run();

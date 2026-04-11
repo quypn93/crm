@@ -1,7 +1,8 @@
 using System.Security.Claims;
 using CRM.Application.DTOs.Common;
 using CRM.Application.DTOs.Report;
-using CRM.Core.Interfaces.Services;
+using CRM.Application.Interfaces;
+using CRM.API.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -56,7 +57,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("sales-performance")]
-    [Authorize(Roles = "Admin,SalesManager")]
+    [Authorize(Policy = Policies.CanViewFullDashboard)]
     public async Task<ActionResult<ApiResponse<IEnumerable<SalesPerformanceDto>>>> GetSalesPerformance([FromQuery] ReportFilterDto filter)
     {
         var report = await _dashboardService.GetSalesPerformanceAsync(filter);
@@ -68,6 +69,32 @@ public class DashboardController : ControllerBase
     {
         var activities = await _dashboardService.GetRecentActivitiesAsync(count);
         return Ok(ApiResponse<IEnumerable<ActivityLogDto>>.Ok(activities));
+    }
+
+    // Role-specific dashboards
+
+    [HttpGet("production")]
+    [Authorize(Policy = Policies.CanViewProductionDashboard)]
+    public async Task<ActionResult<ApiResponse<ProductionDashboardDto>>> GetProductionDashboard()
+    {
+        var dashboard = await _dashboardService.GetProductionDashboardAsync();
+        return Ok(ApiResponse<ProductionDashboardDto>.Ok(dashboard));
+    }
+
+    [HttpGet("quality")]
+    [Authorize(Policy = Policies.CanViewQCDashboard)]
+    public async Task<ActionResult<ApiResponse<QualityDashboardDto>>> GetQualityDashboard()
+    {
+        var dashboard = await _dashboardService.GetQualityDashboardAsync();
+        return Ok(ApiResponse<QualityDashboardDto>.Ok(dashboard));
+    }
+
+    [HttpGet("delivery")]
+    [Authorize(Policy = Policies.CanViewDeliveryDashboard)]
+    public async Task<ActionResult<ApiResponse<DeliveryDashboardDto>>> GetDeliveryDashboard()
+    {
+        var dashboard = await _dashboardService.GetDeliveryDashboardAsync();
+        return Ok(ApiResponse<DeliveryDashboardDto>.Ok(dashboard));
     }
 
     private Guid GetCurrentUserId()

@@ -4,7 +4,8 @@ using CRM.Application.DTOs.Task;
 using CRM.Core.Entities;
 using CRM.Core.Enums;
 using CRM.Core.Interfaces;
-using CRM.Core.Interfaces.Services;
+using CRM.Application.Interfaces;
+using TaskStatusEnum = CRM.Core.Enums.TaskStatus;
 
 namespace CRM.Application.Services;
 
@@ -73,11 +74,11 @@ public class TaskService : ITaskService
         }
 
         // If status changed to completed, set CompletedAt
-        if (dto.Status == TaskStatus.Completed && task.Status != TaskStatus.Completed)
+        if (dto.Status == TaskStatusEnum.Completed && task.Status != TaskStatusEnum.Completed)
         {
             task.CompletedAt = DateTime.UtcNow;
         }
-        else if (dto.Status != TaskStatus.Completed)
+        else if (dto.Status != TaskStatusEnum.Completed)
         {
             task.CompletedAt = null;
         }
@@ -114,7 +115,7 @@ public class TaskService : ITaskService
         task.Status = dto.Status;
 
         // If status changed to completed, set CompletedAt
-        if (dto.Status == TaskStatus.Completed)
+        if (dto.Status == TaskStatusEnum.Completed)
         {
             task.CompletedAt = DateTime.UtcNow;
         }

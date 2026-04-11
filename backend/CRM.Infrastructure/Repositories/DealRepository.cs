@@ -171,4 +171,43 @@ public class DealRepository : Repository<Deal>, IDealRepository
             TotalValue: s.Deals.Sum(d => d.Value)
         ));
     }
+
+    public async Task<int> GetDealsInPipelineCountAsync()
+    {
+        return await _dbSet
+            .Where(d => !d.Stage.IsWonStage && !d.Stage.IsLostStage)
+            .CountAsync();
+    }
+
+    public async Task<decimal> GetPipelineValueAsync()
+    {
+        return await _dbSet
+            .Where(d => !d.Stage.IsWonStage && !d.Stage.IsLostStage)
+            .SumAsync(d => d.Value);
+    }
+
+    public async Task<IEnumerable<Deal>> GetWonDealsAsync(DateTime? from, DateTime? to)
+    {
+        var query = _dbSet
+            .Include(d => d.Stage)
+            .Where(d => d.Stage.IsWonStage && d.ActualCloseDate.HasValue);
+
+        if (from.HasValue)
+            query = query.Where(d => d.ActualCloseDate >= from.Value);
+
+        if (to.HasValue)
+            query = query.Where(d => d.ActualCloseDate <= to.Value);
+
+        return await query.ToListAsync();
+    }
+
+    public async Task<IEnumerable<(DealStage Stage, IEnumerable<Deal> Deals)>> GetAllStagesWithDealsAsync()
+    {
+        var stages = await _context.DealStages
+            .Include(s => s.Deals)
+            .OrderBy(s => s.Order)
+            .ToListAsync();
+
+        return stages.Select(s => (Stage: s, Deals: s.Deals.AsEnumerable()));
+    }
 }

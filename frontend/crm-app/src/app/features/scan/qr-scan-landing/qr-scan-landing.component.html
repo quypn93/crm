@@ -1,0 +1,121 @@
+<div class="scan-page">
+  <!-- Header -->
+  <div class="scan-header">
+    <div class="brand">
+      <span class="brand-icon">🏭</span>
+      <span class="brand-name">Đồng Phục Bốn Mùa</span>
+    </div>
+    <div class="user-info" *ngIf="getCurrentUser() as user">
+      <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
+      <span class="user-role">{{ user.roles[0] | roleLabel }}</span>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner-large"></div>
+    <p>Đang tải thông tin đơn hàng...</p>
+  </div>
+
+  <!-- Error -->
+  <div class="error-state" *ngIf="!isLoading && errorMessage">
+    <div class="error-icon">⚠️</div>
+    <p class="error-text">{{ errorMessage }}</p>
+    <button class="btn-retry" (click)="loadProgress()">Thử lại</button>
+  </div>
+
+  <!-- Content -->
+  <div class="scan-content" *ngIf="!isLoading && progress && !errorMessage">
+
+    <!-- Order Info Card -->
+    <div class="order-card">
+      <div class="order-number">{{ progress.orderNumber }}</div>
+      <div class="customer-name" *ngIf="progress.customerName">
+        <span class="label">Khách hàng:</span> {{ progress.customerName }}
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" [style.width.%]="progress.progressPercent"></div>
+        </div>
+        <span class="progress-text">{{ progress.completedSteps }}/{{ progress.totalSteps }} khâu</span>
+      </div>
+    </div>
+
+    <!-- Chưa vào sản xuất -->
+    <div class="not-in-production" *ngIf="progress.orderStatus < 2">
+      <div class="warn-icon">⏳</div>
+      <h2>Chưa vào sản xuất</h2>
+      <p *ngIf="progress.orderStatus === 0">Đơn hàng đang ở trạng thái <strong>Nháp</strong>. Sale cần xác nhận đơn trước.</p>
+      <p *ngIf="progress.orderStatus === 1">Đơn hàng đã được <strong>Xác nhận</strong>. Sale cần chuyển sang sản xuất.</p>
+    </div>
+
+    <!-- All done -->
+    <div class="all-done" *ngIf="progress.isFullyCompleted">
+      <div class="done-icon">✅</div>
+      <h2>Hoàn tất sản xuất!</h2>
+      <p>Tất cả {{ progress.totalSteps }} khâu đã hoàn thành.</p>
+    </div>
+
+    <!-- Success message -->
+    <div class="success-banner" *ngIf="successMessage">
+      ✅ {{ successMessage }}
+    </div>
+
+    <!-- Steps List -->
+    <div class="steps-list">
+      <div
+        *ngFor="let step of progress.steps; let i = index"
+        class="step-item"
+        [class.completed]="step.isCompleted"
+        [class.active]="canCompleteStep(step)"
+        [class.locked]="!step.isCompleted && !canCompleteStep(step)">
+
+        <div class="step-number">
+          <span *ngIf="step.isCompleted" class="check">✓</span>
+          <span *ngIf="!step.isCompleted">{{ step.stageOrder }}</span>
+        </div>
+
+        <div class="step-body">
+          <div class="step-name">{{ step.stageName }}</div>
+          <div class="step-role" *ngIf="step.responsibleRole">
+            {{ getRoleLabel(step.responsibleRole) }}
+          </div>
+          <div class="step-done-info" *ngIf="step.isCompleted">
+            <span class="done-by">{{ step.completedByUserName }}</span>
+            <span class="done-at">{{ step.completedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="step-note-done" *ngIf="step.isCompleted && step.notes">
+            📝 {{ step.notes }}
+          </div>
+
+          <!-- Confirm panel -->
+          <div class="confirm-panel" *ngIf="confirmingStepId === step.id">
+            <textarea
+              [(ngModel)]="confirmNote"
+              placeholder="Ghi chú (tuỳ chọn)..."
+              rows="2"
+              class="note-input">
+            </textarea>
+            <div class="confirm-actions">
+              <button class="btn-cancel" (click)="cancelConfirm()" [disabled]="isConfirming">
+                Huỷ
+              </button>
+              <button class="btn-confirm" (click)="confirmStep(step)" [disabled]="isConfirming">
+                <span *ngIf="isConfirming" class="spinner-sm"></span>
+                {{ isConfirming ? 'Đang xác nhận...' : '✓ Xác nhận hoàn thành' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action button -->
+        <div class="step-action" *ngIf="canCompleteStep(step) && confirmingStepId !== step.id">
+          <button class="btn-start-confirm" (click)="startConfirm(step)">
+            Hoàn thành
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

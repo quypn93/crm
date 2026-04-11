@@ -1,0 +1,63 @@
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1>{{ isEditMode ? 'Sửa khâu sản xuất' : 'Thêm khâu sản xuất' }}</h1>
+    </div>
+    <a routerLink="/production/stages" class="btn btn-outline">← Quay lại</a>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Đang tải...</p>
+  </div>
+
+  <div class="form-card" *ngIf="!isLoading">
+    <div class="error-banner" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-row">
+        <div class="form-group" style="max-width: 120px">
+          <label>Thứ tự <span class="required">*</span></label>
+          <input type="number" formControlName="stageOrder" min="1" class="form-control"
+            [class.invalid]="f['stageOrder'].invalid && f['stageOrder'].touched">
+          <div class="error-msg" *ngIf="f['stageOrder'].errors?.['required'] && f['stageOrder'].touched">Bắt buộc</div>
+        </div>
+
+        <div class="form-group flex-1">
+          <label>Tên khâu <span class="required">*</span></label>
+          <input type="text" formControlName="stageName" placeholder="VD: Cắt vải, May, In logo..." class="form-control"
+            [class.invalid]="f['stageName'].invalid && f['stageName'].touched">
+          <div class="error-msg" *ngIf="f['stageName'].errors?.['required'] && f['stageName'].touched">Bắt buộc</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Mô tả</label>
+        <textarea formControlName="description" rows="2" placeholder="Mô tả chi tiết về khâu này..." class="form-control"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Vai trò phụ trách</label>
+        <select formControlName="responsibleRole" class="form-control">
+          <option *ngFor="let r of roles" [value]="r.value">{{ r.label }}</option>
+        </select>
+        <div class="hint">Chỉ người có vai trò này mới được xác nhận hoàn thành khâu này.</div>
+      </div>
+
+      <div class="form-group" *ngIf="isEditMode">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="isActive">
+          <span>Hoạt động</span>
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <a routerLink="/production/stages" class="btn btn-outline">Huỷ</a>
+        <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+          <span *ngIf="isSaving" class="spinner-sm"></span>
+          {{ isSaving ? 'Đang lưu...' : (isEditMode ? 'Cập nhật' : 'Tạo khâu') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

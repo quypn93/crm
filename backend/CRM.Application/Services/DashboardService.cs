@@ -1,11 +1,10 @@
 using AutoMapper;
 using CRM.Application.DTOs.Customer;
 using CRM.Application.DTOs.Report;
+using CRM.Application.Interfaces;
 using CRM.Core.Enums;
 using CRM.Core.Interfaces;
-using CRM.Core.Interfaces.Services;
-using CRM.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
+using TaskStatusEnum = CRM.Core.Enums.TaskStatus;
 
 namespace CRM.Application.Services;
 
@@ -13,13 +12,11 @@ public class DashboardService : IDashboardService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly CrmDbContext _context;
 
-    public DashboardService(IUnitOfWork unitOfWork, IMapper mapper, CrmDbContext context)
+    public DashboardService(IUnitOfWork unitOfWork, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
-        _context = context;
     }
 
     public async Task<DashboardStatsDto> GetDashboardStatsAsync(Guid? userId = null)
@@ -53,13 +50,8 @@ public class DashboardService : IDashboardService
             c => c.CreatedAt >= startOfMonth && c.IsActive);
 
         // Deals in pipeline (not won or lost)
-        var dealsInPipeline = await _context.Deals
-            .Where(d => !d.Stage.IsWonStage && !d.Stage.IsLostStage)
-            .CountAsync();
-
-        var pipelineValue = await _context.Deals
-            .Where(d => !d.Stage.IsWonStage && !d.Stage.IsLostStage)
-            .SumAsync(d => d.Value);
+        var dealsInPipeline = await _unitOfWork.Deals.GetDealsInPipelineCountAsync();
+        var pipelineValue = await _unitOfWork.Deals.GetPipelineValueAsync();
 
         // Conversion rate
         var totalClosedDeals = wonDealsCount + lostDealsCount;
@@ -86,19 +78,9 @@ public class DashboardService : IDashboardService
 
     public async Task<IEnumerable<RevenueReportDto>> GetRevenueReportAsync(ReportFilterDto filter)
     {
-        var wonStage = await _unitOfWork.Deals.GetWonStageAsync();
-        if (wonStage == null) return Enumerable.Empty<RevenueReportDto>();
+        var deals = await _unitOfWork.Deals.GetWonDealsAsync(filter.DateFrom, filter.DateTo);
 
-        var query = _context.Deals
-            .Where(d => d.StageId == wonStage.Id && d.ActualCloseDate.HasValue);
-
-        if (filter.DateFrom.HasValue)
-            query = query.Where(d => d.ActualCloseDate >= filter.DateFrom.Value);
-
-        if (filter.DateTo.HasValue)
-            query = query.Where(d => d.ActualCloseDate <= filter.DateTo.Value);
-
-        var deals = await query.ToListAsync();
+        if (!deals.Any()) return Enumerable.Empty<RevenueReportDto>();
 
         var grouped = filter.Period?.ToLower() switch
         {
@@ -118,27 +100,20 @@ public class DashboardService : IDashboardService
 
     public async Task<IEnumerable<DealsByStageReportDto>> GetDealsByStageReportAsync()
     {
-        var stages = await _context.DealStages
-            .Include(s => s.Deals)
-            .OrderBy(s => s.Order)
-            .ToListAsync();
+        var stagesWithDeals = await _unitOfWork.Deals.GetAllStagesWithDealsAsync();
 
-        return stages.Select(s => new DealsByStageReportDto
+        return stagesWithDeals.Select(s => new DealsByStageReportDto
         {
-            StageName = s.Name,
-            StageColor = s.Color ?? "#6366F1",
-            Count = s.Deals.Count,
+            StageName = s.Stage.Name,
+            StageColor = s.Stage.Color ?? "#6366F1",
+            Count = s.Deals.Count(),
             TotalValue = s.Deals.Sum(d => d.Value)
         });
     }
 
     public async Task<IEnumerable<CustomersByIndustryReportDto>> GetCustomersByIndustryReportAsync()
     {
-        var customers = await _context.Customers
-            .Include(c => c.Deals)
-            .Where(c => c.IsActive && !string.IsNullOrEmpty(c.Industry))
-            .ToListAsync();
-
+        var customers = await _unitOfWork.Customers.GetAllWithDealsAsync();
         var wonStage = await _unitOfWork.Deals.GetWonStageAsync();
 
         return customers
@@ -156,14 +131,7 @@ public class DashboardService : IDashboardService
 
     public async Task<IEnumerable<SalesPerformanceDto>> GetSalesPerformanceAsync(ReportFilterDto filter)
     {
-        var users = await _context.Users
-            .Include(u => u.AssignedDeals)
-                .ThenInclude(d => d.Stage)
-            .Include(u => u.AssignedCustomers)
-            .Include(u => u.AssignedTasks)
-            .Where(u => u.IsActive)
-            .ToListAsync();
-
+        var users = await _unitOfWork.Users.GetUsersWithAssignmentsAsync();
         var wonStage = await _unitOfWork.Deals.GetWonStageAsync();
 
         return users.Select(u => new SalesPerformanceDto
@@ -181,19 +149,136 @@ public class DashboardService : IDashboardService
                 ? Math.Round((decimal)u.AssignedDeals.Count(d => d.StageId == wonStage.Id) / u.AssignedDeals.Count * 100, 2)
                 : 0,
             CustomersCount = u.AssignedCustomers.Count,
-            TasksCompleted = u.AssignedTasks.Count(t => t.Status == TaskStatus.Completed)
+            TasksCompleted = u.AssignedTasks.Count(t => t.Status == TaskStatusEnum.Completed)
         }).OrderByDescending(p => p.TotalRevenue);
     }
 
     public async Task<IEnumerable<ActivityLogDto>> GetRecentActivitiesAsync(int count = 10)
     {
-        var activities = await _context.ActivityLogs
-            .Include(a => a.User)
-            .OrderByDescending(a => a.CreatedAt)
-            .Take(count)
-            .ToListAsync();
-
+        var activities = await _unitOfWork.ActivityLogs.GetRecentActivitiesAsync(count);
         return _mapper.Map<IEnumerable<ActivityLogDto>>(activities);
+    }
+
+    public async Task<ProductionDashboardDto> GetProductionDashboardAsync()
+    {
+        var confirmedCount = await _unitOfWork.Orders.GetOrderCountByStatusAsync(OrderStatus.Confirmed);
+        var inProductionCount = await _unitOfWork.Orders.GetOrderCountByStatusAsync(OrderStatus.InProduction);
+
+        // Orders that moved to QualityCheck today
+        var completedToday = await _unitOfWork.Orders.GetOrdersCompletedTodayByStatusAsync(OrderStatus.QualityCheck);
+
+        // Total items in production
+        var productionStatuses = new[] { OrderStatus.Confirmed, OrderStatus.InProduction };
+        var totalItems = await _unitOfWork.Orders.GetTotalItemsCountByStatusesAsync(productionStatuses);
+
+        // Get recent orders
+        var recentOrders = await _unitOfWork.Orders.GetOrdersByStatusesAsync(productionStatuses, 10);
+
+        // Status breakdown
+        var statusBreakdown = new List<OrderStatusCountDto>
+        {
+            new() { Status = (int)OrderStatus.Confirmed, StatusName = "Cho san xuat", Count = confirmedCount },
+            new() { Status = (int)OrderStatus.InProduction, StatusName = "Dang san xuat", Count = inProductionCount }
+        };
+
+        return new ProductionDashboardDto
+        {
+            OrdersWaitingProduction = confirmedCount,
+            OrdersInProduction = inProductionCount,
+            OrdersCompletedToday = completedToday,
+            TotalItemsInProduction = totalItems,
+            AverageProductionDays = 0, // Would need historical tracking
+            StatusBreakdown = statusBreakdown,
+            RecentOrders = MapToRecentOrderDtos(recentOrders)
+        };
+    }
+
+    public async Task<QualityDashboardDto> GetQualityDashboardAsync()
+    {
+        var qcCount = await _unitOfWork.Orders.GetOrderCountByStatusAsync(OrderStatus.QualityCheck);
+
+        // Orders passed today (moved to ReadyToShip today)
+        var passedToday = await _unitOfWork.Orders.GetOrdersCompletedTodayByStatusAsync(OrderStatus.ReadyToShip);
+
+        // Orders failed today (moved back to InProduction) - approximation
+        var failedToday = 0; // Would need activity log tracking for accurate count
+
+        // Pass rate - need historical data for accurate calculation
+        var passRate = passedToday + failedToday > 0
+            ? Math.Round((decimal)passedToday / (passedToday + failedToday) * 100, 2)
+            : 100m;
+
+        // Get pending QC orders
+        var pendingOrders = await _unitOfWork.Orders.GetOrdersByStatusAsync(OrderStatus.QualityCheck, 10);
+
+        return new QualityDashboardDto
+        {
+            OrdersWaitingQC = qcCount,
+            OrdersPassedToday = passedToday,
+            OrdersFailedToday = failedToday,
+            PassRate = passRate,
+            PendingQCOrders = MapToRecentOrderDtos(pendingOrders)
+        };
+    }
+
+    public async Task<DeliveryDashboardDto> GetDeliveryDashboardAsync()
+    {
+        var readyToShipCount = await _unitOfWork.Orders.GetOrderCountByStatusAsync(OrderStatus.ReadyToShip);
+        var shippingCount = await _unitOfWork.Orders.GetOrderCountByStatusAsync(OrderStatus.Shipping);
+
+        // Orders delivered today
+        var deliveredToday = await _unitOfWork.Orders.GetOrdersDeliveredTodayAsync();
+
+        // Total value of orders being shipped
+        var totalValueShipping = await _unitOfWork.Orders.GetTotalAmountByStatusAsync(OrderStatus.Shipping);
+
+        // Get pending delivery orders
+        var deliveryStatuses = new[] { OrderStatus.ReadyToShip, OrderStatus.Shipping };
+        var pendingOrders = await _unitOfWork.Orders.GetOrdersByStatusesAsync(deliveryStatuses, 10);
+
+        return new DeliveryDashboardDto
+        {
+            OrdersReadyToShip = readyToShipCount,
+            OrdersShipping = shippingCount,
+            OrdersDeliveredToday = deliveredToday,
+            TotalValueShipping = totalValueShipping,
+            PendingDeliveryOrders = MapToRecentOrderDtos(pendingOrders)
+        };
+    }
+
+    private static IEnumerable<RecentOrderDto> MapToRecentOrderDtos(IEnumerable<CRM.Core.Entities.Order> orders)
+    {
+        return orders.Select(o => new RecentOrderDto
+        {
+            Id = o.Id,
+            OrderNumber = o.OrderNumber,
+            CustomerName = o.Customer?.Name ?? "N/A",
+            Status = (int)o.Status,
+            StatusName = GetStatusName(o.Status),
+            OrderDate = o.OrderDate,
+            RequiredDate = o.ExpectedDeliveryDate,
+            TotalAmount = o.TotalAmount,
+            TotalItems = o.Items.Sum(i => i.Quantity),
+            DeliveryAddress = o.ShippingAddress,
+            DeliveryPhone = o.ShippingPhone
+        });
+    }
+
+    private static string GetStatusName(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.Draft => "Nhap",
+            OrderStatus.Confirmed => "Da xac nhan",
+            OrderStatus.InProduction => "Dang san xuat",
+            OrderStatus.QualityCheck => "Kiem tra chat luong",
+            OrderStatus.ReadyToShip => "San sang giao",
+            OrderStatus.Shipping => "Dang giao",
+            OrderStatus.Delivered => "Da giao",
+            OrderStatus.Completed => "Hoan thanh",
+            OrderStatus.Cancelled => "Da huy",
+            _ => status.ToString()
+        };
     }
 
     private static int GetWeekOfYear(DateTime date)

@@ -18,10 +18,12 @@ public class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
             .HasMaxLength(255);
 
         builder.Property(t => t.Priority)
-            .HasDefaultValue(TaskPriority.Medium);
+            .HasDefaultValue(TaskPriority.Medium)
+            .HasSentinel(TaskPriority.Medium);
 
         builder.Property(t => t.Status)
-            .HasDefaultValue(TaskStatus.Pending);
+            .HasDefaultValue(CRM.Core.Enums.TaskStatus.Pending)
+            .HasSentinel(CRM.Core.Enums.TaskStatus.Pending);
 
         builder.HasOne(t => t.Customer)
             .WithMany(c => c.Tasks)

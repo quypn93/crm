@@ -2,8 +2,12 @@ using AutoMapper;
 using CRM.Application.DTOs.Auth;
 using CRM.Application.DTOs.Customer;
 using CRM.Application.DTOs.Deal;
+using CRM.Application.DTOs.Design;
+using CRM.Application.DTOs.Order;
+using CRM.Application.DTOs.Production;
 using CRM.Application.DTOs.Task;
 using CRM.Application.DTOs.Report;
+using CRM.Application.DTOs.User;
 using CRM.Core.Entities;
 
 namespace CRM.Application.Mappings;
@@ -16,6 +20,12 @@ public class MappingProfile : Profile
         CreateMap<User, UserDto>()
             .ForMember(d => d.FullName, opt => opt.MapFrom(s => $"{s.FirstName} {s.LastName}"))
             .ForMember(d => d.Roles, opt => opt.MapFrom(s => s.UserRoles.Select(ur => ur.Role.Name).ToList()));
+
+        CreateMap<User, UserListItemDto>()
+            .ForMember(d => d.FullName, opt => opt.MapFrom(s => $"{s.FirstName} {s.LastName}"))
+            .ForMember(d => d.Roles, opt => opt.MapFrom(s => s.UserRoles.Select(ur => ur.Role.Name).ToList()));
+
+        CreateMap<Role, RoleDto>();
 
         CreateMap<RegisterRequestDto, User>()
             .ForMember(d => d.PasswordHash, opt => opt.Ignore());
@@ -61,5 +71,57 @@ public class MappingProfile : Profile
         // ActivityLog mappings
         CreateMap<ActivityLog, ActivityLogDto>()
             .ForMember(d => d.UserName, opt => opt.MapFrom(s => s.User != null ? $"{s.User.FirstName} {s.User.LastName}" : null));
+
+        // Order mappings
+        CreateMap<Order, OrderDto>()
+            .ForMember(d => d.CustomerName, opt => opt.MapFrom(s => s.Customer != null ? s.Customer.Name : s.CustomerName))
+            .ForMember(d => d.DealTitle, opt => opt.MapFrom(s => s.Deal != null ? s.Deal.Title : null))
+            .ForMember(d => d.CreatedByUserName, opt => opt.MapFrom(s => s.CreatedByUser != null ? $"{s.CreatedByUser.FirstName} {s.CreatedByUser.LastName}" : null))
+            .ForMember(d => d.AssignedToUserName, opt => opt.MapFrom(s => s.AssignedToUser != null ? $"{s.AssignedToUser.FirstName} {s.AssignedToUser.LastName}" : null))
+            .ForMember(d => d.ItemsCount, opt => opt.MapFrom(s => s.Items.Count))
+            .ForMember(d => d.DesignerUserName, opt => opt.MapFrom(s => s.DesignerUser != null ? $"{s.DesignerUser.FirstName} {s.DesignerUser.LastName}" : null));
+
+        CreateMap<OrderItem, OrderItemDto>();
+        CreateMap<CreateOrderItemDto, OrderItem>();
+
+        // ColorFabric mappings
+        CreateMap<ColorFabric, ColorFabricDto>();
+        CreateMap<CreateColorFabricDto, ColorFabric>();
+        CreateMap<UpdateColorFabricDto, ColorFabric>();
+
+        // ShirtComponent mappings
+        CreateMap<ShirtComponent, ShirtComponentDto>()
+            .ForMember(d => d.ColorFabricName, opt => opt.MapFrom(s => s.ColorFabric != null ? s.ColorFabric.Name : null));
+        CreateMap<CreateShirtComponentDto, ShirtComponent>();
+        CreateMap<UpdateShirtComponentDto, ShirtComponent>();
+
+        // Design mappings
+        CreateMap<Design, DesignDto>()
+            .ForMember(d => d.ColorFabricName, opt => opt.MapFrom(s => s.ColorFabric != null ? s.ColorFabric.Name : null))
+            .ForMember(d => d.OrderNumber, opt => opt.MapFrom(s => s.Order != null ? s.Order.OrderNumber : null))
+            .ForMember(d => d.CreatedByUserName, opt => opt.MapFrom(s => s.CreatedByUser != null ? $"{s.CreatedByUser.FirstName} {s.CreatedByUser.LastName}" : null));
+
+        // ProductionStage mappings
+        CreateMap<ProductionStage, ProductionStageDto>();
+        CreateMap<CreateProductionStageDto, ProductionStage>();
+        CreateMap<UpdateProductionStageDto, ProductionStage>();
+
+        CreateMap<OrderProductionStep, OrderProductionStepDto>()
+            .ForMember(d => d.StageOrder, opt => opt.MapFrom(s => s.ProductionStage != null ? s.ProductionStage.StageOrder : 0))
+            .ForMember(d => d.StageName, opt => opt.MapFrom(s => s.ProductionStage != null ? s.ProductionStage.StageName : string.Empty))
+            .ForMember(d => d.ResponsibleRole, opt => opt.MapFrom(s => s.ProductionStage != null ? s.ProductionStage.ResponsibleRole : null))
+            .ForMember(d => d.CompletedByUserName, opt => opt.MapFrom(s =>
+                s.CompletedByUser != null ? $"{s.CompletedByUser.FirstName} {s.CompletedByUser.LastName}" : null));
+
+        CreateMap<Design, DesignDetailDto>()
+            .ForMember(d => d.ColorFabricName, opt => opt.MapFrom(s => s.ColorFabric != null ? s.ColorFabric.Name : null))
+            .ForMember(d => d.OrderNumber, opt => opt.MapFrom(s => s.Order != null ? s.Order.OrderNumber : null))
+            .ForMember(d => d.CreatedByUserName, opt => opt.MapFrom(s => s.CreatedByUser != null ? $"{s.CreatedByUser.FirstName} {s.CreatedByUser.LastName}" : null))
+            .ForMember(d => d.CustomerName, opt => opt.MapFrom(s => s.Order != null && s.Order.Customer != null ? s.Order.Customer.Name : null))
+            .ForMember(d => d.CustomerPhone, opt => opt.MapFrom(s => s.Order != null && s.Order.Customer != null ? s.Order.Customer.Phone : null))
+            .ForMember(d => d.CustomerEmail, opt => opt.MapFrom(s => s.Order != null && s.Order.Customer != null ? s.Order.Customer.Email : null));
+
+        CreateMap<CreateDesignDto, Design>();
+        CreateMap<UpdateDesignDto, Design>();
     }
 }

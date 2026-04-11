@@ -19,4 +19,5 @@ public interface ICustomerRepository : IRepository<Customer>
         string sortOrder);
     Task<IEnumerable<Customer>> GetByAssignedUserAsync(Guid userId);
     Task<int> GetCustomerCountByIndustryAsync(string industry);
+    Task<IEnumerable<Customer>> GetAllWithDealsAsync();
 }

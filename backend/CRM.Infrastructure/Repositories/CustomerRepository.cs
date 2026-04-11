@@ -113,4 +113,13 @@ public class CustomerRepository : Repository<Customer>, ICustomerRepository
     {
         return await _dbSet.CountAsync(c => c.Industry == industry);
     }
+
+    public async Task<IEnumerable<Customer>> GetAllWithDealsAsync()
+    {
+        return await _dbSet
+            .Include(c => c.Deals)
+                .ThenInclude(d => d.Stage)
+            .Where(c => c.IsActive && !string.IsNullOrEmpty(c.Industry))
+            .ToListAsync();
+    }
 }

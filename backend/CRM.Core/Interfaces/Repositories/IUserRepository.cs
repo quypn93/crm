@@ -11,4 +11,5 @@ public interface IUserRepository : IRepository<User>
     Task<IEnumerable<User>> GetAllWithRolesAsync();
     Task AddUserRoleAsync(Guid userId, Guid roleId);
     Task RemoveUserRolesAsync(Guid userId);
+    Task<IEnumerable<User>> GetUsersWithAssignmentsAsync();
 }

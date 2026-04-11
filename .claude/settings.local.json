@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dotnet add package:*)"
+      "Bash(dotnet add package:*)",
+      "Bash(sqlcmd:*)",
+      "Bash(taskkill:*)"
     ]
   }
 }
