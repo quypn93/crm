@@ -7,6 +7,8 @@ public interface IOrderRepository : IRepository<Order>
 {
     Task<Order?> GetByIdWithDetailsAsync(Guid id);
     Task<Order?> GetByOrderNumberAsync(string orderNumber);
+    Task DeleteItemsByOrderIdAsync(Guid orderId);
+    Task AddItemsAsync(IEnumerable<OrderItem> items);
     Task<(IEnumerable<Order> Items, int TotalCount)> GetPagedAsync(
         string? search,
         Guid? customerId,

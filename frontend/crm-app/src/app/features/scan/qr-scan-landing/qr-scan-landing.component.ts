@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { OrderService } from '../../../core/services/order.service';
+import { Order } from '../../../core/models/order.model';
+import { environment } from '../../../../environments/environment';
 import {
   ProductionService,
   OrderProductionProgress,
@@ -15,6 +18,7 @@ import {
 export class QrScanLandingComponent implements OnInit {
   token = '';
   progress: OrderProductionProgress | null = null;
+  publicOrder: Order | null = null;
   isLoading = true;
   isConfirming = false;
   errorMessage = '';
@@ -22,29 +26,52 @@ export class QrScanLandingComponent implements OnInit {
   currentUserRoles: string[] = [];
   confirmingStepId: string | null = null;
   confirmNote = '';
+  isAuthenticated = false;
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private productionService: ProductionService,
+    private orderService: OrderService,
     private authService: AuthService
   ) {}
 
+  goToStaffLogin(): void {
+    this.router.navigate(['/auth/login'], {
+      queryParams: { returnUrl: `/scan/${this.token}` }
+    });
+  }
+
   ngOnInit(): void {
-    this.token = this.route.snapshot.paramMap.get('token') || '';
+    this.token = this.route.snapshot.paramMap.get('token')
+              || this.route.parent?.snapshot.paramMap.get('token')
+              || '';
+    this.isAuthenticated = !!this.authService.getCurrentUser();
     this.currentUserRoles = this.authService.getCurrentUser()?.roles || [];
-    this.loadProgress();
+    this.isLoading = false;
+    this.loadPublicOrder();
+    if (this.isAuthenticated) this.loadProgress();
+  }
+
+  loadPublicOrder(): void {
+    this.orderService.getPublicByToken(this.token).subscribe({
+      next: (o) => { this.publicOrder = o; },
+      error: () => { /* token invalid */ }
+    });
   }
 
   loadProgress(): void {
-    this.isLoading = true;
     this.errorMessage = '';
     this.productionService.getProgressByToken(this.token).subscribe({
-      next: (p) => { this.progress = p; this.isLoading = false; },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'Không thể tải thông tin đơn hàng.';
-        this.isLoading = false;
-      }
+      next: (p) => { this.progress = p; },
+      error: () => { /* silently ignore — token hết hạn hoặc không có quyền */ }
     });
+  }
+
+  resolveImageUrl(path?: string): string {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return environment.apiUrl.replace(/\/api\/?$/, '') + path;
   }
 
   canCompleteStep(step: OrderProductionStep): boolean {

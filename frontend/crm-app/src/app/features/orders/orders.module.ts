@@ -6,21 +6,21 @@ import { OrdersRoutingModule } from './orders-routing.module';
 import { OrderListComponent } from './order-list/order-list.component';
 import { OrderFormComponent } from './order-form/order-form.component';
 import { OrderDetailComponent } from './order-detail/order-detail.component';
-import { OrderCardComponent } from './order-card/order-card.component';
+import { SharedModule } from '../../shared/shared.module';
 
 @NgModule({
   declarations: [
     OrderListComponent,
     OrderFormComponent,
-    OrderDetailComponent,
-    OrderCardComponent
+    OrderDetailComponent
   ],
   imports: [
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
     RouterModule,
-    OrdersRoutingModule
+    OrdersRoutingModule,
+    SharedModule
   ]
 })
 export class OrdersModule { }

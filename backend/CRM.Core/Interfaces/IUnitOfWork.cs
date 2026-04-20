@@ -1,3 +1,4 @@
+using CRM.Core.Entities;
 using CRM.Core.Interfaces.Repositories;
 
 namespace CRM.Core.Interfaces;
@@ -16,6 +17,14 @@ public interface IUnitOfWork : IDisposable
     IDesignRepository Designs { get; }
     IProductionStageRepository ProductionStages { get; }
     IOrderProductionStepRepository OrderProductionSteps { get; }
+
+    // Lookup pools + admin-managed tables
+    IRepository<Collection> Collections { get; }
+    IRepository<Material> Materials { get; }
+    IRepository<ProductForm> ProductForms { get; }
+    IRepository<ProductSpecification> ProductSpecifications { get; }
+    IRepository<ProductionDaysOption> ProductionDaysOptions { get; }
+    IRepository<DepositTransaction> DepositTransactions { get; }
 
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();

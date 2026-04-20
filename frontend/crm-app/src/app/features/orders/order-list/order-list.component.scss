@@ -244,6 +244,11 @@
     background: #fef2f2;
     color: #dc2626;
   }
+
+  &.btn-warning:hover {
+    background: #fffbeb;
+    color: #d97706;
+  }
 }
 
 .empty-state {

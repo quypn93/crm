@@ -3,12 +3,15 @@ $red:       #c0392b;
 $dark-red:  #8a0000;
 $card-w:    1400px;
 $card-h:    900px;
-$scale:     0.72;
 
 // ── Wrapper ──────────────────────────────────────────────────
+// Dùng CSS var --card-scale để dễ điều chỉnh theo viewport và reset khi export.
+// overflow: hidden để layout width 1400px của card-root không gây scroll ngang
+// (transform: scale không giảm layout width, chỉ giảm visual).
 .card-scroll-wrapper {
+  --card-scale: 0.68;
   width: 100%;
-  overflow-x: auto;
+  overflow: hidden;
   background: #bbb;
   padding: 16px 0;
 }
@@ -20,10 +23,53 @@ $scale:     0.72;
   background: #fff;
   border: 2px solid $red;
   transform-origin: top left;
-  transform: scale(#{$scale});
-  margin-bottom: calc(#{$card-h} * (#{$scale} - 1));
+  transform: scale(var(--card-scale));
+  // Kéo layout về đúng kích thước visual sau khi scale (cho cả wrapper tự co lại)
+  margin-right: calc(#{$card-w} * (var(--card-scale) - 1));
+  margin-bottom: calc(#{$card-h} * (var(--card-scale) - 1));
   display: flex;
   flex-direction: column;
+}
+
+// ── Responsive: scale được chọn sao cho 1400px * scale ≤ chiều rộng khả dụng ─
+// Giả định page-container padding ~24px mỗi bên, sidebar ~240px trên desktop.
+@media (max-width: 1280px) {
+  .card-scroll-wrapper { --card-scale: 0.58; }
+}
+
+@media (max-width: 1024px) {
+  .card-scroll-wrapper { --card-scale: 0.48; }
+}
+
+@media (max-width: 900px) {
+  .card-scroll-wrapper { --card-scale: 0.4; }
+}
+
+@media (max-width: 768px) {
+  .card-scroll-wrapper {
+    padding: 8px 0;
+    --card-scale: 0.48; // trên mobile thường không có sidebar → có thể scale to hơn
+  }
+}
+
+@media (max-width: 600px) {
+  .card-scroll-wrapper { --card-scale: 0.38; }
+}
+
+@media (max-width: 480px) {
+  .card-scroll-wrapper { --card-scale: 0.3; }
+}
+
+@media (max-width: 380px) {
+  .card-scroll-wrapper { --card-scale: 0.24; }
+}
+
+// ── Export button responsive ─────────────────────────────────
+@media (max-width: 768px) {
+  .export-actions .btn-export {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 // ════════════════════════════════════════════════════════════

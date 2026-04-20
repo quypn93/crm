@@ -5,6 +5,10 @@ import { AuthGuard } from './core/guards/auth.guard';
 
 const routes: Routes = [
   {
+    path: 'scan/:token',
+    loadChildren: () => import('./features/scan/scan.module').then(m => m.ScanModule)
+  },
+  {
     path: 'auth',
     loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
   },
@@ -55,11 +59,6 @@ const routes: Routes = [
         loadChildren: () => import('./features/settings/settings.module').then(m => m.SettingsModule)
       }
     ]
-  },
-  {
-    path: 'scan/:token',
-    canActivate: [AuthGuard],
-    loadChildren: () => import('./features/scan/scan.module').then(m => m.ScanModule)
   },
   { path: '**', redirectTo: 'dashboard' }
 ];

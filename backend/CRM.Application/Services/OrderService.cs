@@ -96,6 +96,17 @@ public class OrderService : IOrderService
                 throw new KeyNotFoundException("Không tìm thấy giao dịch.");
         }
 
+        // Production days option → compute CompletionDate and ReturnDate automatically
+        ProductionDaysOption? prodOption = null;
+        DateTime? completionDate = dto.CompletionDate;
+        if (dto.ProductionDaysOptionId.HasValue)
+        {
+            prodOption = await _unitOfWork.ProductionDaysOptions.GetByIdAsync(dto.ProductionDaysOptionId.Value);
+            if (prodOption != null)
+                completionDate = DateTime.UtcNow.AddDays(prodOption.Days);
+        }
+        var returnDate = completionDate?.AddDays(1);
+
         var order = new Order
         {
             OrderNumber = await _unitOfWork.Orders.GenerateOrderNumberAsync(),
@@ -105,8 +116,11 @@ public class OrderService : IOrderService
             Status = OrderStatus.Draft,
             OrderDate = DateTime.UtcNow,
             ExpectedDeliveryDate = dto.ExpectedDeliveryDate,
-            CompletionDate = dto.CompletionDate,
-            ReturnDate = dto.ReturnDate,
+            CompletionDate = completionDate,
+            ReturnDate = returnDate,
+            ProductionDaysOptionId = dto.ProductionDaysOptionId,
+            ProductionDays = prodOption?.Days,
+            DepositCode = dto.DepositCode,
             ShippingAddress = dto.ShippingAddress ?? customer?.Address,
             ShippingCity = dto.ShippingCity ?? customer?.City,
             ShippingPhone = dto.ShippingPhone ?? customer?.Phone,
@@ -116,31 +130,15 @@ public class OrderService : IOrderService
             Notes = dto.Notes,
             InternalNotes = dto.InternalNotes,
             StyleNotes = dto.StyleNotes,
-            PersonNamesBySize = dto.PersonNamesBySize,
-            GiftItems = dto.GiftItems,
             CreatedByUserId = userId,
             AssignedToUserId = dto.AssignedToUserId ?? userId,
             DesignerUserId = dto.DesignerUserId
         };
 
-        // Add items
+        // Add items - resolve names from pool ids
         foreach (var itemDto in dto.Items)
         {
-            var item = new OrderItem
-            {
-                ProductName = itemDto.ProductName,
-                ProductCode = itemDto.ProductCode,
-                Description = itemDto.Description,
-                Size = itemDto.Size,
-                Color = itemDto.Color,
-                Material = itemDto.Material,
-                Quantity = itemDto.Quantity,
-                Unit = itemDto.Unit,
-                UnitPrice = itemDto.UnitPrice,
-                DiscountPercent = itemDto.DiscountPercent,
-                Notes = itemDto.Notes
-            };
-
+            var item = await BuildOrderItemAsync(itemDto);
             CalculateItemTotal(item);
             order.Items.Add(item);
         }
@@ -161,17 +159,32 @@ public class OrderService : IOrderService
 
     public async Task<OrderDto> UpdateAsync(UpdateOrderDto dto, Guid userId)
     {
-        var order = await _unitOfWork.Orders.GetByIdWithDetailsAsync(dto.Id);
+        // Load Order KHÔNG include Items — tránh EF tracking toàn subgraph,
+        // items cũ sẽ được xoá bằng ExecuteDelete (bypass change tracker).
+        var order = await _unitOfWork.Orders.GetByIdAsync(dto.Id);
         if (order == null)
             throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
 
         if (order.Status != OrderStatus.Draft && order.Status != OrderStatus.Confirmed)
             throw new InvalidOperationException("Chỉ có thể chỉnh sửa đơn hàng ở trạng thái Nháp hoặc Đã xác nhận.");
 
-        // Update basic info
+        // Production days option → recompute dates
+        ProductionDaysOption? prodOption = null;
+        DateTime? completionDate = dto.CompletionDate;
+        if (dto.ProductionDaysOptionId.HasValue)
+        {
+            prodOption = await _unitOfWork.ProductionDaysOptions.GetByIdAsync(dto.ProductionDaysOptionId.Value);
+            if (prodOption != null)
+                completionDate = order.OrderDate.AddDays(prodOption.Days);
+        }
+
+        // Update basic info — order được tracked, EF tự detect thay đổi field.
         order.ExpectedDeliveryDate = dto.ExpectedDeliveryDate;
-        order.CompletionDate = dto.CompletionDate;
-        order.ReturnDate = dto.ReturnDate;
+        order.CompletionDate = completionDate;
+        order.ReturnDate = completionDate?.AddDays(1);
+        order.ProductionDaysOptionId = dto.ProductionDaysOptionId;
+        order.ProductionDays = prodOption?.Days ?? order.ProductionDays;
+        order.DepositCode = dto.DepositCode;
         order.ShippingAddress = dto.ShippingAddress;
         order.ShippingCity = dto.ShippingCity;
         order.ShippingPhone = dto.ShippingPhone;
@@ -181,38 +194,32 @@ public class OrderService : IOrderService
         order.Notes = dto.Notes;
         order.InternalNotes = dto.InternalNotes;
         order.StyleNotes = dto.StyleNotes;
-        order.PersonNamesBySize = dto.PersonNamesBySize;
-        order.GiftItems = dto.GiftItems;
         order.AssignedToUserId = dto.AssignedToUserId;
         order.DesignerUserId = dto.DesignerUserId;
 
-        // Clear existing items and add new ones
-        order.Items.Clear();
+        // Xoá toàn bộ items cũ bằng ExecuteDelete (raw SQL DELETE WHERE OrderId=X),
+        // không đi qua change tracker → tránh lỗi "0 rows affected" của pattern .Clear().
+        await _unitOfWork.Orders.DeleteItemsByOrderIdAsync(order.Id);
+
+        // Build items mới rồi add trực tiếp vào DbSet.OrderItems (không đụng order.Items navigation).
+        var newItems = new List<OrderItem>();
         foreach (var itemDto in dto.Items)
         {
-            var item = new OrderItem
-            {
-                OrderId = order.Id,
-                ProductName = itemDto.ProductName,
-                ProductCode = itemDto.ProductCode,
-                Description = itemDto.Description,
-                Size = itemDto.Size,
-                Color = itemDto.Color,
-                Material = itemDto.Material,
-                Quantity = itemDto.Quantity,
-                Unit = itemDto.Unit,
-                UnitPrice = itemDto.UnitPrice,
-                DiscountPercent = itemDto.DiscountPercent,
-                Notes = itemDto.Notes
-            };
-
+            var item = await BuildOrderItemAsync(itemDto);
+            item.OrderId = order.Id;
             CalculateItemTotal(item);
-            order.Items.Add(item);
+            newItems.Add(item);
         }
+        if (newItems.Count > 0)
+            await _unitOfWork.Orders.AddItemsAsync(newItems);
 
-        CalculateOrderTotals(order);
+        // Tính tổng dựa trên list items mới (vì order.Items vẫn là collection cũ/rỗng)
+        order.SubTotal = newItems.Sum(i => i.LineTotal);
+        order.DiscountAmount = order.SubTotal * order.DiscountPercent / 100;
+        var afterDiscount = order.SubTotal - order.DiscountAmount;
+        order.TaxAmount = afterDiscount * order.TaxPercent / 100;
+        order.TotalAmount = afterDiscount + order.TaxAmount;
 
-        _unitOfWork.Orders.Update(order);
         await _unitOfWork.SaveChangesAsync();
 
         return await GetByIdAsync(order.Id) ?? throw new InvalidOperationException("Không thể cập nhật đơn hàng.");
@@ -314,7 +321,6 @@ public class OrderService : IOrderService
             {
                 new()
                 {
-                    ProductName = deal.Title,
                     Quantity = 1,
                     UnitPrice = deal.Value,
                     Notes = deal.Notes
@@ -350,6 +356,44 @@ public class OrderService : IOrderService
             TotalRevenue = totalRevenue,
             PendingPayment = pendingPayment
         };
+    }
+
+    private async Task<OrderItem> BuildOrderItemAsync(CreateOrderItemDto itemDto)
+    {
+        var item = new OrderItem
+        {
+            CollectionId = itemDto.CollectionId,
+            ProductCode = itemDto.ProductCode,
+            Description = itemDto.Description,
+            Size = itemDto.Size,
+            MainColorId = itemDto.MainColorId,
+            AccentColorId = itemDto.AccentColorId,
+            MaterialId = itemDto.MaterialId,
+            FormId = itemDto.FormId,
+            SpecificationId = itemDto.SpecificationId,
+            Quantity = itemDto.Quantity,
+            Unit = itemDto.Unit,
+            UnitPrice = itemDto.UnitPrice,
+            DiscountPercent = itemDto.DiscountPercent,
+            Notes = itemDto.Notes
+        };
+
+        if (itemDto.CollectionId.HasValue)
+        {
+            var col = await _unitOfWork.Collections.GetByIdAsync(itemDto.CollectionId.Value);
+            item.CollectionName = col?.Name;
+        }
+        if (itemDto.MainColorId.HasValue)
+            item.MainColorName = (await _unitOfWork.ColorFabrics.GetByIdAsync(itemDto.MainColorId.Value))?.Name;
+        if (itemDto.AccentColorId.HasValue)
+            item.AccentColorName = (await _unitOfWork.ColorFabrics.GetByIdAsync(itemDto.AccentColorId.Value))?.Name;
+        if (itemDto.MaterialId.HasValue)
+            item.MaterialName = (await _unitOfWork.Materials.GetByIdAsync(itemDto.MaterialId.Value))?.Name;
+        if (itemDto.FormId.HasValue)
+            item.FormName = (await _unitOfWork.ProductForms.GetByIdAsync(itemDto.FormId.Value))?.Name;
+        if (itemDto.SpecificationId.HasValue)
+            item.SpecificationName = (await _unitOfWork.ProductSpecifications.GetByIdAsync(itemDto.SpecificationId.Value))?.Name;
+        return item;
     }
 
     private static void CalculateItemTotal(OrderItem item)
@@ -388,6 +432,23 @@ public class OrderService : IOrderService
         {
             throw new InvalidOperationException($"Không thể chuyển từ trạng thái '{current}' sang '{next}'.");
         }
+    }
+
+    public async Task<OrderDto> SetDesignImageAsync(Guid id, string imageUrl)
+    {
+        var order = await _unitOfWork.Orders.GetByIdAsync(id)
+            ?? throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
+        order.DesignImageUrl = imageUrl;
+        _unitOfWork.Orders.Update(order);
+        await _unitOfWork.SaveChangesAsync();
+        return await GetByIdAsync(id) ?? throw new InvalidOperationException();
+    }
+
+    public async Task<OrderDto?> GetByQrTokenAsync(string token)
+    {
+        var order = await _unitOfWork.Orders.FirstOrDefaultAsync(o => o.QrCodeToken == token);
+        if (order == null) return null;
+        return await GetByIdAsync(order.Id);
     }
 
     /// <summary>Sinh lại QR cho đơn hàng (dùng cho các đơn cũ chưa có QR)</summary>

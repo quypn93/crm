@@ -24,6 +24,16 @@ public class CrmDbContext : DbContext
     public DbSet<Design> Designs => Set<Design>();
     public DbSet<ProductionStage> ProductionStages => Set<ProductionStage>();
     public DbSet<OrderProductionStep> OrderProductionSteps => Set<OrderProductionStep>();
+    public DbSet<Collection> Collections => Set<Collection>();
+    public DbSet<Material> Materials => Set<Material>();
+    public DbSet<ProductForm> ProductForms => Set<ProductForm>();
+    public DbSet<ProductSpecification> ProductSpecifications => Set<ProductSpecification>();
+    public DbSet<CollectionMaterial> CollectionMaterials => Set<CollectionMaterial>();
+    public DbSet<CollectionColor> CollectionColors => Set<CollectionColor>();
+    public DbSet<CollectionForm> CollectionForms => Set<CollectionForm>();
+    public DbSet<CollectionSpecification> CollectionSpecifications => Set<CollectionSpecification>();
+    public DbSet<ProductionDaysOption> ProductionDaysOptions => Set<ProductionDaysOption>();
+    public DbSet<DepositTransaction> DepositTransactions => Set<DepositTransaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -49,7 +49,10 @@ public class OrderProductionController : ControllerBase
 
     /// <summary>Hoàn thành một bước sản xuất (desktop)</summary>
     [HttpPost("api/orders/{orderId:guid}/production/steps/{stageId:guid}/complete")]
-    [Authorize(Roles = $"{RoleNames.Admin},{RoleNames.ProductionManager},{RoleNames.ProductionStaff},{RoleNames.QualityControl},{RoleNames.QualityManager}")]
+    [Authorize(Roles = $"{RoleNames.Admin},{RoleNames.ProductionManager},{RoleNames.ProductionStaff}," +
+                       $"{RoleNames.CuttingStaff},{RoleNames.SewingStaff},{RoleNames.PrintingStaff}," +
+                       $"{RoleNames.FinishingStaff},{RoleNames.PackagingStaff}," +
+                       $"{RoleNames.QualityControl},{RoleNames.QualityManager}")]
     public async Task<ActionResult<ApiResponse<OrderProductionStepDto>>> CompleteStep(
         Guid orderId, Guid stageId, [FromBody] CompleteProductionStepDto dto)
     {
@@ -61,6 +64,7 @@ public class OrderProductionController : ControllerBase
         }
         catch (KeyNotFoundException ex) { return NotFound(ApiResponse<OrderProductionStepDto>.Fail(ex.Message)); }
         catch (InvalidOperationException ex) { return BadRequest(ApiResponse<OrderProductionStepDto>.Fail(ex.Message)); }
+        catch (UnauthorizedAccessException ex) { return StatusCode(403, ApiResponse<OrderProductionStepDto>.Fail(ex.Message)); }
     }
 
     // ── Truy cập qua QR token (mobile) ───────────────────────────────
@@ -82,7 +86,10 @@ public class OrderProductionController : ControllerBase
 
     /// <summary>Hoàn thành bước sản xuất qua QR token (mobile scan)</summary>
     [HttpPost("api/production/scan/{token}/steps/{stageId:guid}/complete")]
-    [Authorize(Roles = $"{RoleNames.Admin},{RoleNames.ProductionManager},{RoleNames.ProductionStaff},{RoleNames.QualityControl},{RoleNames.QualityManager}")]
+    [Authorize(Roles = $"{RoleNames.Admin},{RoleNames.ProductionManager},{RoleNames.ProductionStaff}," +
+                       $"{RoleNames.CuttingStaff},{RoleNames.SewingStaff},{RoleNames.PrintingStaff}," +
+                       $"{RoleNames.FinishingStaff},{RoleNames.PackagingStaff}," +
+                       $"{RoleNames.QualityControl},{RoleNames.QualityManager}")]
     public async Task<ActionResult<ApiResponse<OrderProductionStepDto>>> CompleteStepByToken(
         string token, Guid stageId, [FromBody] CompleteProductionStepDto dto)
     {
@@ -94,6 +101,7 @@ public class OrderProductionController : ControllerBase
         }
         catch (KeyNotFoundException ex) { return NotFound(ApiResponse<OrderProductionStepDto>.Fail(ex.Message)); }
         catch (InvalidOperationException ex) { return BadRequest(ApiResponse<OrderProductionStepDto>.Fail(ex.Message)); }
+        catch (UnauthorizedAccessException ex) { return StatusCode(403, ApiResponse<OrderProductionStepDto>.Fail(ex.Message)); }
     }
 
     // ─────────────────────────────────────────────────────────────────

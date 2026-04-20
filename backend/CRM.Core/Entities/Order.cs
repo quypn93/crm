@@ -43,18 +43,26 @@ public class Order : BaseEntity
     public string? InternalNotes { get; set; }
 
     // Uniform-specific fields
-    public string? StyleNotes { get; set; }         // Kiểu dáng: form, quy cách, bộ sưu tập, cổ dệt...
-    public string? PersonNamesBySize { get; set; }  // JSON: {"M":["Nguyễn A","Trần B"],"L":["Lê C"]}
-    public string? GiftItems { get; set; }          // JSON: [{"description":"Cờ 1M x 1.5M"},{"description":"Sticker"}]
+    public string? StyleNotes { get; set; }
+
+    // Production days option (admin-managed)
+    public Guid? ProductionDaysOptionId { get; set; }
+    public int? ProductionDays { get; set; }          // Snapshot số ngày sản xuất
+
+    // Deposit code (sale nhập mã cọc tiền - liên kết với DepositTransaction)
+    public string? DepositCode { get; set; }
+
+    // Designer upload (ảnh đơn hàng sau khi thiết kế)
+    public string? DesignImageUrl { get; set; }
 
     // QR & Production
-    public string? QrCodeToken { get; set; }          // 22-char URL-safe Base64 of OrderId
-    public string? QrCodeImageBase64 { get; set; }    // PNG base64 for embedding in template
+    public string? QrCodeToken { get; set; }
+    public string? QrCodeImageBase64 { get; set; }
 
     // Foreign keys
     public Guid CreatedByUserId { get; set; }
     public Guid? AssignedToUserId { get; set; }
-    public Guid? DesignerUserId { get; set; }         // người thiết kế được giao
+    public Guid? DesignerUserId { get; set; }
 
     // Navigation properties
     public virtual Customer Customer { get; set; } = null!;
@@ -62,6 +70,7 @@ public class Order : BaseEntity
     public virtual User CreatedByUser { get; set; } = null!;
     public virtual User? AssignedToUser { get; set; }
     public virtual User? DesignerUser { get; set; }
+    public virtual ProductionDaysOption? ProductionDaysOption { get; set; }
     public virtual ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
     public virtual ICollection<Design> Designs { get; set; } = new List<Design>();
     public virtual ICollection<OrderProductionStep> ProductionSteps { get; set; } = new List<OrderProductionStep>();

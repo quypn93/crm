@@ -20,4 +20,6 @@ public interface IOrderService
     Task<OrderDto> CreateFromDealAsync(Guid dealId, Guid userId);
     Task<OrderSummaryDto> GetSummaryAsync(Guid? userId = null);
     Task<OrderDto> GenerateQrAsync(Guid id);
+    Task<OrderDto> SetDesignImageAsync(Guid id, string imageUrl);
+    Task<OrderDto?> GetByQrTokenAsync(string token);
 }

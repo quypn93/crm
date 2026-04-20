@@ -16,10 +16,22 @@ export class AuthInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    const token = this.storageService.getToken();
+    // Public / anonymous endpoints opt out of token via X-Skip-Auth header.
+    if (request.headers.has('X-Skip-Auth')) {
+      const cleaned = request.clone({ headers: request.headers.delete('X-Skip-Auth') });
+      return next.handle(cleaned);
+    }
 
+    // Silent auth: send token if any, but on 401 just propagate the error
+    // instead of triggering refresh/logout/redirect (used by public scan page).
+    const silent = request.headers.has('X-Silent-Auth');
+    const token = this.storageService.getToken();
     if (token) {
       request = this.addToken(request, token);
+    }
+    if (silent) {
+      const cleaned = request.clone({ headers: request.headers.delete('X-Silent-Auth') });
+      return next.handle(cleaned);
     }
 
     return next.handle(request).pipe(

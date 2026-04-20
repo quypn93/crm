@@ -130,23 +130,23 @@
             </thead>
             <tbody>
               <tr *ngFor="let item of order.items">
-                <td>
+                <td data-label="Sản phẩm">
                   <div class="product-info">
-                    <span class="product-name">{{ item.productName }}</span>
+                    <span class="product-name">{{ item.collectionName || '-' }}</span>
                     <span class="product-code" *ngIf="item.productCode">{{ item.productCode }}</span>
                     <span class="product-desc" *ngIf="item.description">{{ item.description }}</span>
                   </div>
                 </td>
-                <td>
+                <td data-label="Size/Màu">
                   <span *ngIf="item.size">{{ item.size }}</span>
-                  <span *ngIf="item.size && item.color"> / </span>
-                  <span *ngIf="item.color">{{ item.color }}</span>
-                  <span *ngIf="!item.size && !item.color">-</span>
+                  <span *ngIf="item.size && item.mainColorName"> / </span>
+                  <span *ngIf="item.mainColorName">{{ item.mainColorName }}</span>
+                  <span *ngIf="!item.size && !item.mainColorName">-</span>
                 </td>
-                <td class="text-right">{{ item.quantity }} {{ item.unit }}</td>
-                <td class="text-right">{{ formatCurrency(item.unitPrice) }}</td>
-                <td class="text-right">{{ item.discountPercent }}%</td>
-                <td class="text-right">{{ formatCurrency(item.lineTotal) }}</td>
+                <td class="text-right" data-label="SL">{{ item.quantity }} {{ item.unit }}</td>
+                <td class="text-right" data-label="Đơn giá">{{ formatCurrency(item.unitPrice) }}</td>
+                <td class="text-right" data-label="Giảm">{{ item.discountPercent }}%</td>
+                <td class="text-right" data-label="Thành tiền">{{ formatCurrency(item.lineTotal) }}</td>
               </tr>
             </tbody>
           </table>
@@ -159,29 +159,20 @@
         <p class="style-notes">{{ order.styleNotes }}</p>
       </div>
 
-      <!-- Tên riêng theo size -->
-      <div class="info-card" *ngIf="order.personNamesBySize">
-        <h3>Tên riêng in theo size</h3>
-        <div class="names-by-size">
-          <ng-container *ngFor="let entry of parsePersonNames(order.personNamesBySize)">
-            <div class="size-group">
-              <span class="size-label">Size {{ entry.size }}</span>
-              <div class="names-list">
-                <span class="name-tag" *ngFor="let name of entry.names">{{ name }}</span>
-              </div>
-            </div>
-          </ng-container>
+      <!-- Ảnh thiết kế (Designer upload) -->
+      <div class="info-card">
+        <h3>Ảnh đơn hàng (thiết kế)</h3>
+        <div *ngIf="order.designImageUrl">
+          <img [src]="resolveImageUrl(order.designImageUrl)" alt="Design"
+               style="max-width:100%;border:1px solid #e2e8f0;border-radius:8px;">
         </div>
-      </div>
-
-      <!-- Quà tặng -->
-      <div class="info-card" *ngIf="order.giftItems">
-        <h3>Quà tặng kèm theo</h3>
-        <div class="gifts-list">
-          <div class="gift-item" *ngFor="let gift of parseGiftItems(order.giftItems)">
-            <span class="gift-icon">🎁</span>
-            <span>{{ gift.description }}</span>
-          </div>
+        <div *ngIf="!order.designImageUrl" style="color:#64748b;font-size:14px;">Chưa có ảnh thiết kế.</div>
+        <div *ngIf="canUploadDesignImage()" style="margin-top:12px;">
+          <label class="btn btn-primary" style="cursor:pointer;">
+            {{ isUploadingDesign ? 'Đang upload...' : (order.designImageUrl ? 'Thay ảnh' : 'Upload ảnh thiết kế') }}
+            <input type="file" accept="image/*" hidden (change)="onDesignImageSelected($event)" [disabled]="isUploadingDesign">
+          </label>
+          <div class="alert alert-danger" *ngIf="designUploadError" style="margin-top:8px;">{{ designUploadError }}</div>
         </div>
       </div>
 
@@ -276,6 +267,14 @@
             <span>Ngày trả</span>
             <span class="date-highlight">{{ order.returnDate | date:'dd/MM/yyyy' }}</span>
           </div>
+          <div class="info-row" *ngIf="order.productionDaysOptionName">
+            <span>Thời gian SX</span>
+            <span>{{ order.productionDaysOptionName }} ({{ order.productionDays }} ngày)</span>
+          </div>
+          <div class="info-row" *ngIf="order.depositCode">
+            <span>Mã cọc tiền</span>
+            <span>{{ order.depositCode }}</span>
+          </div>
         </div>
       </div>
 
@@ -333,10 +332,17 @@
         </div>
       </div>
 
-      <!-- Danger Zone (chỉ Sale) -->
+      <!-- Hủy đơn (Confirmed / InProduction) -->
+      <div class="danger-card warning-card" *ngIf="canCancelOrder()">
+        <h3>Hủy đơn hàng</h3>
+        <p>Đơn hàng đã xác nhận/đang sản xuất không thể xóa. Bạn có thể hủy để chuyển sang trạng thái "Đã hủy" (giữ dữ liệu để truy vết).</p>
+        <button class="btn btn-warning" (click)="cancelOrder()">Hủy đơn hàng</button>
+      </div>
+
+      <!-- Xóa vật lý (chỉ đơn Nháp) -->
       <div class="danger-card" *ngIf="canDeleteOrder()">
         <h3>Vùng nguy hiểm</h3>
-        <p>Xóa đơn hàng này vĩnh viễn. Hành động này không thể hoàn tác.</p>
+        <p>Xóa đơn hàng Nháp này vĩnh viễn. Hành động này không thể hoàn tác.</p>
         <button class="btn btn-danger" (click)="deleteOrder()">Xóa đơn hàng</button>
       </div>
     </div>

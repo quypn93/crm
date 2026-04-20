@@ -63,13 +63,29 @@
           </div>
 
           <div class="form-group">
+            <label>Thời gian sản xuất</label>
+            <select formControlName="productionDaysOptionId">
+              <option value="">-- Chọn --</option>
+              <option *ngFor="let o of productionDaysOptions" [value]="o.id">{{ o.name }} ({{ o.days }} ngày)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
             <label>Ngày xong (sản xuất)</label>
             <input type="date" formControlName="completionDate">
+            <div class="hint">Tự động tính từ ngày lên đơn + thời gian sản xuất.</div>
           </div>
 
           <div class="form-group">
             <label>Ngày trả hàng</label>
             <input type="date" formControlName="returnDate">
+            <div class="hint">Tự động = ngày xong + 1.</div>
+          </div>
+
+          <div class="form-group">
+            <label>Mã cọc tiền</label>
+            <input type="text" formControlName="depositCode" placeholder="Mã giao dịch ngân hàng">
+            <div class="hint">Sale điền mã khớp với lịch sử cộng tiền của mình.</div>
           </div>
         </div>
       </div>
@@ -81,52 +97,55 @@
         <!-- Thông tin chung -->
         <div class="form-grid" formGroupName="productInfo">
           <div class="form-group col-span-2">
-            <label>Tên sản phẩm <span class="required">*</span></label>
-            <input type="text" formControlName="productName" placeholder="VD: Áo polo đồng phục">
+            <label>Bộ sưu tập <span class="required">*</span></label>
+            <select formControlName="collectionId">
+              <option value="">-- Chọn bộ sưu tập --</option>
+              <option *ngFor="let c of collections" [value]="c.id">{{ c.name }}</option>
+            </select>
           </div>
 
           <!-- Chất liệu -->
           <div class="form-group">
             <label>Chất liệu</label>
-            <input type="text" formControlName="material" list="materialList" placeholder="Chọn hoặc nhập chất liệu">
-            <datalist id="materialList">
-              <option *ngFor="let m of materials" [value]="m.name">{{ m.name }}</option>
-            </datalist>
+            <select formControlName="materialId">
+              <option value="">-- Chọn chất liệu --</option>
+              <option *ngFor="let m of filteredMaterials" [value]="m.id">{{ m.name }}</option>
+            </select>
           </div>
 
           <!-- Màu sắc chính -->
           <div class="form-group">
             <label>Màu sắc chính</label>
-            <input type="text" formControlName="colorMain" list="colorMainList" placeholder="Chọn hoặc nhập màu chính">
-            <datalist id="colorMainList">
-              <option *ngFor="let c of colorFabrics" [value]="c.name">{{ c.name }}</option>
-            </datalist>
+            <select formControlName="mainColorId">
+              <option value="">-- Chọn màu --</option>
+              <option *ngFor="let c of filteredColors" [value]="c.id">{{ c.name }}</option>
+            </select>
           </div>
 
           <!-- Màu phối -->
           <div class="form-group">
             <label>Màu phối</label>
-            <input type="text" formControlName="colorSub" list="colorSubList" placeholder="Chọn hoặc nhập màu phối">
-            <datalist id="colorSubList">
-              <option *ngFor="let c of colorFabrics" [value]="c.name">{{ c.name }}</option>
-            </datalist>
+            <select formControlName="accentColorId">
+              <option value="">-- Chọn màu --</option>
+              <option *ngFor="let c of filteredColors" [value]="c.id">{{ c.name }}</option>
+            </select>
           </div>
 
           <!-- Form dáng -->
           <div class="form-group">
             <label>Form</label>
-            <select formControlName="styleForm">
-              <option value="">-- Chọn form áo --</option>
-              <option *ngFor="let f of shirtForms" [value]="f.name">{{ f.name }}</option>
+            <select formControlName="formId">
+              <option value="">-- Chọn form --</option>
+              <option *ngFor="let f of filteredForms" [value]="f.id">{{ f.name }}</option>
             </select>
           </div>
 
           <!-- Quy cách -->
           <div class="form-group">
             <label>Quy cách</label>
-            <select formControlName="styleSpec">
+            <select formControlName="specificationId">
               <option value="">-- Chọn quy cách --</option>
-              <option *ngFor="let s of styleSpecs" [value]="s.name">{{ s.name }}</option>
+              <option *ngFor="let s of filteredSpecs" [value]="s.id">{{ s.name }}</option>
             </select>
           </div>
 
@@ -169,32 +188,6 @@
             <textarea formControlName="styleNotes" rows="3"
               placeholder="VD: Cổ dệt: Trắng gạo 01 | Nẹp trụ cổ: Trắng gạo 08 | Bộ sưu tập: ..."></textarea>
             <div class="hint">Các chi tiết khác ngoài form và quy cách đã nhập ở trên.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ④ Tên riêng theo size -->
-      <div class="form-section">
-        <h2 class="section-title">Tên riêng in theo size</h2>
-        <div class="form-grid">
-          <div class="form-group full-width">
-            <label>Tên riêng (JSON hoặc text)</label>
-            <textarea formControlName="personNamesBySize" rows="4"
-              placeholder='VD: {"M":["Thị Thuỷ","Kim Si","Hoàng Liên"],"L":["Pjnz 97","Q-Thor"],"XXL":["T. Dươm"]}'></textarea>
-            <div class="hint">Nhập tên từng người theo từng size để in lên ngực áo.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ⑤ Quà tặng -->
-      <div class="form-section">
-        <h2 class="section-title">Quà tặng kèm theo</h2>
-        <div class="form-grid">
-          <div class="form-group full-width">
-            <label>Danh sách quà tặng</label>
-            <textarea formControlName="giftItems" rows="3"
-              placeholder='VD: [{"description":"Cờ 1M x 1.5M"},{"description":"Sticker 4Mùa"}]'></textarea>
-            <div class="hint">Nhập mô tả các quà tặng kèm theo đơn hàng.</div>
           </div>
         </div>
       </div>

@@ -20,6 +20,7 @@ public class OrderRepository : Repository<Order>, IOrderRepository
             .Include(o => o.CreatedByUser)
             .Include(o => o.AssignedToUser)
             .Include(o => o.DesignerUser)
+            .Include(o => o.ProductionDaysOption)
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.Id == id);
     }
@@ -30,6 +31,22 @@ public class OrderRepository : Repository<Order>, IOrderRepository
             .Include(o => o.Customer)
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
+    }
+
+    // Xoá toàn bộ OrderItem của một Order bằng ExecuteDelete (bỏ qua EF change tracker)
+    // Dùng khi cần "replace all items" trong UpdateAsync — tránh pattern .Clear() + .Add()
+    // gây lỗi tracking với cascade required FK.
+    public async Task DeleteItemsByOrderIdAsync(Guid orderId)
+    {
+        await _context.OrderItems
+            .Where(i => i.OrderId == orderId)
+            .ExecuteDeleteAsync();
+    }
+
+    // Thêm items qua DbSet trực tiếp — EF sẽ mark Added và INSERT khi SaveChanges.
+    public async Task AddItemsAsync(IEnumerable<OrderItem> items)
+    {
+        await _context.OrderItems.AddRangeAsync(items);
     }
 
     public async Task<(IEnumerable<Order> Items, int TotalCount)> GetPagedAsync(

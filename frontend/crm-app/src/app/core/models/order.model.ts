@@ -61,12 +61,21 @@ export const PaymentStatusColors: Record<PaymentStatus, string> = {
 export interface OrderItem {
   id: string;
   orderId: string;
-  productName: string;
+  collectionId?: string;
+  collectionName?: string;
   productCode?: string;
   description?: string;
   size?: string;
-  color?: string;
-  material?: string;
+  mainColorId?: string;
+  accentColorId?: string;
+  materialId?: string;
+  formId?: string;
+  specificationId?: string;
+  mainColorName?: string;
+  accentColorName?: string;
+  materialName?: string;
+  formName?: string;
+  specificationName?: string;
   quantity: number;
   unit: string;
   unitPrice: number;
@@ -74,7 +83,7 @@ export interface OrderItem {
   discountAmount: number;
   lineTotal: number;
   notes?: string;
-  sortOrder: number;
+  sortOrder?: number;
 }
 
 export interface Order {
@@ -113,8 +122,11 @@ export interface Order {
   internalNotes?: string;
   customerNotes?: string;
   styleNotes?: string;
-  personNamesBySize?: string;
-  giftItems?: string;
+  productionDaysOptionId?: string;
+  productionDaysOptionName?: string;
+  productionDays?: number;
+  depositCode?: string;
+  designImageUrl?: string;
   createdAt: Date;
   updatedAt?: Date;
   createdByUserId: string;
@@ -130,18 +142,20 @@ export interface Order {
 }
 
 export interface CreateOrderItemRequest {
-  productName: string;
+  collectionId?: string;
   productCode?: string;
   description?: string;
   size?: string;
-  color?: string;
-  material?: string;
+  mainColorId?: string;
+  accentColorId?: string;
+  materialId?: string;
+  formId?: string;
+  specificationId?: string;
   quantity: number;
   unit?: string;
   unitPrice: number;
   discountPercent?: number;
   notes?: string;
-  sortOrder?: number;
 }
 
 export interface CreateOrderRequest {
@@ -165,8 +179,8 @@ export interface CreateOrderRequest {
   internalNotes?: string;
   customerNotes?: string;
   styleNotes?: string;
-  personNamesBySize?: string;
-  giftItems?: string;
+  productionDaysOptionId?: string;
+  depositCode?: string;
   assignedToUserId?: string;
   designerUserId?: string;
   items: CreateOrderItemRequest[];

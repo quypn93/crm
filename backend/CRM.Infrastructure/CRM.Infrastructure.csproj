@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CRM.Core\CRM.Core.csproj" />
+    <ProjectReference Include="..\CRM.Application\CRM.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

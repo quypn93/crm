@@ -19,7 +19,9 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
 
   private generateQr(): void {
     import('qrcode').then(QRCode => {
-      const url = `${window.location.origin}/orders/${this.order.id}`;
+      const token = this.order.qrCodeToken;
+      if (!token) { this.qrDataUrl = ''; return; }
+      const url = `${window.location.origin}/scan/${token}`;
       QRCode.toDataURL(url, { width: 220, margin: 1 }).then(d => this.qrDataUrl = d);
     });
   }
@@ -29,11 +31,16 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
     this.isRendering = true;
     try {
       const el = this.cardRef.nativeElement;
+      const wrapper = el.parentElement; // .card-scroll-wrapper giữ --card-scale
       // Tạm thời reset scale để html2canvas chụp full resolution
       const prevTransform = el.style.transform;
-      const prevMargin = el.style.marginBottom;
+      const prevMarginBottom = el.style.marginBottom;
+      const prevMarginRight = el.style.marginRight;
+      const prevWrapperOverflow = wrapper?.style.overflow ?? '';
       el.style.transform = 'scale(1)';
       el.style.marginBottom = '0';
+      el.style.marginRight = '0';
+      if (wrapper) wrapper.style.overflow = 'visible';
       const canvas = await html2canvas(el, {
         scale: 2,
         useCORS: true,
@@ -43,7 +50,9 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
         scrollY: 0,
       });
       el.style.transform = prevTransform;
-      el.style.marginBottom = prevMargin;
+      el.style.marginBottom = prevMarginBottom;
+      el.style.marginRight = prevMarginRight;
+      if (wrapper) wrapper.style.overflow = prevWrapperOverflow;
       const a = document.createElement('a');
       a.download = `${this.order.orderNumber}.png`;
       a.href = canvas.toDataURL('image/png');
@@ -55,20 +64,8 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
 
   // ── Data helpers ──────────────────────────────────────────
 
-  parsePersonNames(): { size: string; names: string[] }[] {
-    if (!this.order.personNamesBySize) return [];
-    try {
-      return Object.entries(JSON.parse(this.order.personNamesBySize))
-        .map(([size, names]) => ({ size, names: names as string[] }));
-    } catch { return []; }
-  }
-
-  parseGiftItems(): string[] {
-    if (!this.order.giftItems) return [];
-    try {
-      return (JSON.parse(this.order.giftItems) as any[]).map(g => g.description ?? String(g));
-    } catch { return [this.order.giftItems]; }
-  }
+  parsePersonNames(): { size: string; names: string[] }[] { return []; }
+  parseGiftItems(): string[] { return []; }
 
   private parseStyleNotes(): [string, string][] {
     if (!this.order.styleNotes) return [];
@@ -79,14 +76,14 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
   getMaterial(): string {
     const e = this.parseStyleNotes().find(([k]) => /chất liệu/i.test(k));
     if (e) return e[1];
-    return [...new Set(this.order.items.map(i => i.material).filter(Boolean))].join(', ');
+    return [...new Set(this.order.items.map(i => i.materialName).filter(Boolean))].join(', ');
   }
 
   getColorText(): string {
     const lines = this.parseStyleNotes().filter(([k]) => /màu/i.test(k))
       .map(([k,v]) => `- ${k.toUpperCase()}: ${v}`);
     if (lines.length) return lines.join('\n');
-    return [...new Set(this.order.items.map(i => i.color).filter(Boolean))].join(', ');
+    return [...new Set(this.order.items.map(i => i.mainColorName).filter(Boolean))].join(', ');
   }
 
   getStyleText(): string {

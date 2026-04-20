@@ -1,6 +1,7 @@
 using System.Text;
 using CRM.Application.Mappings;
 using CRM.Application.Services;
+using CRM.Infrastructure.Services;
 using CRM.Application.Interfaces;
 using CRM.Core.Interfaces;
 using CRM.Infrastructure.Data;
@@ -13,6 +14,9 @@ using CRM.Core.Entities;
 using CRM.API.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Ensure wwwroot exists before static files middleware looks for it
+Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads", "designs"));
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -152,7 +156,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
+        policy.SetIsOriginAllowed(origin =>
+              {
+                  try { return new Uri(origin).Host == "localhost"; }
+                  catch { return false; }
+              })
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -179,6 +187,12 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IColorFabricService, ColorFabricService>();
 builder.Services.AddScoped<IShirtComponentService, ShirtComponentService>();
 builder.Services.AddScoped<IDesignService, DesignService>();
+builder.Services.AddScoped<ICollectionService, CollectionService>();
+builder.Services.AddScoped<IMaterialService, MaterialService>();
+builder.Services.AddScoped<IProductFormService, ProductFormService>();
+builder.Services.AddScoped<IProductSpecificationService, ProductSpecificationService>();
+builder.Services.AddScoped<IProductionDaysOptionService, ProductionDaysOptionService>();
+builder.Services.AddScoped<IDepositTransactionService, DepositTransactionService>();
 
 var app = builder.Build();
 
@@ -194,6 +208,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseCors("AllowAngular");
 app.UseAuthentication();
 app.UseAuthorization();

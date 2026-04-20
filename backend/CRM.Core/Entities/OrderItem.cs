@@ -4,15 +4,24 @@ public class OrderItem : BaseEntity
 {
     public Guid OrderId { get; set; }
 
-    // Product info
-    public string ProductName { get; set; } = string.Empty;
+    // Collection (thay thế ProductName)
+    public Guid? CollectionId { get; set; }
+    public string? CollectionName { get; set; }         // snapshot tên BST lúc đặt
     public string? ProductCode { get; set; }
     public string? Description { get; set; }
 
-    // Specifications (for uniforms)
+    // Specifications (for uniforms) - lấy từ pool chung, filter theo Collection
     public string? Size { get; set; }
-    public string? Color { get; set; }
-    public string? Material { get; set; }
+    public Guid? MainColorId { get; set; }              // ColorFabric
+    public Guid? AccentColorId { get; set; }            // ColorFabric
+    public Guid? MaterialId { get; set; }
+    public Guid? FormId { get; set; }
+    public Guid? SpecificationId { get; set; }
+    public string? MainColorName { get; set; }
+    public string? AccentColorName { get; set; }
+    public string? MaterialName { get; set; }
+    public string? FormName { get; set; }
+    public string? SpecificationName { get; set; }
 
     // Quantity and pricing
     public int Quantity { get; set; }
@@ -27,4 +36,5 @@ public class OrderItem : BaseEntity
 
     // Navigation properties
     public virtual Order Order { get; set; } = null!;
+    public virtual Collection? Collection { get; set; }
 }

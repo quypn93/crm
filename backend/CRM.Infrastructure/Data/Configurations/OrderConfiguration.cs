@@ -76,6 +76,14 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasForeignKey(o => o.AssignedToUserId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        builder.HasOne(o => o.ProductionDaysOption)
+            .WithMany()
+            .HasForeignKey(o => o.ProductionDaysOptionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Property(o => o.DepositCode).HasMaxLength(100);
+        builder.Property(o => o.DesignImageUrl).HasMaxLength(500);
+
         builder.HasIndex(o => o.CustomerId);
         builder.HasIndex(o => o.DealId);
         builder.HasIndex(o => o.Status);

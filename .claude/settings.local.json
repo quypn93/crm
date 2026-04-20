@@ -3,7 +3,9 @@
     "allow": [
       "Bash(dotnet add package:*)",
       "Bash(sqlcmd:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(cmd.exe /c \"taskkill /PID 33908 /F\")",
+      "Bash(curl.exe -s -o /dev/null -w \"POST /api/deposits/sepay-webhook → %{http_code}\\\\n\" -X POST \"http://localhost:5222/api/deposits/sepay-webhook\" -H \"Content-Type: application/json\" -d \"{\\\\\"id\\\\\":999,\\\\\"gateway\\\\\":\\\\\"Techcombank\\\\\",\\\\\"transferType\\\\\":\\\\\"in\\\\\",\\\\\"transferAmount\\\\\":500000,\\\\\"content\\\\\":\\\\\"test\\\\\",\\\\\"referenceCode\\\\\":\\\\\"FT123\\\\\",\\\\\"transactionDate\\\\\":\\\\\"2026-04-15 10:00:00\\\\\"}\")"
     ]
   }
 }

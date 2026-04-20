@@ -1,3 +1,4 @@
+using CRM.Core.Entities;
 using CRM.Core.Interfaces;
 using CRM.Core.Interfaces.Repositories;
 using CRM.Infrastructure.Data;
@@ -22,6 +23,12 @@ public class UnitOfWork : IUnitOfWork
     private IDesignRepository? _designs;
     private IProductionStageRepository? _productionStages;
     private IOrderProductionStepRepository? _orderProductionSteps;
+    private IRepository<Collection>? _collections;
+    private IRepository<Material>? _materials;
+    private IRepository<ProductForm>? _productForms;
+    private IRepository<ProductSpecification>? _productSpecs;
+    private IRepository<ProductionDaysOption>? _productionDaysOptions;
+    private IRepository<DepositTransaction>? _depositTransactions;
 
     public UnitOfWork(CrmDbContext context)
     {
@@ -40,6 +47,12 @@ public class UnitOfWork : IUnitOfWork
     public IDesignRepository Designs => _designs ??= new DesignRepository(_context);
     public IProductionStageRepository ProductionStages => _productionStages ??= new ProductionStageRepository(_context);
     public IOrderProductionStepRepository OrderProductionSteps => _orderProductionSteps ??= new OrderProductionStepRepository(_context);
+    public IRepository<Collection> Collections => _collections ??= new Repository<Collection>(_context);
+    public IRepository<Material> Materials => _materials ??= new Repository<Material>(_context);
+    public IRepository<ProductForm> ProductForms => _productForms ??= new Repository<ProductForm>(_context);
+    public IRepository<ProductSpecification> ProductSpecifications => _productSpecs ??= new Repository<ProductSpecification>(_context);
+    public IRepository<ProductionDaysOption> ProductionDaysOptions => _productionDaysOptions ??= new Repository<ProductionDaysOption>(_context);
+    public IRepository<DepositTransaction> DepositTransactions => _depositTransactions ??= new Repository<DepositTransaction>(_context);
 
     public async Task<int> SaveChangesAsync()
     {

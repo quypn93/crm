@@ -79,10 +79,20 @@ public class MappingProfile : Profile
             .ForMember(d => d.CreatedByUserName, opt => opt.MapFrom(s => s.CreatedByUser != null ? $"{s.CreatedByUser.FirstName} {s.CreatedByUser.LastName}" : null))
             .ForMember(d => d.AssignedToUserName, opt => opt.MapFrom(s => s.AssignedToUser != null ? $"{s.AssignedToUser.FirstName} {s.AssignedToUser.LastName}" : null))
             .ForMember(d => d.ItemsCount, opt => opt.MapFrom(s => s.Items.Count))
-            .ForMember(d => d.DesignerUserName, opt => opt.MapFrom(s => s.DesignerUser != null ? $"{s.DesignerUser.FirstName} {s.DesignerUser.LastName}" : null));
+            .ForMember(d => d.DesignerUserName, opt => opt.MapFrom(s => s.DesignerUser != null ? $"{s.DesignerUser.FirstName} {s.DesignerUser.LastName}" : null))
+            .ForMember(d => d.ProductionDaysOptionName, opt => opt.MapFrom(s => s.ProductionDaysOption != null ? s.ProductionDaysOption.Name : null));
 
         CreateMap<OrderItem, OrderItemDto>();
         CreateMap<CreateOrderItemDto, OrderItem>();
+
+        // New admin lookups
+        CreateMap<Collection, CRM.Application.DTOs.Lookup.CollectionDto>();
+        CreateMap<CRM.Application.DTOs.Lookup.CreateCollectionDto, Collection>();
+        CreateMap<Material, CRM.Application.DTOs.Lookup.LookupItemDto>();
+        CreateMap<ProductForm, CRM.Application.DTOs.Lookup.LookupItemDto>();
+        CreateMap<ProductSpecification, CRM.Application.DTOs.Lookup.LookupItemDto>();
+        CreateMap<ProductionDaysOption, CRM.Application.DTOs.Lookup.ProductionDaysOptionDto>();
+        CreateMap<DepositTransaction, CRM.Application.DTOs.Lookup.DepositTransactionDto>();
 
         // ColorFabric mappings
         CreateMap<ColorFabric, ColorFabricDto>();

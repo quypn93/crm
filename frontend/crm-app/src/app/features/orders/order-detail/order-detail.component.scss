@@ -1,5 +1,7 @@
 .page-container {
   padding: 24px;
+  max-width: 100%;
+  overflow-x: hidden; // order-card rộng 1400px sẽ tự scroll bên trong .card-scroll-wrapper
 }
 
 .page-header {
@@ -138,19 +140,18 @@
 }
 
 .content-grid {
-  display: grid;
-  grid-template-columns: 1fr 360px;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
-
-  @media (max-width: 1024px) {
-    grid-template-columns: 1fr;
-  }
 }
 
 .main-content {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -164,6 +165,9 @@
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 
   h3 {
     font-size: 16px;
@@ -204,17 +208,23 @@
 }
 
 .items-table {
-  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;       // nếu table quá rộng thì scroll NGAY TRONG bảng, không đẩy layout
+  -webkit-overflow-scrolling: touch;
 
   table {
     width: 100%;
+    min-width: 0;
     border-collapse: collapse;
+    table-layout: auto;
 
     th, td {
-      padding: 12px;
+      padding: 12px 8px;
       text-align: left;
       border-bottom: 1px solid #e2e8f0;
       font-size: 14px;
+      word-break: break-word;
     }
 
     th {
@@ -227,6 +237,34 @@
 
     .text-right {
       text-align: right;
+    }
+  }
+
+  // Mobile: stack rows as cards instead of table
+  @media (max-width: 700px) {
+    table, thead, tbody, th, td, tr { display: block; width: 100%; }
+    thead { display: none; }
+    tr {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      padding: 8px 12px;
+    }
+    td {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 0;
+      border: none;
+
+      &::before {
+        content: attr(data-label);
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        flex-shrink: 0;
+      }
     }
   }
 }
@@ -609,6 +647,15 @@
     color: #64748b;
     margin: 0 0 16px;
   }
+
+  &.warning-card {
+    border-color: #fcd34d;
+
+    h3 {
+      color: #d97706;
+      border-bottom-color: #fcd34d;
+    }
+  }
 }
 
 .loading-container {
@@ -801,6 +848,15 @@
     }
   }
 
+  &.btn-warning {
+    background: #f59e0b;
+    color: #fff;
+
+    &:hover {
+      background: #d97706;
+    }
+  }
+
   &.full-width {
     width: 100%;
     justify-content: center;
@@ -843,6 +899,178 @@
   display: flex; align-items: center; gap: 10px;
   font-size: 14px; color: #374151;
   .gift-icon { font-size: 18px; flex-shrink: 0; }
+}
+
+// ── Responsive ─────────────────────────────────────────────────────────────
+@media (max-width: 1024px) {
+  .page-container {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 16px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .header-left {
+    gap: 12px;
+
+    h1 {
+      font-size: 18px;
+      line-height: 1.3;
+    }
+  }
+
+  .btn-back {
+    width: 36px;
+    height: 36px;
+  }
+
+  .order-meta {
+    gap: 8px;
+    margin-top: 6px;
+
+    .date {
+      font-size: 12px;
+      width: 100%;
+    }
+  }
+
+  .header-actions {
+    width: 100%;
+
+    .btn {
+      flex: 1;
+      justify-content: center;
+      padding: 9px 12px;
+      font-size: 13px;
+    }
+  }
+
+  .confirm-banner {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 16px;
+
+    .confirm-banner-content {
+      gap: 10px;
+    }
+
+    .confirm-banner-icon {
+      font-size: 24px;
+    }
+
+    .confirm-banner-text strong {
+      font-size: 14px;
+    }
+  }
+
+  .btn-confirm-order {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .info-card,
+  .summary-card,
+  .danger-card,
+  .qr-card,
+  .production-card {
+    padding: 16px;
+    border-radius: 10px;
+
+    h3 {
+      font-size: 15px;
+    }
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .qr-layout {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .qr-meta {
+    width: 100%;
+    align-items: center;
+    text-align: center;
+  }
+
+  .btn-qr-print {
+    align-self: stretch;
+    text-align: center;
+  }
+
+  .summary-row.total {
+    font-size: 16px;
+  }
+
+  .modal {
+    margin: 12px;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 16px;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    padding: 12px;
+  }
+
+  .header-left h1 {
+    font-size: 17px;
+  }
+
+  .status-badge {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .header-actions {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+    }
+  }
+
+  .info-card,
+  .summary-card,
+  .danger-card,
+  .qr-card,
+  .production-card {
+    padding: 14px;
+  }
+
+  .summary-rows,
+  .info-list {
+    gap: 10px;
+  }
 }
 
 @media print {

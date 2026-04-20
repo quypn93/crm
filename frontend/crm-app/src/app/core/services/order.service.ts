@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { ApiService, PagedResult } from './api.service';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiService, PagedResult, ApiResponse } from './api.service';
 import {
   Order,
   OrderItem,
@@ -38,7 +40,7 @@ export interface OrderSearchParams {
   providedIn: 'root'
 })
 export class OrderService {
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private http: HttpClient) {}
 
   getOrders(params: OrderSearchParams): Observable<PagedResult<Order>> {
     return this.api.get<PagedResult<Order>>('orders', this.api.buildParams(params));
@@ -140,5 +142,21 @@ export class OrderService {
 
   generateQr(orderId: string): Observable<Order> {
     return this.api.post<Order>(`orders/${orderId}/generate-qr`, {});
+  }
+
+  uploadDesignImage(orderId: string, file: File): Observable<Order> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.api.post<Order>(`orders/${orderId}/design-image`, form);
+  }
+
+  getPublicByToken(token: string): Observable<Order> {
+    // Dùng HttpClient trực tiếp để bỏ qua auth interceptor (không gửi token
+    // cũ nếu có — tránh 401 kích hoạt logout khi khách quét QR).
+    return this.http
+      .get<ApiResponse<Order>>(`${environment.apiUrl}/orders/public/by-token/${token}`, {
+        headers: { 'X-Skip-Auth': '1' }
+      })
+      .pipe(map(r => r.data));
   }
 }

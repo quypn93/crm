@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { OrderService } from '../../../core/services/order.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { ProductionService, OrderProductionProgress } from '../../../core/services/production.service';
 import {
   Order,
@@ -53,7 +54,8 @@ export class OrderDetailComponent implements OnInit {
     private authService: AuthService,
     private productionService: ProductionService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -97,7 +99,19 @@ export class OrderDetailComponent implements OnInit {
   }
 
   canDeleteOrder(): boolean {
-    return this.authService.canDeleteOrders();
+    // Chỉ cho xóa đơn Nháp (khớp ràng buộc backend)
+    return this.order?.status === OrderStatus.Draft && this.authService.canDeleteOrders();
+  }
+
+  canCancelOrder(): boolean {
+    if (!this.order) return false;
+    if (this.order.status === OrderStatus.Confirmed) {
+      return this.authService.hasAnyRole(['Admin', 'SalesManager', 'SalesRep']);
+    }
+    if (this.order.status === OrderStatus.InProduction) {
+      return this.authService.hasAnyRole(['Admin', 'SalesManager']);
+    }
+    return false;
   }
 
   canEditOrder(): boolean {
@@ -231,17 +245,38 @@ export class OrderDetailComponent implements OnInit {
 
   deleteOrder(): void {
     if (!this.order) return;
+    const orderNumber = this.order.orderNumber;
+    if (!confirm(`Bạn có chắc muốn xóa đơn hàng "${orderNumber}"?\n\nChỉ có thể xóa đơn ở trạng thái Nháp.`)) return;
+    this.orderService.deleteOrder(this.order.id).subscribe({
+      next: () => {
+        this.toast.success(`Đã xóa đơn hàng ${orderNumber}.`);
+        this.router.navigate(['/orders']);
+      },
+      error: (error) => {
+        const msg = error?.error?.message || 'Xóa đơn hàng thất bại';
+        this.errorMessage = msg;
+        this.toast.error(msg);
+      }
+    });
+  }
 
-    if (confirm(`Bạn có chắc muốn xóa đơn hàng "${this.order.orderNumber}"?`)) {
-      this.orderService.deleteOrder(this.order.id).subscribe({
-        next: () => {
-          this.router.navigate(['/orders']);
-        },
-        error: (error) => {
-          this.errorMessage = error.error?.message || 'Xóa đơn hàng thất bại';
-        }
-      });
-    }
+  cancelOrder(): void {
+    if (!this.order) return;
+    const orderNumber = this.order.orderNumber;
+    if (!confirm(`Bạn có chắc muốn hủy đơn hàng "${orderNumber}"?\n\nTrạng thái sẽ chuyển sang "Đã hủy" và không thể hoàn tác.`)) return;
+    const req: UpdateOrderStatusRequest = { status: OrderStatus.Cancelled, notes: 'Hủy đơn từ trang chi tiết' };
+    const orderId = this.order.id;
+    this.orderService.updateOrderStatus(orderId, req).subscribe({
+      next: () => {
+        this.toast.success(`Đã hủy đơn hàng ${orderNumber}.`);
+        this.loadOrder(orderId);
+      },
+      error: (error) => {
+        const msg = error?.error?.message || 'Hủy đơn hàng thất bại';
+        this.errorMessage = msg;
+        this.toast.error(msg);
+      }
+    });
   }
 
   generateQr(): void {
@@ -315,17 +350,36 @@ export class OrderDetailComponent implements OnInit {
     w.document.close();
   }
 
-  parsePersonNames(json?: string): { size: string; names: string[] }[] {
-    if (!json) return [];
-    try {
-      const obj = JSON.parse(json);
-      return Object.entries(obj).map(([size, names]) => ({ size, names: names as string[] }));
-    } catch { return []; }
+  // Designer upload
+  isUploadingDesign = false;
+  designUploadError = '';
+
+  canUploadDesignImage(): boolean {
+    return this.authService.hasAnyRole(['Admin', 'Designer']);
   }
 
-  parseGiftItems(json?: string): { description: string }[] {
-    if (!json) return [];
-    try { return JSON.parse(json); } catch { return [{ description: json }]; }
+  onDesignImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this.order) return;
+    this.isUploadingDesign = true;
+    this.designUploadError = '';
+    this.orderService.uploadDesignImage(this.order.id, file).subscribe({
+      next: (updated) => { this.order = updated; this.isUploadingDesign = false; input.value = ''; },
+      error: (err) => { this.isUploadingDesign = false; this.designUploadError = err.error?.message || 'Upload thất bại.'; }
+    });
+  }
+
+  apiOrigin(): string {
+    // Static files served by API at the same origin as apiUrl (without /api suffix)
+    const url = (window as any).__env?.apiUrl || '';
+    return url.replace(/\/api\/?$/, '');
+  }
+
+  resolveImageUrl(path?: string): string {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return this.apiOrigin() + path;
   }
 
   printOrder(): void {

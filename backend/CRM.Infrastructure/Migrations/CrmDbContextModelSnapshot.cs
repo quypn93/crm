@@ -71,6 +71,98 @@ namespace CRM.Infrastructure.Migrations
                     b.ToTable("ActivityLogs", (string)null);
                 });
 
+            modelBuilder.Entity("CRM.Core.Entities.Collection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Collections", (string)null);
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.CollectionColor", b =>
+                {
+                    b.Property<Guid>("CollectionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ColorFabricId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("CollectionId", "ColorFabricId");
+
+                    b.HasIndex("ColorFabricId");
+
+                    b.ToTable("CollectionColors", (string)null);
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.CollectionForm", b =>
+                {
+                    b.Property<Guid>("CollectionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProductFormId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("CollectionId", "ProductFormId");
+
+                    b.HasIndex("ProductFormId");
+
+                    b.ToTable("CollectionForms", (string)null);
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.CollectionMaterial", b =>
+                {
+                    b.Property<Guid>("CollectionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("MaterialId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("CollectionId", "MaterialId");
+
+                    b.HasIndex("MaterialId");
+
+                    b.ToTable("CollectionMaterials", (string)null);
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.CollectionSpecification", b =>
+                {
+                    b.Property<Guid>("CollectionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProductSpecificationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("CollectionId", "ProductSpecificationId");
+
+                    b.HasIndex("ProductSpecificationId");
+
+                    b.ToTable("CollectionSpecifications", (string)null);
+                });
+
             modelBuilder.Entity("CRM.Core.Entities.ColorFabric", b =>
                 {
                     b.Property<Guid>("Id")
@@ -389,6 +481,69 @@ namespace CRM.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CRM.Core.Entities.DepositTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AccountNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("BankName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("CassoId");
+
+                    b.Property<Guid?>("MatchedOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("TransactionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique()
+                        .HasFilter("[CassoId] IS NOT NULL");
+
+                    b.HasIndex("MatchedOrderId");
+
+                    b.ToTable("DepositTransactions", (string)null);
+                });
+
             modelBuilder.Entity("CRM.Core.Entities.Design", b =>
                 {
                     b.Property<Guid>("Id")
@@ -509,6 +664,38 @@ namespace CRM.Infrastructure.Migrations
                     b.ToTable("Designs", (string)null);
                 });
 
+            modelBuilder.Entity("CRM.Core.Entities.Material", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Materials", (string)null);
+                });
+
             modelBuilder.Entity("CRM.Core.Entities.Order", b =>
                 {
                     b.Property<Guid>("Id")
@@ -546,6 +733,14 @@ namespace CRM.Infrastructure.Migrations
                     b.Property<Guid?>("DealId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("DepositCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("DesignImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<Guid?>("DesignerUserId")
                         .HasColumnType("uniqueidentifier");
 
@@ -559,9 +754,6 @@ namespace CRM.Infrastructure.Migrations
 
                     b.Property<DateTime?>("ExpectedDeliveryDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("GiftItems")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("InternalNotes")
                         .HasColumnType("nvarchar(max)");
@@ -591,8 +783,11 @@ namespace CRM.Infrastructure.Migrations
                     b.Property<int>("PaymentStatus")
                         .HasColumnType("int");
 
-                    b.Property<string>("PersonNamesBySize")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("ProductionDays")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("ProductionDaysOptionId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("QrCodeImageBase64")
                         .HasColumnType("nvarchar(max)");
@@ -662,6 +857,8 @@ namespace CRM.Infrastructure.Migrations
 
                     b.HasIndex("PaymentStatus");
 
+                    b.HasIndex("ProductionDaysOptionId");
+
                     b.HasIndex("Status");
 
                     b.ToTable("Orders", (string)null);
@@ -673,9 +870,19 @@ namespace CRM.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Color")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<Guid?>("AccentColorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AccentColorName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid?>("CollectionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CollectionName")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -692,11 +899,28 @@ namespace CRM.Infrastructure.Migrations
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(5,2)");
 
+                    b.Property<Guid?>("FormId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FormName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<decimal>("LineTotal")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("Material")
+                    b.Property<Guid?>("MainColorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("MainColorName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid?>("MaterialId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("MaterialName")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -710,17 +934,19 @@ namespace CRM.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("ProductName")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
                     b.Property<string>("Size")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid?>("SpecificationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SpecificationName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Unit")
                         .IsRequired()
@@ -737,6 +963,8 @@ namespace CRM.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CollectionId");
 
                     b.HasIndex("OrderId");
 
@@ -788,6 +1016,98 @@ namespace CRM.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("OrderProductionSteps", (string)null);
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.ProductForm", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("ProductForms", (string)null);
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.ProductSpecification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("ProductSpecifications", (string)null);
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.ProductionDaysOption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Days")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProductionDaysOptions", (string)null);
                 });
 
             modelBuilder.Entity("CRM.Core.Entities.ProductionStage", b =>
@@ -891,7 +1211,7 @@ namespace CRM.Infrastructure.Migrations
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555555"),
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Nhân viên sản xuất",
+                            Description = "Nhân viên sản xuất (đa năng)",
                             Name = "ProductionStaff"
                         },
                         new
@@ -935,6 +1255,41 @@ namespace CRM.Infrastructure.Migrations
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Nhân viên thiết kế",
                             Name = "Designer"
+                        },
+                        new
+                        {
+                            Id = new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Nhân viên cắt vải",
+                            Name = "CuttingStaff"
+                        },
+                        new
+                        {
+                            Id = new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Nhân viên may",
+                            Name = "SewingStaff"
+                        },
+                        new
+                        {
+                            Id = new Guid("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Nhân viên in / thêu logo",
+                            Name = "PrintingStaff"
+                        },
+                        new
+                        {
+                            Id = new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Nhân viên hoàn thiện",
+                            Name = "FinishingStaff"
+                        },
+                        new
+                        {
+                            Id = new Guid("12121212-1212-1212-1212-121212121212"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Nhân viên đóng gói",
+                            Name = "PackagingStaff"
                         });
                 });
 
@@ -1143,6 +1498,82 @@ namespace CRM.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("CRM.Core.Entities.CollectionColor", b =>
+                {
+                    b.HasOne("CRM.Core.Entities.Collection", "Collection")
+                        .WithMany("Colors")
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CRM.Core.Entities.ColorFabric", "ColorFabric")
+                        .WithMany()
+                        .HasForeignKey("ColorFabricId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Collection");
+
+                    b.Navigation("ColorFabric");
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.CollectionForm", b =>
+                {
+                    b.HasOne("CRM.Core.Entities.Collection", "Collection")
+                        .WithMany("Forms")
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CRM.Core.Entities.ProductForm", "ProductForm")
+                        .WithMany()
+                        .HasForeignKey("ProductFormId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Collection");
+
+                    b.Navigation("ProductForm");
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.CollectionMaterial", b =>
+                {
+                    b.HasOne("CRM.Core.Entities.Collection", "Collection")
+                        .WithMany("Materials")
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CRM.Core.Entities.Material", "Material")
+                        .WithMany()
+                        .HasForeignKey("MaterialId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Collection");
+
+                    b.Navigation("Material");
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.CollectionSpecification", b =>
+                {
+                    b.HasOne("CRM.Core.Entities.Collection", "Collection")
+                        .WithMany("Specifications")
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CRM.Core.Entities.ProductSpecification", "ProductSpecification")
+                        .WithMany()
+                        .HasForeignKey("ProductSpecificationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Collection");
+
+                    b.Navigation("ProductSpecification");
+                });
+
             modelBuilder.Entity("CRM.Core.Entities.Customer", b =>
                 {
                     b.HasOne("CRM.Core.Entities.User", "AssignedToUser")
@@ -1193,6 +1624,16 @@ namespace CRM.Infrastructure.Migrations
                     b.Navigation("Customer");
 
                     b.Navigation("Stage");
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.DepositTransaction", b =>
+                {
+                    b.HasOne("CRM.Core.Entities.Order", "MatchedOrder")
+                        .WithMany()
+                        .HasForeignKey("MatchedOrderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("MatchedOrder");
                 });
 
             modelBuilder.Entity("CRM.Core.Entities.Design", b =>
@@ -1246,6 +1687,11 @@ namespace CRM.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("DesignerUserId");
 
+                    b.HasOne("CRM.Core.Entities.ProductionDaysOption", "ProductionDaysOption")
+                        .WithMany()
+                        .HasForeignKey("ProductionDaysOptionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("AssignedToUser");
 
                     b.Navigation("CreatedByUser");
@@ -1255,15 +1701,24 @@ namespace CRM.Infrastructure.Migrations
                     b.Navigation("Deal");
 
                     b.Navigation("DesignerUser");
+
+                    b.Navigation("ProductionDaysOption");
                 });
 
             modelBuilder.Entity("CRM.Core.Entities.OrderItem", b =>
                 {
+                    b.HasOne("CRM.Core.Entities.Collection", "Collection")
+                        .WithMany()
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("CRM.Core.Entities.Order", "Order")
                         .WithMany("Items")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Collection");
 
                     b.Navigation("Order");
                 });
@@ -1353,6 +1808,17 @@ namespace CRM.Infrastructure.Migrations
                     b.Navigation("Role");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.Collection", b =>
+                {
+                    b.Navigation("Colors");
+
+                    b.Navigation("Forms");
+
+                    b.Navigation("Materials");
+
+                    b.Navigation("Specifications");
                 });
 
             modelBuilder.Entity("CRM.Core.Entities.ColorFabric", b =>

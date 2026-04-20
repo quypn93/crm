@@ -1,14 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { OrderService } from '../../../core/services/order.service';
 import { CustomerService, Customer } from '../../../core/services/customer.service';
 import { DealService, Deal } from '../../../core/services/deal.service';
-import { DesignService, ColorFabric, ShirtComponent, ComponentType } from '../../../core/services/design.service';
+import { DesignService, ColorFabric } from '../../../core/services/design.service';
+import { SettingsService } from '../../../core/services/settings.service';
 import { UserManagementService, UserListItem } from '../../../core/services/user-management.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { CreateOrderItemRequest } from '../../../core/models/order.model';
+import { Collection, LookupItem, ProductionDaysOption } from '../../../core/models/lookup.model';
 
 @Component({
   selector: 'app-order-form',
@@ -26,10 +28,20 @@ export class OrderFormComponent implements OnInit {
   deals: Deal[] = [];
   filteredDeals: Deal[] = [];
   filteredCustomers: Customer[] = [];
+
   colorFabrics: ColorFabric[] = [];
-  materials: ShirtComponent[] = [];
-  shirtForms: ShirtComponent[] = [];
-  styleSpecs: ShirtComponent[] = [];
+  materials: LookupItem[] = [];
+  shirtForms: LookupItem[] = [];
+  styleSpecs: LookupItem[] = [];
+  collections: Collection[] = [];
+  productionDaysOptions: ProductionDaysOption[] = [];
+
+  // Filtered by selected collection
+  filteredMaterials: LookupItem[] = [];
+  filteredColors: ColorFabric[] = [];
+  filteredForms: LookupItem[] = [];
+  filteredSpecs: LookupItem[] = [];
+
   users: UserListItem[] = [];
   designers: UserListItem[] = [];
   customerSearchText = '';
@@ -54,6 +66,7 @@ export class OrderFormComponent implements OnInit {
     private customerService: CustomerService,
     private dealService: DealService,
     private designService: DesignService,
+    private settingsService: SettingsService,
     private userService: UserManagementService,
     private authService: AuthService,
     private router: Router,
@@ -63,8 +76,10 @@ export class OrderFormComponent implements OnInit {
       customerId: [''],
       dealId: [''],
       orderDate: [this.formatDate(new Date())],
-      completionDate: [''],
-      returnDate: [''],
+      productionDaysOptionId: [''],
+      completionDate: [{ value: '', disabled: true }],
+      returnDate: [{ value: '', disabled: true }],
+      depositCode: [''],
       assignedToUserId: [''],
       designerUserId: [''],
       deliveryContactName: [''],
@@ -78,17 +93,15 @@ export class OrderFormComponent implements OnInit {
       shippingFee: [0, [Validators.min(0)]],
       paymentMethod: [''],
       styleNotes: [''],
-      personNamesBySize: [''],
-      giftItems: [''],
       internalNotes: [''],
       customerNotes: [''],
       productInfo: this.fb.group({
-        productName: ['', Validators.required],
-        material: [''],
-        colorMain: [''],
-        colorSub: [''],
-        styleForm: [''],
-        styleSpec: [''],
+        collectionId: [''],
+        materialId: [''],
+        mainColorId: [''],
+        accentColorId: [''],
+        formId: [''],
+        specificationId: [''],
         unitPrice: [0, [Validators.min(0)]],
         itemDiscountPercent: [0, [Validators.min(0), Validators.max(100)]],
       }),
@@ -106,9 +119,11 @@ export class OrderFormComponent implements OnInit {
     forkJoin({
       customers: this.customerService.getCustomers({ page: 1, pageSize: 200 }),
       colors: this.designService.getAllColorFabrics(),
-      materials: this.designService.getActiveShirtComponentsByType(ComponentType.Fabric),
-      shirtForms: this.designService.getActiveShirtComponentsByType(ComponentType.Form),
-      styleSpecs: this.designService.getActiveShirtComponentsByType(ComponentType.StyleSpec),
+      materials: this.settingsService.getLookups('materials'),
+      shirtForms: this.settingsService.getLookups('product-forms'),
+      styleSpecs: this.settingsService.getLookups('product-specifications'),
+      collections: this.settingsService.getCollections(),
+      productionDaysOptions: this.settingsService.getProductionDaysOptions(),
       users: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true }),
       designers: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true, role: 'Designer' })
     }).subscribe({
@@ -118,8 +133,12 @@ export class OrderFormComponent implements OnInit {
         this.materials = res.materials || [];
         this.shirtForms = res.shirtForms || [];
         this.styleSpecs = res.styleSpecs || [];
+        this.collections = res.collections || [];
+        this.productionDaysOptions = (res.productionDaysOptions || []).filter(o => o.isActive);
         this.users = res.users?.items || [];
         this.designers = res.designers?.items || [];
+
+        this.resetAttributeFilters();
 
         if (this.isEditMode) {
           this.loadOrder();
@@ -131,10 +150,57 @@ export class OrderFormComponent implements OnInit {
         }
       }
     });
+
+    this.orderForm.get('productionDaysOptionId')?.valueChanges.subscribe(() => this.recalcDates());
+    this.orderForm.get('orderDate')?.valueChanges.subscribe(() => this.recalcDates());
+    this.orderForm.get('productInfo.collectionId')?.valueChanges.subscribe((id: string) => this.onCollectionChange(id));
   }
 
-  get items(): FormArray {
-    return this.orderForm.get('items') as FormArray;
+  get items(): FormArray { return this.orderForm.get('items') as FormArray; }
+
+  private resetAttributeFilters(): void {
+    this.filteredMaterials = this.materials;
+    this.filteredColors = this.colorFabrics;
+    this.filteredForms = this.shirtForms;
+    this.filteredSpecs = this.styleSpecs;
+  }
+
+  onCollectionChange(collectionId: string): void {
+    const col = this.collections.find(c => c.id === collectionId);
+    if (!col) { this.resetAttributeFilters(); return; }
+    this.filteredMaterials = this.materials.filter(m => col.materialIds.includes(m.id));
+    this.filteredColors = this.colorFabrics.filter(c => col.colorFabricIds.includes(c.id));
+    this.filteredForms = this.shirtForms.filter(f => col.formIds.includes(f.id));
+    this.filteredSpecs = this.styleSpecs.filter(s => col.specificationIds.includes(s.id));
+
+    // Clear selections not in filtered set
+    const pi = this.orderForm.get('productInfo');
+    const clearIfMissing = (key: string, arr: { id: string }[]) => {
+      const v = pi?.get(key)?.value;
+      if (v && !arr.find(x => x.id === v)) pi?.get(key)?.setValue('');
+    };
+    clearIfMissing('materialId', this.filteredMaterials);
+    clearIfMissing('mainColorId', this.filteredColors);
+    clearIfMissing('accentColorId', this.filteredColors);
+    clearIfMissing('formId', this.filteredForms);
+    clearIfMissing('specificationId', this.filteredSpecs);
+  }
+
+  private recalcDates(): void {
+    const optId = this.orderForm.get('productionDaysOptionId')?.value;
+    const orderDateStr = this.orderForm.get('orderDate')?.value;
+    if (!optId || !orderDateStr) {
+      this.orderForm.get('completionDate')?.setValue('');
+      this.orderForm.get('returnDate')?.setValue('');
+      return;
+    }
+    const opt = this.productionDaysOptions.find(o => o.id === optId);
+    if (!opt) return;
+    const base = new Date(orderDateStr);
+    const completion = new Date(base); completion.setDate(base.getDate() + opt.days);
+    const ret = new Date(completion); ret.setDate(completion.getDate() + 1);
+    this.orderForm.get('completionDate')?.setValue(this.formatDate(completion));
+    this.orderForm.get('returnDate')?.setValue(this.formatDate(ret));
   }
 
   loadDealsForCustomer(customerId: string): void {
@@ -180,9 +246,7 @@ export class OrderFormComponent implements OnInit {
     this.showCustomerDropdown = true;
   }
 
-  onCustomerBlur(): void {
-    setTimeout(() => { this.showCustomerDropdown = false; }, 150);
-  }
+  onCustomerBlur(): void { setTimeout(() => { this.showCustomerDropdown = false; }, 150); }
 
   selectCustomer(customer: Customer): void {
     this.customerSearchText = this.getCustomerDisplayName(customer);
@@ -216,8 +280,10 @@ export class OrderFormComponent implements OnInit {
           customerId: order.customerId,
           dealId: order.dealId || '',
           orderDate: this.formatDate(new Date(order.orderDate)),
+          productionDaysOptionId: order.productionDaysOptionId || '',
           completionDate: order.completionDate ? this.formatDate(new Date(order.completionDate)) : '',
           returnDate: order.returnDate ? this.formatDate(new Date(order.returnDate)) : '',
+          depositCode: order.depositCode || '',
           assignedToUserId: order.assignedToUserId || '',
           designerUserId: order.designerUserId || '',
           deliveryAddress: order.deliveryAddress || '',
@@ -231,44 +297,30 @@ export class OrderFormComponent implements OnInit {
           shippingFee: order.shippingFee || 0,
           paymentMethod: order.paymentMethod || '',
           styleNotes: order.styleNotes || '',
-          personNamesBySize: order.personNamesBySize || '',
-          giftItems: order.giftItems || '',
           internalNotes: order.internalNotes || '',
           customerNotes: order.customerNotes || ''
         });
 
-        // Customer display name
         const selectedCustomer = this.customers.find(c => c.id === order.customerId);
-        if (selectedCustomer) {
-          this.customerSearchText = this.getCustomerDisplayName(selectedCustomer);
-        } else if (order.customerName) {
-          this.customerSearchText = order.customerName;
-        }
+        if (selectedCustomer) this.customerSearchText = this.getCustomerDisplayName(selectedCustomer);
+        else if (order.customerName) this.customerSearchText = order.customerName;
         this.loadDealsForCustomer(order.customerId);
 
-        // Populate productInfo from first item
         const firstItem = order.items[0];
         if (firstItem) {
-          // Parse styleNotes back to productInfo fields
-          const styleMap: Record<string, string> = {};
-          (order.styleNotes || '').split('|').forEach(p => {
-            const i = p.indexOf(':');
-            if (i > -1) styleMap[p.slice(0, i).trim().toLowerCase()] = p.slice(i + 1).trim();
-          });
-
           this.orderForm.get('productInfo')?.patchValue({
-            productName: firstItem.productName || '',
-            material: styleMap['chất liệu'] || firstItem.material || '',
-            colorMain: styleMap['màu chính'] || firstItem.color || '',
-            colorSub: styleMap['màu phối'] || '',
-            styleForm: styleMap['form'] || '',
-            styleSpec: styleMap['quy cách'] || '',
+            collectionId: firstItem.collectionId || '',
+            materialId: firstItem.materialId || '',
+            mainColorId: firstItem.mainColorId || '',
+            accentColorId: firstItem.accentColorId || '',
+            formId: firstItem.formId || '',
+            specificationId: firstItem.specificationId || '',
             unitPrice: firstItem.unitPrice || 0,
             itemDiscountPercent: firstItem.discountPercent || 0,
           });
+          if (firstItem.collectionId) this.onCollectionChange(firstItem.collectionId);
         }
 
-        // Populate sizeQty from items
         this.sizeQty = {};
         order.items.forEach(item => {
           if (item.size) {
@@ -284,25 +336,6 @@ export class OrderFormComponent implements OnInit {
     });
   }
 
-  createItemFormGroup(): FormGroup {
-    return this.fb.group({
-      productName: ['', [Validators.required]],
-      productCode: [''],
-      description: [''],
-      size: [''],
-      color: [''],
-      material: [''],
-      quantity: [1, [Validators.required, Validators.min(1)]],
-      unit: ['cái'],
-      unitPrice: [0, [Validators.required, Validators.min(0)]],
-      discountPercent: [0, [Validators.min(0), Validators.max(100)]],
-      notes: ['']
-    });
-  }
-
-  addItem(): void { this.items.push(this.createItemFormGroup()); }
-  removeItem(index: number): void { if (this.items.length > 1) this.items.removeAt(index); }
-
   calculateItemTotal(index: number): number {
     const item = this.items.at(index);
     const qty = item.get('quantity')?.value || 0;
@@ -312,9 +345,10 @@ export class OrderFormComponent implements OnInit {
   }
 
   calculateSubTotal(): number {
-    let total = 0;
-    for (let i = 0; i < this.items.length; i++) total += this.calculateItemTotal(i);
-    return total;
+    const pi = this.orderForm.get('productInfo')?.value || {};
+    const totalQty = this.getTotalQtyInput();
+    const disc = pi.itemDiscountPercent || 0;
+    return totalQty * (pi.unitPrice || 0) * (1 - disc / 100);
   }
 
   calculateDiscountAmount(): number {
@@ -340,14 +374,15 @@ export class OrderFormComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const f = this.orderForm.value;
+    const f = this.orderForm.getRawValue();
+    const pi = f.productInfo || {};
     const orderData = {
       customerId: f.customerId || undefined,
       customerName: !f.customerId ? this.customerSearchText || undefined : undefined,
       dealId: f.dealId || null,
       orderDate: f.orderDate ? new Date(f.orderDate) : undefined,
-      completionDate: f.completionDate ? new Date(f.completionDate) : undefined,
-      returnDate: f.returnDate ? new Date(f.returnDate) : undefined,
+      productionDaysOptionId: f.productionDaysOptionId || undefined,
+      depositCode: f.depositCode || undefined,
       assignedToUserId: f.assignedToUserId || undefined,
       designerUserId: f.designerUserId || undefined,
       deliveryAddress: f.deliveryAddress,
@@ -360,21 +395,23 @@ export class OrderFormComponent implements OnInit {
       taxPercent: f.taxPercent,
       shippingFee: f.shippingFee,
       paymentMethod: f.paymentMethod,
-      styleNotes: this.buildStyleNotes(f),
-      personNamesBySize: f.personNamesBySize || undefined,
-      giftItems: f.giftItems || undefined,
+      styleNotes: f.styleNotes,
       internalNotes: f.internalNotes,
       customerNotes: f.customerNotes,
       items: this.SIZE_LIST
         .filter(s => (this.sizeQty[s] || 0) > 0)
-        .map((s, index) => ({
-          productName: f.productInfo?.productName || 'Sản phẩm',
+        .map(s => ({
+          collectionId: pi.collectionId || undefined,
+          materialId: pi.materialId || undefined,
+          mainColorId: pi.mainColorId || undefined,
+          accentColorId: pi.accentColorId || undefined,
+          formId: pi.formId || undefined,
+          specificationId: pi.specificationId || undefined,
           size: s,
           quantity: this.sizeQty[s],
           unit: 'cái',
-          unitPrice: f.productInfo?.unitPrice || 0,
-          discountPercent: f.productInfo?.itemDiscountPercent || 0,
-          sortOrder: index
+          unitPrice: pi.unitPrice || 0,
+          discountPercent: pi.itemDiscountPercent || 0,
         } as CreateOrderItemRequest))
     };
 
@@ -393,16 +430,5 @@ export class OrderFormComponent implements OnInit {
 
   cancel(): void { this.router.navigate(['/orders']); }
 
-  private buildStyleNotes(f: any): string {
-    const pi = f.productInfo || {};
-    const parts: string[] = [];
-    if (pi.material)   parts.push(`Chất liệu: ${pi.material}`);
-    if (pi.colorMain)  parts.push(`Màu chính: ${pi.colorMain}`);
-    if (pi.colorSub)   parts.push(`Màu phối: ${pi.colorSub}`);
-    if (pi.styleForm)  parts.push(`Form: ${pi.styleForm}`);
-    if (pi.styleSpec)  parts.push(`Quy cách: ${pi.styleSpec}`);
-    if (f.styleNotes)  parts.push(f.styleNotes);
-    return parts.join(' | ') || '';
-  }
   get f() { return this.orderForm.controls; }
 }

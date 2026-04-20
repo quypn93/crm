@@ -19,11 +19,18 @@ public static class RoleNames
 
     // Production
     public const string ProductionManager = "ProductionManager";
-    public const string ProductionStaff = "ProductionStaff";
+    public const string ProductionStaff = "ProductionStaff"; // generic fallback, giữ tương thích
+
+    // Production stage-specific roles (mỗi khâu 1 role)
+    public const string CuttingStaff    = "CuttingStaff";    // Cắt vải
+    public const string SewingStaff     = "SewingStaff";     // May
+    public const string PrintingStaff   = "PrintingStaff";   // In / Thêu logo
+    public const string FinishingStaff  = "FinishingStaff";  // Hoàn thiện (vệ sinh, cắt chỉ)
+    public const string PackagingStaff  = "PackagingStaff";  // Đóng gói
 
     // Quality Control
     public const string QualityManager = "QualityManager";
-    public const string QualityControl = "QualityControl";
+    public const string QualityControl = "QualityControl"; // Kiểm tra chất lượng
 
     // Delivery
     public const string DeliveryManager = "DeliveryManager";
@@ -38,18 +45,27 @@ public static class RoleNames
         Admin,
         SalesManager, SalesRep,
         ProductionManager, ProductionStaff,
+        CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff,
         QualityManager, QualityControl,
         DeliveryManager, DeliveryStaff,
         DesignManager, Designer
     };
     public static readonly string[] SalesRoles = { Admin, SalesManager, SalesRep };
     public static readonly string[] ManagerRoles = { Admin, SalesManager };
-    public static readonly string[] ProductionRoles = { Admin, ProductionManager, ProductionStaff };
+    public static readonly string[] ProductionRoles = {
+        Admin, ProductionManager, ProductionStaff,
+        CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff
+    };
+    // Các role chuyên môn hóa cho từng khâu sản xuất
+    public static readonly string[] ProductionStageRoles = {
+        CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff
+    };
     public static readonly string[] QualityRoles = { Admin, QualityManager, QualityControl };
     public static readonly string[] DeliveryRoles = { Admin, DeliveryManager, DeliveryStaff };
     public static readonly string[] DesignRoles = { Admin, DesignManager, Designer };
     public static readonly string[] OperationalRoles = {
         Admin, ProductionManager, ProductionStaff,
+        CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff,
         QualityManager, QualityControl,
         DeliveryManager, DeliveryStaff
     };

@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { ApiService } from './api.service';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiService, ApiResponse } from './api.service';
 
 export interface ProductionStage {
   id: string;
@@ -59,7 +61,7 @@ export interface CompleteProductionStepDto {
 
 @Injectable({ providedIn: 'root' })
 export class ProductionService {
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private http: HttpClient) {}
 
   // ── Stage management ───────────────────────────────────────────────
   getStages(): Observable<ProductionStage[]> {
@@ -101,12 +103,23 @@ export class ProductionService {
   }
 
   // ── QR scan (mobile) ───────────────────────────────────────────────
+  // Dùng HttpClient trực tiếp với header X-Silent-Auth: token được đính kèm
+  // nếu có, nhưng 401 sẽ propagate ra component thay vì kích hoạt logout
+  // (tránh redirect login khi khách quét QR công khai).
   getProgressByToken(token: string): Observable<OrderProductionProgress> {
-    return this.api.get<OrderProductionProgress>(`production/scan/${token}`);
+    return this.http
+      .get<ApiResponse<OrderProductionProgress>>(`${environment.apiUrl}/production/scan/${token}`, {
+        headers: { 'X-Silent-Auth': '1' }
+      })
+      .pipe(map(r => r.data));
   }
 
   completeStepByToken(token: string, stageId: string, dto: CompleteProductionStepDto): Observable<OrderProductionStep> {
-    return this.api.post<OrderProductionStep>(`production/scan/${token}/steps/${stageId}/complete`, dto);
+    return this.http
+      .post<ApiResponse<OrderProductionStep>>(`${environment.apiUrl}/production/scan/${token}/steps/${stageId}/complete`, dto, {
+        headers: { 'X-Silent-Auth': '1' }
+      })
+      .pipe(map(r => r.data));
   }
 
   // ── Helper ─────────────────────────────────────────────────────────

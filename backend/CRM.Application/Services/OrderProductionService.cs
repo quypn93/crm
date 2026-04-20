@@ -1,6 +1,7 @@
 using AutoMapper;
 using CRM.Application.DTOs.Production;
 using CRM.Application.Interfaces;
+using CRM.Core.Entities;
 using CRM.Core.Enums;
 using CRM.Core.Interfaces;
 
@@ -55,6 +56,8 @@ public class OrderProductionService : IOrderProductionService
         if (step.IsCompleted)
             throw new InvalidOperationException("Bước này đã được hoàn thành.");
 
+        await EnsureUserAuthorizedForStageAsync(userId, step.ProductionStage);
+
         step.IsCompleted = true;
         step.CompletedByUserId = userId;
         step.CompletedAt = DateTime.UtcNow;
@@ -100,6 +103,46 @@ public class OrderProductionService : IOrderProductionService
     }
 
     // ---------------------------------------------------------------
+    // Kiểm tra user có đúng role phụ trách khâu này không.
+    // Override: Admin và ProductionManager có thể complete bất kỳ khâu nào.
+    // Fallback: ProductionStaff (đa năng) có thể làm các khâu sản xuất (không phải QC).
+    private async Task EnsureUserAuthorizedForStageAsync(Guid userId, ProductionStage? stage)
+    {
+        if (stage == null) return;
+        var required = stage.ResponsibleRole;
+        if (string.IsNullOrWhiteSpace(required)) return;
+
+        var user = await _unitOfWork.Users.GetByIdWithRolesAsync(userId)
+            ?? throw new UnauthorizedAccessException("Không xác định được người dùng.");
+
+        var roles = user.UserRoles
+            .Select(ur => ur.Role?.Name)
+            .Where(n => !string.IsNullOrEmpty(n))
+            .Cast<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        // Override cho cấp quản lý
+        if (roles.Contains(RoleNames.Admin) || roles.Contains(RoleNames.ProductionManager))
+            return;
+
+        // Đúng role phụ trách
+        if (roles.Contains(required))
+            return;
+
+        // ProductionStaff đa năng được phép làm các khâu sản xuất (trừ QC)
+        var isQcStage = required.Equals(RoleNames.QualityControl, StringComparison.OrdinalIgnoreCase)
+                     || required.Equals(RoleNames.QualityManager, StringComparison.OrdinalIgnoreCase);
+        if (!isQcStage && roles.Contains(RoleNames.ProductionStaff))
+            return;
+
+        // QualityManager có thể làm khâu QC
+        if (isQcStage && roles.Contains(RoleNames.QualityManager))
+            return;
+
+        throw new UnauthorizedAccessException(
+            $"Bạn không có quyền hoàn thành khâu '{stage.StageName}'. Yêu cầu role: {required}.");
+    }
+
     private static OrderProductionProgressDto BuildProgressDto(
         Guid orderId, string orderNumber, string? customerName, int orderStatus,
         List<Core.Entities.OrderProductionStep> steps)

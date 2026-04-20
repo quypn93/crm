@@ -27,6 +27,12 @@ export class SidebarComponent implements OnInit {
     { label: 'Báo cáo', icon: 'chart', route: '/reports', roles: RoleGroups.ManagerRoles },
     { label: 'Form áo', icon: 'list', route: '/catalog/forms', roles: RoleGroups.ManagerRoles },
     { label: 'Quy cách', icon: 'list', route: '/catalog/style-specs', roles: RoleGroups.ManagerRoles },
+    { label: 'Bộ sưu tập', icon: 'fabric', route: '/settings/collections', roles: [RoleNames.Admin], exact: true },
+    { label: 'Chất liệu', icon: 'fabric', route: '/settings/materials', roles: [RoleNames.Admin], exact: true },
+    { label: 'Form áo', icon: 'list', route: '/settings/product-forms', roles: [RoleNames.Admin], exact: true },
+    { label: 'Quy cách', icon: 'list', route: '/settings/product-specifications', roles: [RoleNames.Admin], exact: true },
+    { label: 'Thời gian SX', icon: 'check-circle', route: '/settings/production-days', roles: [RoleNames.Admin], exact: true },
+    { label: 'Lịch sử cộng tiền', icon: 'chart', route: '/settings/deposits', roles: RoleGroups.SalesRoles, exact: true },
     { label: 'Người dùng', icon: 'user-manage', route: '/settings/users', roles: [RoleNames.Admin], exact: false },
     { label: 'Vai trò', icon: 'shield', route: '/settings/roles', roles: [RoleNames.Admin], exact: true },
     { label: 'Cài đặt', icon: 'settings', route: '/settings', roles: [RoleNames.Admin], exact: true }

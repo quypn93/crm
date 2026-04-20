@@ -27,6 +27,17 @@ public class OrderDto
     public DateTime? ReturnDate { get; set; }
     public DateTime? ActualDeliveryDate { get; set; }
 
+    // Production days option
+    public Guid? ProductionDaysOptionId { get; set; }
+    public int? ProductionDays { get; set; }
+    public string? ProductionDaysOptionName { get; set; }
+
+    // Deposit
+    public string? DepositCode { get; set; }
+
+    // Designer upload
+    public string? DesignImageUrl { get; set; }
+
     public string? ShippingAddress { get; set; }
     public string? ShippingCity { get; set; }
     public string? ShippingPhone { get; set; }
@@ -41,8 +52,6 @@ public class OrderDto
     public string? Notes { get; set; }
     public string? InternalNotes { get; set; }
     public string? StyleNotes { get; set; }
-    public string? PersonNamesBySize { get; set; }
-    public string? GiftItems { get; set; }
 
     public Guid CreatedByUserId { get; set; }
     public string? CreatedByUserName { get; set; }
@@ -90,12 +99,21 @@ public class OrderItemDto
 {
     public Guid Id { get; set; }
     public Guid OrderId { get; set; }
-    public string ProductName { get; set; } = string.Empty;
+    public Guid? CollectionId { get; set; }
+    public string? CollectionName { get; set; }
     public string? ProductCode { get; set; }
     public string? Description { get; set; }
     public string? Size { get; set; }
-    public string? Color { get; set; }
-    public string? Material { get; set; }
+    public Guid? MainColorId { get; set; }
+    public Guid? AccentColorId { get; set; }
+    public Guid? MaterialId { get; set; }
+    public Guid? FormId { get; set; }
+    public Guid? SpecificationId { get; set; }
+    public string? MainColorName { get; set; }
+    public string? AccentColorName { get; set; }
+    public string? MaterialName { get; set; }
+    public string? FormName { get; set; }
+    public string? SpecificationName { get; set; }
     public int Quantity { get; set; }
     public string Unit { get; set; } = "cái";
     public decimal UnitPrice { get; set; }
@@ -113,6 +131,8 @@ public class CreateOrderDto
     public DateTime? ExpectedDeliveryDate { get; set; }
     public DateTime? CompletionDate { get; set; }
     public DateTime? ReturnDate { get; set; }
+    public Guid? ProductionDaysOptionId { get; set; }
+    public string? DepositCode { get; set; }
     public string? ShippingAddress { get; set; }
     public string? ShippingCity { get; set; }
     public string? ShippingPhone { get; set; }
@@ -122,8 +142,6 @@ public class CreateOrderDto
     public string? Notes { get; set; }
     public string? InternalNotes { get; set; }
     public string? StyleNotes { get; set; }
-    public string? PersonNamesBySize { get; set; }
-    public string? GiftItems { get; set; }
     public Guid? AssignedToUserId { get; set; }
     public Guid? DesignerUserId { get; set; }
     public List<CreateOrderItemDto> Items { get; set; } = new();
@@ -131,12 +149,15 @@ public class CreateOrderDto
 
 public class CreateOrderItemDto
 {
-    public string ProductName { get; set; } = string.Empty;
+    public Guid? CollectionId { get; set; }
     public string? ProductCode { get; set; }
     public string? Description { get; set; }
     public string? Size { get; set; }
-    public string? Color { get; set; }
-    public string? Material { get; set; }
+    public Guid? MainColorId { get; set; }
+    public Guid? AccentColorId { get; set; }
+    public Guid? MaterialId { get; set; }
+    public Guid? FormId { get; set; }
+    public Guid? SpecificationId { get; set; }
     public int Quantity { get; set; }
     public string Unit { get; set; } = "cái";
     public decimal UnitPrice { get; set; }

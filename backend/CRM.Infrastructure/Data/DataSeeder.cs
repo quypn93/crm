@@ -25,6 +25,9 @@ public static class DataSeeder
 
         await SeedProductionStagesAsync(context);
         await context.SaveChangesAsync();
+
+        await SeedLookupsAsync(context);
+        await context.SaveChangesAsync();
     }
 
     private static async Task SeedDealStagesAsync(CrmDbContext context)
@@ -87,6 +90,33 @@ public static class DataSeeder
             MakeUser("worker4@crm.com", "Worker@123", "Worker", "4", "0923001004"),
             MakeUser("worker5@crm.com", "Worker@123", "Worker", "5", "0923001005"),
         }, RoleNames.ProductionStaff);
+
+        // ─── Nhân viên chuyên môn theo khâu (mỗi khâu một role) ────────────
+        await AddUsers(new[] {
+            MakeUser("cutting1@crm.com", "Cutting@123", "Cutting", "1", "0923101001"),
+            MakeUser("cutting2@crm.com", "Cutting@123", "Cutting", "2", "0923101002"),
+        }, RoleNames.CuttingStaff);
+
+        await AddUsers(new[] {
+            MakeUser("sewing1@crm.com", "Sewing@123", "Sewing", "1", "0923102001"),
+            MakeUser("sewing2@crm.com", "Sewing@123", "Sewing", "2", "0923102002"),
+            MakeUser("sewing3@crm.com", "Sewing@123", "Sewing", "3", "0923102003"),
+        }, RoleNames.SewingStaff);
+
+        await AddUsers(new[] {
+            MakeUser("printing1@crm.com", "Printing@123", "Printing", "1", "0923103001"),
+            MakeUser("printing2@crm.com", "Printing@123", "Printing", "2", "0923103002"),
+        }, RoleNames.PrintingStaff);
+
+        await AddUsers(new[] {
+            MakeUser("finishing1@crm.com", "Finishing@123", "Finishing", "1", "0923104001"),
+            MakeUser("finishing2@crm.com", "Finishing@123", "Finishing", "2", "0923104002"),
+        }, RoleNames.FinishingStaff);
+
+        await AddUsers(new[] {
+            MakeUser("packaging1@crm.com", "Packaging@123", "Packaging", "1", "0923105001"),
+            MakeUser("packaging2@crm.com", "Packaging@123", "Packaging", "2", "0923105002"),
+        }, RoleNames.PackagingStaff);
 
         await AddUser(MakeUser("quality.manager@crm.com",   "Manager@123", "Pham",  "Chat Luong", "0934000001"), RoleNames.QualityManager);
         await AddUsers(new[] {
@@ -247,13 +277,131 @@ public static class DataSeeder
 
         var stages = new List<ProductionStage>
         {
-            new() { StageOrder = 1, StageName = "Cắt vải",                        Description = "Cắt vải theo đúng size và số lượng",           ResponsibleRole = RoleNames.ProductionManager, IsActive = true },
-            new() { StageOrder = 2, StageName = "May",                             Description = "May thành phẩm theo kiểu dáng yêu cầu",         ResponsibleRole = RoleNames.ProductionManager, IsActive = true },
-            new() { StageOrder = 3, StageName = "In / Thêu logo",                 Description = "In hoặc thêu logo, tên riêng theo thiết kế",     ResponsibleRole = RoleNames.ProductionManager, IsActive = true },
-            new() { StageOrder = 4, StageName = "Hoàn thiện (vệ sinh, cắt chỉ)", Description = "Vệ sinh sản phẩm, cắt chỉ thừa, là phẳng",       ResponsibleRole = RoleNames.ProductionManager, IsActive = true },
-            new() { StageOrder = 5, StageName = "Kiểm tra chất lượng",            Description = "Kiểm tra chất lượng trước khi đóng gói",         ResponsibleRole = RoleNames.QualityControl,    IsActive = true },
-            new() { StageOrder = 6, StageName = "Đóng gói",                       Description = "Đóng gói sản phẩm, chuẩn bị giao hàng",          ResponsibleRole = RoleNames.ProductionManager, IsActive = true },
+            new() { StageOrder = 1, StageName = "Cắt vải",                        Description = "Cắt vải theo đúng size và số lượng",           ResponsibleRole = RoleNames.CuttingStaff,   IsActive = true },
+            new() { StageOrder = 2, StageName = "May",                             Description = "May thành phẩm theo kiểu dáng yêu cầu",         ResponsibleRole = RoleNames.SewingStaff,    IsActive = true },
+            new() { StageOrder = 3, StageName = "In / Thêu logo",                 Description = "In hoặc thêu logo, tên riêng theo thiết kế",     ResponsibleRole = RoleNames.PrintingStaff,  IsActive = true },
+            new() { StageOrder = 4, StageName = "Hoàn thiện (vệ sinh, cắt chỉ)", Description = "Vệ sinh sản phẩm, cắt chỉ thừa, là phẳng",       ResponsibleRole = RoleNames.FinishingStaff, IsActive = true },
+            new() { StageOrder = 5, StageName = "Kiểm tra chất lượng",            Description = "Kiểm tra chất lượng trước khi đóng gói",         ResponsibleRole = RoleNames.QualityControl, IsActive = true },
+            new() { StageOrder = 6, StageName = "Đóng gói",                       Description = "Đóng gói sản phẩm, chuẩn bị giao hàng",          ResponsibleRole = RoleNames.PackagingStaff, IsActive = true },
         };
         context.ProductionStages.AddRange(stages);
+    }
+
+    private static async Task SeedLookupsAsync(CrmDbContext context)
+    {
+        // ── ProductionDaysOptions ─────────────────────────────────────
+        if (!await context.ProductionDaysOptions.AnyAsync())
+        {
+            context.ProductionDaysOptions.AddRange(
+                new ProductionDaysOption { Name = "Nhanh (7 ngày)",      Days = 7,  IsActive = true },
+                new ProductionDaysOption { Name = "Tiêu chuẩn (15 ngày)", Days = 15, IsActive = true },
+                new ProductionDaysOption { Name = "Thường (20 ngày)",    Days = 20, IsActive = true },
+                new ProductionDaysOption { Name = "Chậm (30 ngày)",      Days = 30, IsActive = true }
+            );
+        }
+
+        // ── Materials ─────────────────────────────────────────────────
+        if (!await context.Materials.AnyAsync())
+        {
+            context.Materials.AddRange(
+                new Material { Name = "Cotton 100%",                    IsActive = true },
+                new Material { Name = "Cotton pha (CVC)",               IsActive = true },
+                new Material { Name = "TC (65% Polyester, 35% Cotton)", IsActive = true },
+                new Material { Name = "Kate",                           IsActive = true },
+                new Material { Name = "Thun cá sấu",                    IsActive = true },
+                new Material { Name = "Thun cotton",                    IsActive = true },
+                new Material { Name = "Mè bóng",                        IsActive = true },
+                new Material { Name = "Coolmate",                       IsActive = true }
+            );
+        }
+
+        // ── ProductForms (dáng áo) ────────────────────────────────────
+        if (!await context.ProductForms.AnyAsync())
+        {
+            context.ProductForms.AddRange(
+                new ProductForm { Name = "Ôm (Slim Fit)",     IsActive = true },
+                new ProductForm { Name = "Vừa (Regular Fit)", IsActive = true },
+                new ProductForm { Name = "Rộng (Loose Fit)",  IsActive = true }
+            );
+        }
+
+        // ── ProductSpecifications (cổ / tay / chi tiết) ───────────────
+        if (!await context.ProductSpecifications.AnyAsync())
+        {
+            context.ProductSpecifications.AddRange(
+                new ProductSpecification { Name = "Cổ tròn, tay ngắn",       IsActive = true },
+                new ProductSpecification { Name = "Cổ tròn, tay dài",        IsActive = true },
+                new ProductSpecification { Name = "Cổ bẻ (polo), tay ngắn",  IsActive = true },
+                new ProductSpecification { Name = "Cổ bẻ (polo), tay dài",   IsActive = true },
+                new ProductSpecification { Name = "Cổ tim, tay ngắn",        IsActive = true },
+                new ProductSpecification { Name = "Cổ trụ, tay ngắn",        IsActive = true }
+            );
+        }
+
+        await context.SaveChangesAsync();
+
+        // ── Collections + links (phụ thuộc vào các lookup trên) ───────
+        if (!await context.Collections.AnyAsync())
+        {
+            var materials    = await context.Materials.ToListAsync();
+            var forms        = await context.ProductForms.ToListAsync();
+            var specs        = await context.ProductSpecifications.ToListAsync();
+            var colorFabrics = await context.ColorFabrics.ToListAsync();
+
+            Guid? Mid(string n) => materials.FirstOrDefault(x => x.Name == n)?.Id;
+            Guid? Fid(string n) => forms.FirstOrDefault(x => x.Name == n)?.Id;
+            Guid? Sid(string n) => specs.FirstOrDefault(x => x.Name == n)?.Id;
+            Guid? Cid(string n) => colorFabrics.FirstOrDefault(x => x.Name == n)?.Id;
+
+            void AddCollection(string name, string desc,
+                                string[] matNames, string[] formNames, string[] specNames, string[] colorNames)
+            {
+                var col = new Collection { Name = name, Description = desc, IsActive = true };
+                context.Collections.Add(col);
+                context.SaveChanges();
+
+                foreach (var m in matNames) { var id = Mid(m); if (id.HasValue)
+                    context.Set<CollectionMaterial>().Add(new CollectionMaterial { CollectionId = col.Id, MaterialId = id.Value }); }
+                foreach (var f in formNames) { var id = Fid(f); if (id.HasValue)
+                    context.Set<CollectionForm>().Add(new CollectionForm { CollectionId = col.Id, ProductFormId = id.Value }); }
+                foreach (var s in specNames) { var id = Sid(s); if (id.HasValue)
+                    context.Set<CollectionSpecification>().Add(new CollectionSpecification { CollectionId = col.Id, ProductSpecificationId = id.Value }); }
+                foreach (var c in colorNames) { var id = Cid(c); if (id.HasValue)
+                    context.Set<CollectionColor>().Add(new CollectionColor { CollectionId = col.Id, ColorFabricId = id.Value }); }
+                context.SaveChanges();
+            }
+
+            AddCollection(
+                "Bộ sưu tập cổ bẻ",
+                "Áo polo cổ bẻ, đa dạng chất liệu và màu sắc",
+                new[] { "Cotton 100%", "Cotton pha (CVC)", "Thun cá sấu" },
+                new[] { "Ôm (Slim Fit)", "Vừa (Regular Fit)" },
+                new[] { "Cổ bẻ (polo), tay ngắn", "Cổ bẻ (polo), tay dài" },
+                new[] { "Trắng", "Đen", "Xanh Dương", "Xanh Lá", "Đỏ" });
+
+            AddCollection(
+                "Bộ sưu tập cổ dệt",
+                "Áo polo cổ dệt cao cấp",
+                new[] { "Cotton 100%", "Thun cá sấu", "Coolmate" },
+                new[] { "Vừa (Regular Fit)" },
+                new[] { "Cổ bẻ (polo), tay ngắn" },
+                new[] { "Trắng", "Đen", "Xanh Lá", "Đỏ Đô", "Xanh Rêu" });
+
+            AddCollection(
+                "Bộ sưu tập cổ tròn",
+                "Áo thun cổ tròn căn bản",
+                new[] { "Cotton 100%", "TC (65% Polyester, 35% Cotton)", "Thun cotton" },
+                new[] { "Ôm (Slim Fit)", "Vừa (Regular Fit)", "Rộng (Loose Fit)" },
+                new[] { "Cổ tròn, tay ngắn", "Cổ tròn, tay dài" },
+                new[] { "Trắng", "Đen", "Xám", "Xanh Dương", "Đỏ", "Vàng" });
+
+            AddCollection(
+                "Bộ sưu tập đồng phục công sở",
+                "Áo sơ mi công sở, kate cao cấp",
+                new[] { "Kate" },
+                new[] { "Ôm (Slim Fit)", "Vừa (Regular Fit)" },
+                new[] { "Cổ trụ, tay ngắn" },
+                new[] { "Trắng", "Xanh Dương Nhạt", "Be/Kem" });
+        }
     }
 }

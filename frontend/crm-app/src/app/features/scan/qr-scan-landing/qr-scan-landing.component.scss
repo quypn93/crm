@@ -71,10 +71,40 @@
   font-size: 14px; cursor: pointer;
 }
 
+.btn-staff-login {
+  background: #fff;
+  color: #1e293b;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
 .scan-content {
   padding: 16px;
-  max-width: 600px;
+  max-width: 900px;
   margin: 0 auto;
+
+  // Order card fallback: shrink to fit viewport. Card is 1400px wide.
+  ::ng-deep .card-scroll-wrapper {
+    overflow: hidden;
+    background: transparent;
+    padding: 0;
+  }
+  ::ng-deep .card-root {
+    // override the 0.72 hardcoded scale to fit narrower containers
+    transform: scale(#{"calc(100vw / 1450)"});
+    transform-origin: top left;
+    margin-bottom: #{"calc((100vw / 1450 - 1) * 900px)"} !important;
+  }
+  @media (min-width: 920px) {
+    ::ng-deep .card-root {
+      transform: scale(0.62);
+      margin-bottom: -342px !important;
+    }
+  }
 }
 
 .order-card {

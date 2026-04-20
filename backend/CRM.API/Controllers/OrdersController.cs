@@ -165,7 +165,13 @@ public class OrdersController : ControllerBase
         }
         catch (Exception ex)
         {
-            return BadRequest(ApiResponse<OrderDto>.Fail(ex.Message));
+            // Log full details để debug "0 rows affected" — gỡ sau khi fix xong.
+            Console.WriteLine($"[OrderUpdate] FAILED for order {id}: {ex.GetType().Name}: {ex.Message}");
+            var inner = ex.InnerException;
+            while (inner != null) { Console.WriteLine($"  └─ inner {inner.GetType().Name}: {inner.Message}"); inner = inner.InnerException; }
+            Console.WriteLine(ex.StackTrace);
+            var fullMsg = ex.Message + (ex.InnerException != null ? $" | Inner: {ex.InnerException.Message}" : "");
+            return BadRequest(ApiResponse<OrderDto>.Fail(fullMsg));
         }
     }
 
@@ -270,6 +276,41 @@ public class OrdersController : ControllerBase
         {
             return BadRequest(ApiResponse.Fail(ex.Message));
         }
+    }
+
+    /// <summary>Designer upload ảnh thiết kế của đơn hàng.</summary>
+    [HttpPost("{id}/design-image")]
+    public async Task<ActionResult<ApiResponse<OrderDto>>> UploadDesignImage(Guid id, IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(ApiResponse<OrderDto>.Fail("Không có file."));
+
+        var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!allowed.Contains(ext))
+            return BadRequest(ApiResponse<OrderDto>.Fail("Định dạng ảnh không hỗ trợ."));
+
+        var uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "designs");
+        Directory.CreateDirectory(uploadsRoot);
+        var fileName = $"{id}_{DateTime.UtcNow:yyyyMMddHHmmss}{ext}";
+        var fullPath = Path.Combine(uploadsRoot, fileName);
+        using (var stream = System.IO.File.Create(fullPath))
+            await file.CopyToAsync(stream);
+
+        var url = $"/uploads/designs/{fileName}";
+        var result = await _orderService.SetDesignImageAsync(id, url);
+        return Ok(ApiResponse<OrderDto>.Ok(result, "Upload thành công."));
+    }
+
+    /// <summary>Khách xem đơn hàng qua QR token (read-only, không cần đăng nhập).</summary>
+    [HttpGet("public/by-token/{token}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<ApiResponse<OrderDto>>> GetPublicByToken(string token)
+    {
+        var order = await _orderService.GetByQrTokenAsync(token);
+        if (order == null)
+            return NotFound(ApiResponse<OrderDto>.Fail("Không tìm thấy đơn hàng."));
+        return Ok(ApiResponse<OrderDto>.Ok(order));
     }
 
     /// <summary>Sinh lại QR cho đơn hàng (backfill các đơn cũ)</summary>

@@ -1,0 +1,14 @@
+<div class="toast-stack" *ngIf="(toast.toasts$ | async) as list">
+  <div *ngFor="let t of list" class="toast" [class]="'toast-' + t.kind" role="status">
+    <span class="toast-icon" aria-hidden="true">
+      <ng-container [ngSwitch]="t.kind">
+        <ng-container *ngSwitchCase="'success'">✓</ng-container>
+        <ng-container *ngSwitchCase="'error'">✕</ng-container>
+        <ng-container *ngSwitchCase="'warning'">!</ng-container>
+        <ng-container *ngSwitchDefault>i</ng-container>
+      </ng-container>
+    </span>
+    <span class="toast-msg">{{ t.message }}</span>
+    <button type="button" class="toast-close" (click)="toast.dismiss(t.id)" aria-label="Đóng">×</button>
+  </div>
+</div>
