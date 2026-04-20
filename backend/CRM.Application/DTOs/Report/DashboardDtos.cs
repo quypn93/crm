@@ -3,18 +3,19 @@ namespace CRM.Application.DTOs.Report;
 public class DashboardStatsDto
 {
     public int TotalCustomers { get; set; }
-    public int TotalDeals { get; set; }
+    public int TotalOrders { get; set; }
     public int TotalTasks { get; set; }
     public decimal TotalRevenue { get; set; }
-    public int WonDealsCount { get; set; }
-    public int LostDealsCount { get; set; }
+    public int CompletedOrdersCount { get; set; }
+    public int CancelledOrdersCount { get; set; }
     public int PendingTasksCount { get; set; }
     public int OverdueTasksCount { get; set; }
-    public decimal ConversionRate { get; set; }
+    public decimal CompletionRate { get; set; }
     public decimal RevenueGrowth { get; set; }
     public int NewCustomersThisMonth { get; set; }
-    public int DealsInPipeline { get; set; }
-    public decimal PipelineValue { get; set; }
+    public int OrdersInProgress { get; set; }
+    public decimal InProgressOrdersValue { get; set; }
+    public int NewOrdersThisMonth { get; set; }
 }
 
 public class RevenueReportDto

@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
 import { StorageService } from './storage.service';
-import { User, LoginRequest, RegisterRequest, AuthResponse, RefreshTokenRequest } from '../models';
+import { User, LoginRequest, RegisterRequest, AuthResponse, RefreshTokenRequest, ChangePasswordRequest } from '../models';
 
 // Role constants matching backend
 export const RoleNames = {
@@ -85,6 +85,10 @@ export class AuthService {
     this.api.post('auth/logout', {}).subscribe({
       complete: () => this.clearAuth()
     });
+  }
+
+  changePassword(request: ChangePasswordRequest): Observable<void> {
+    return this.api.put<void>('auth/change-password', request);
   }
 
   private handleAuthResponse(response: AuthResponse): void {

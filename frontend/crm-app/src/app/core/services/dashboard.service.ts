@@ -4,17 +4,18 @@ import { ApiService } from './api.service';
 
 export interface DashboardStats {
   totalCustomers: number;
-  totalDeals: number;
+  totalOrders: number;
   totalTasks: number;
   totalRevenue: number;
-  wonDealsCount: number;
-  lostDealsCount: number;
+  completedOrdersCount: number;
+  cancelledOrdersCount: number;
   pendingTasksCount: number;
   overdueTasksCount: number;
-  conversionRate: number;
+  completionRate: number;
   newCustomersThisMonth: number;
-  dealsInPipeline: number;
-  pipelineValue: number;
+  ordersInProgress: number;
+  inProgressOrdersValue: number;
+  newOrdersThisMonth: number;
 }
 
 export interface RecentOrder {

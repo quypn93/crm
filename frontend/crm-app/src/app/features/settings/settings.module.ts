@@ -10,6 +10,7 @@ import { CollectionsAdminComponent } from './collections-admin/collections-admin
 import { ProductionDaysAdminComponent } from './production-days-admin/production-days-admin.component';
 import { DepositsAdminComponent } from './deposits-admin/deposits-admin.component';
 import { LookupsAdminComponent } from './lookups-admin/lookups-admin.component';
+import { ProfileComponent } from './profile/profile.component';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,8 @@ import { LookupsAdminComponent } from './lookups-admin/lookups-admin.component';
     CollectionsAdminComponent,
     ProductionDaysAdminComponent,
     DepositsAdminComponent,
-    LookupsAdminComponent
+    LookupsAdminComponent,
+    ProfileComponent
   ],
   imports: [
     CommonModule,

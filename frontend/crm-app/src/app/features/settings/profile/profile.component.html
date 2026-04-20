@@ -1,0 +1,137 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Hồ sơ cá nhân</h1>
+      <p class="subtitle">Thông tin tài khoản và bảo mật</p>
+    </div>
+  </div>
+
+  <div class="profile-layout">
+    <!-- Left column: User info -->
+    <div class="form-card">
+      <h2 class="card-title">Thông tin tài khoản</h2>
+
+      <div class="profile-identity" *ngIf="currentUser">
+        <div class="avatar">{{ getInitials() }}</div>
+        <div class="identity-text">
+          <div class="full-name">{{ currentUser.firstName }} {{ currentUser.lastName }}</div>
+          <div class="email">{{ currentUser.email }}</div>
+        </div>
+      </div>
+
+      <div class="info-grid" *ngIf="currentUser">
+        <div class="info-row">
+          <span class="info-label">Email</span>
+          <span class="info-value">{{ currentUser.email }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Số điện thoại</span>
+          <span class="info-value">{{ currentUser.phoneNumber || 'Chưa cập nhật' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Vai trò</span>
+          <span class="info-value">
+            <span
+              *ngFor="let role of currentUser.roles"
+              class="role-badge"
+              [ngClass]="getRoleBadgeClass(role)">
+              {{ getRoleLabel(role) }}
+            </span>
+            <span *ngIf="!currentUser.roles?.length" class="muted">Chưa phân vai trò</span>
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Trạng thái</span>
+          <span class="info-value">
+            <span class="status-badge" [class.active]="currentUser.isActive" [class.inactive]="!currentUser.isActive">
+              {{ currentUser.isActive ? 'Hoạt động' : 'Vô hiệu hóa' }}
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: Change password -->
+    <div class="form-card">
+      <h2 class="card-title">Đổi mật khẩu</h2>
+      <p class="card-subtitle">Cập nhật mật khẩu để bảo vệ tài khoản của bạn</p>
+
+      <form [formGroup]="passwordForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label>Mật khẩu hiện tại <span class="required">*</span></label>
+          <div class="password-wrapper">
+            <input
+              [type]="showCurrentPassword ? 'text' : 'password'"
+              formControlName="currentPassword"
+              placeholder="Nhập mật khẩu hiện tại"
+              [class.invalid]="f['currentPassword'].invalid && f['currentPassword'].touched">
+            <button type="button" class="toggle-visibility" (click)="showCurrentPassword = !showCurrentPassword">
+              {{ showCurrentPassword ? 'Ẩn' : 'Hiện' }}
+            </button>
+          </div>
+          <div class="error-msg" *ngIf="f['currentPassword'].errors?.['required'] && f['currentPassword'].touched">
+            Vui lòng nhập mật khẩu hiện tại
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Mật khẩu mới <span class="required">*</span></label>
+          <div class="password-wrapper">
+            <input
+              [type]="showNewPassword ? 'text' : 'password'"
+              formControlName="newPassword"
+              placeholder="Tối thiểu 6 ký tự"
+              [class.invalid]="f['newPassword'].invalid && f['newPassword'].touched">
+            <button type="button" class="toggle-visibility" (click)="showNewPassword = !showNewPassword">
+              {{ showNewPassword ? 'Ẩn' : 'Hiện' }}
+            </button>
+          </div>
+          <div class="error-msg" *ngIf="f['newPassword'].errors?.['required'] && f['newPassword'].touched">
+            Vui lòng nhập mật khẩu mới
+          </div>
+          <div class="error-msg" *ngIf="f['newPassword'].errors?.['minlength'] && f['newPassword'].touched">
+            Mật khẩu tối thiểu 6 ký tự
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Xác nhận mật khẩu mới <span class="required">*</span></label>
+          <div class="password-wrapper">
+            <input
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              formControlName="confirmNewPassword"
+              placeholder="Nhập lại mật khẩu mới"
+              [class.invalid]="(f['confirmNewPassword'].invalid || passwordForm.errors?.['passwordMismatch']) && f['confirmNewPassword'].touched">
+            <button type="button" class="toggle-visibility" (click)="showConfirmPassword = !showConfirmPassword">
+              {{ showConfirmPassword ? 'Ẩn' : 'Hiện' }}
+            </button>
+          </div>
+          <div class="error-msg" *ngIf="f['confirmNewPassword'].errors?.['required'] && f['confirmNewPassword'].touched">
+            Vui lòng xác nhận mật khẩu mới
+          </div>
+          <div class="error-msg" *ngIf="passwordForm.errors?.['passwordMismatch'] && f['confirmNewPassword'].touched && !f['confirmNewPassword'].errors?.['required']">
+            Mật khẩu xác nhận không khớp
+          </div>
+        </div>
+
+        <div class="error-banner" *ngIf="errorMessage">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          {{ errorMessage }}
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+            <svg *ngIf="isSaving" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+            </svg>
+            {{ isSaving ? 'Đang lưu...' : 'Đổi mật khẩu' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

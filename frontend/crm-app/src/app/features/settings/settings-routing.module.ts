@@ -8,9 +8,11 @@ import { CollectionsAdminComponent } from './collections-admin/collections-admin
 import { ProductionDaysAdminComponent } from './production-days-admin/production-days-admin.component';
 import { DepositsAdminComponent } from './deposits-admin/deposits-admin.component';
 import { LookupsAdminComponent } from './lookups-admin/lookups-admin.component';
+import { ProfileComponent } from './profile/profile.component';
 
 const routes: Routes = [
-  { path: '', redirectTo: 'users', pathMatch: 'full' },
+  { path: '', redirectTo: 'profile', pathMatch: 'full' },
+  { path: 'profile', component: ProfileComponent },
   { path: 'users', component: UserListComponent },
   { path: 'users/new', component: UserFormComponent },
   { path: 'users/:id/edit', component: UserFormComponent },

@@ -25,22 +25,17 @@ public class DashboardService : IDashboardService
         var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
         var totalCustomers = await _unitOfWork.Customers.CountAsync(c => c.IsActive);
-        var totalDeals = await _unitOfWork.Deals.CountAsync();
+        var totalOrders = await _unitOfWork.Orders.CountAsync();
         var totalTasks = await _unitOfWork.Tasks.CountAsync();
 
-        // Get won stage deals
-        var wonStage = await _unitOfWork.Deals.GetWonStageAsync();
-        var lostStage = await _unitOfWork.Deals.GetLostStageAsync();
+        // Completed orders (revenue-recognized)
+        var completedOrdersCount = await _unitOfWork.Orders.CountAsync(
+            o => o.Status == OrderStatus.Delivered || o.Status == OrderStatus.Completed);
 
-        var wonDealsCount = wonStage != null
-            ? await _unitOfWork.Deals.CountAsync(d => d.StageId == wonStage.Id)
-            : 0;
+        var cancelledOrdersCount = await _unitOfWork.Orders.GetOrderCountByStatusAsync(OrderStatus.Cancelled);
 
-        var lostDealsCount = lostStage != null
-            ? await _unitOfWork.Deals.CountAsync(d => d.StageId == lostStage.Id)
-            : 0;
-
-        var totalRevenue = await _unitOfWork.Deals.GetTotalRevenueAsync(null, null);
+        // Revenue from completed orders
+        var totalRevenue = await _unitOfWork.Orders.GetTotalRevenueAsync(null, null);
 
         var pendingTasksCount = await _unitOfWork.Tasks.GetPendingTasksCountAsync(userId);
         var overdueTasksCount = await _unitOfWork.Tasks.GetOverdueTasksCountAsync(userId);
@@ -49,30 +44,49 @@ public class DashboardService : IDashboardService
         var newCustomersThisMonth = await _unitOfWork.Customers.CountAsync(
             c => c.CreatedAt >= startOfMonth && c.IsActive);
 
-        // Deals in pipeline (not won or lost)
-        var dealsInPipeline = await _unitOfWork.Deals.GetDealsInPipelineCountAsync();
-        var pipelineValue = await _unitOfWork.Deals.GetPipelineValueAsync();
+        // New orders this month
+        var newOrdersThisMonth = await _unitOfWork.Orders.CountAsync(
+            o => o.OrderDate >= startOfMonth);
 
-        // Conversion rate
-        var totalClosedDeals = wonDealsCount + lostDealsCount;
-        var conversionRate = totalClosedDeals > 0
-            ? (decimal)wonDealsCount / totalClosedDeals * 100
+        // Orders in progress (confirmed → shipping)
+        var inProgressStatuses = new[]
+        {
+            OrderStatus.Confirmed,
+            OrderStatus.InProduction,
+            OrderStatus.QualityCheck,
+            OrderStatus.ReadyToShip,
+            OrderStatus.Shipping
+        };
+        var ordersInProgress = await _unitOfWork.Orders.CountAsync(
+            o => inProgressStatuses.Contains(o.Status));
+
+        decimal inProgressValue = 0;
+        foreach (var status in inProgressStatuses)
+        {
+            inProgressValue += await _unitOfWork.Orders.GetTotalAmountByStatusAsync(status);
+        }
+
+        // Completion rate
+        var totalClosedOrders = completedOrdersCount + cancelledOrdersCount;
+        var completionRate = totalClosedOrders > 0
+            ? (decimal)completedOrdersCount / totalClosedOrders * 100
             : 0;
 
         return new DashboardStatsDto
         {
             TotalCustomers = totalCustomers,
-            TotalDeals = totalDeals,
+            TotalOrders = totalOrders,
             TotalTasks = totalTasks,
             TotalRevenue = totalRevenue,
-            WonDealsCount = wonDealsCount,
-            LostDealsCount = lostDealsCount,
+            CompletedOrdersCount = completedOrdersCount,
+            CancelledOrdersCount = cancelledOrdersCount,
             PendingTasksCount = pendingTasksCount,
             OverdueTasksCount = overdueTasksCount,
-            ConversionRate = Math.Round(conversionRate, 2),
+            CompletionRate = Math.Round(completionRate, 2),
             NewCustomersThisMonth = newCustomersThisMonth,
-            DealsInPipeline = dealsInPipeline,
-            PipelineValue = pipelineValue
+            OrdersInProgress = ordersInProgress,
+            InProgressOrdersValue = inProgressValue,
+            NewOrdersThisMonth = newOrdersThisMonth
         };
     }
 
