@@ -227,6 +227,30 @@ $card-h:    900px;
   background: #f5f5f5;
 }
 
+// ── Card thiết kế (thay toàn bộ khung khi Designer đã upload) ──────────────
+// Dùng chung logic scale + layout-compensation với .card-root để khớp kích thước hiển thị.
+.card-design-wrapper {
+  width: $card-w;
+  height: $card-h;
+  transform-origin: top left;
+  transform: scale(var(--card-scale));
+  margin-right: calc(#{$card-w} * (var(--card-scale) - 1));
+  margin-bottom: calc(#{$card-h} * (var(--card-scale) - 1));
+  background: #fff;
+  border: 2px solid $red;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.card-design-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
 // ── Right column ─────────────────────────────────────────────
 .col-right {
   width: 560px;
@@ -529,6 +553,10 @@ $card-h:    900px;
 // ════════════════════════════════════════════════════════════
 .export-actions {
   margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
 
   .btn-export {
     display: inline-flex;

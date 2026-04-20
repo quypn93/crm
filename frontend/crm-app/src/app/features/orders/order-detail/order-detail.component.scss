@@ -865,6 +865,25 @@
 
 .date-highlight { color: #dc2626; font-weight: 600; }
 
+// ── Upload ảnh thiết kế (projected vào slot cạnh nút Xuất ảnh) ───────────
+.btn-upload-design {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: #15803d; }
+  &.disabled { opacity: 0.6; cursor: not-allowed; pointer-events: none; }
+}
+
 // ── Style notes ───────────────────────────────────────────────────────────
 .style-notes {
   font-size: 14px;

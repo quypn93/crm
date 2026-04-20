@@ -208,8 +208,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+// CORS phải nằm trước StaticFiles để ảnh /uploads có CORS headers
+// (cần cho crossorigin="anonymous" + html2canvas khi export ảnh đơn hàng).
 app.UseCors("AllowAngular");
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

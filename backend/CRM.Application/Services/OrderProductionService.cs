@@ -66,13 +66,14 @@ public class OrderProductionService : IOrderProductionService
         _unitOfWork.OrderProductionSteps.Update(step);
         await _unitOfWork.SaveChangesAsync();
 
-        // Nếu xong hết tất cả bước → tự động chuyển đơn sang QualityCheck
+        // QC giờ là khâu 5 trong flow production (không phải giai đoạn riêng).
+        // Khi xong hết tất cả 6 khâu (bao gồm QC + Đóng gói) → đơn hàng đã sẵn sàng giao.
         if (await _unitOfWork.OrderProductionSteps.AreAllStepsCompletedAsync(orderId))
         {
             var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
-            if (order != null && order.Status == OrderStatus.InProduction)
+            if (order != null && (order.Status == OrderStatus.InProduction || order.Status == OrderStatus.QualityCheck))
             {
-                order.Status = OrderStatus.QualityCheck;
+                order.Status = OrderStatus.ReadyToShip;
                 _unitOfWork.Orders.Update(order);
                 await _unitOfWork.SaveChangesAsync();
             }

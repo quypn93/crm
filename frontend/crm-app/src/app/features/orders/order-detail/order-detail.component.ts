@@ -5,6 +5,7 @@ import { OrderService } from '../../../core/services/order.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ProductionService, OrderProductionProgress } from '../../../core/services/production.service';
+import { environment } from '../../../../environments/environment';
 import {
   Order,
   OrderStatus,
@@ -365,21 +366,33 @@ export class OrderDetailComponent implements OnInit {
     this.isUploadingDesign = true;
     this.designUploadError = '';
     this.orderService.uploadDesignImage(this.order.id, file).subscribe({
-      next: (updated) => { this.order = updated; this.isUploadingDesign = false; input.value = ''; },
-      error: (err) => { this.isUploadingDesign = false; this.designUploadError = err.error?.message || 'Upload thất bại.'; }
+      next: (updated) => {
+        this.order = updated;
+        this.isUploadingDesign = false;
+        input.value = '';
+        this.toast.success('Đã cập nhật ảnh thiết kế.');
+      },
+      error: (err) => {
+        this.isUploadingDesign = false;
+        const msg = err?.error?.message || 'Upload thất bại.';
+        this.designUploadError = msg;
+        this.toast.error(msg);
+      }
     });
   }
 
   apiOrigin(): string {
-    // Static files served by API at the same origin as apiUrl (without /api suffix)
-    const url = (window as any).__env?.apiUrl || '';
+    // Static files (ví dụ /uploads/designs/...) được API serve cùng origin với apiUrl (bỏ đuôi /api).
+    const url = environment.apiUrl || '';
     return url.replace(/\/api\/?$/, '');
   }
 
   resolveImageUrl(path?: string): string {
     if (!path) return '';
     if (path.startsWith('http')) return path;
-    return this.apiOrigin() + path;
+    // path có thể là '/uploads/...' → prepend origin của API
+    const origin = this.apiOrigin();
+    return origin + (path.startsWith('/') ? path : '/' + path);
   }
 
   printOrder(): void {

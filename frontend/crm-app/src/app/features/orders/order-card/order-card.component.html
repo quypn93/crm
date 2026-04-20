@@ -1,5 +1,13 @@
 <div class="card-scroll-wrapper">
-  <div class="card-root" #cardRef>
+  <!-- Nếu có ảnh thiết kế → hiển thị ảnh thay cho khung card mặc định -->
+  <div *ngIf="order.designImageUrl" class="card-design-wrapper" #cardRef>
+    <img [src]="resolveImageUrl(order.designImageUrl)"
+         class="card-design-img"
+         alt="Ảnh thiết kế đơn hàng"
+         crossorigin="anonymous">
+  </div>
+
+  <div *ngIf="!order.designImageUrl" class="card-root" #cardRef>
 
     <!-- ═══ HEADER ═══ -->
     <div class="hdr">
@@ -162,7 +170,7 @@
   </div>
 </div>
 
-<!-- Export button -->
+<!-- Export button + slot cho action phụ (ví dụ: upload ảnh thiết kế của Designer) -->
 <div class="export-actions">
   <button class="btn-export" (click)="exportImage()" [disabled]="isRendering">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -172,4 +180,5 @@
     </svg>
     {{ isRendering ? 'Đang xuất...' : 'Xuất ảnh đơn hàng' }}
   </button>
+  <ng-content select="[slot=extra-actions]"></ng-content>
 </div>

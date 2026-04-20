@@ -61,7 +61,18 @@
   </div>
 
   <!-- Order Card Export -->
-  <app-order-card [order]="order"></app-order-card>
+  <app-order-card [order]="order">
+    <!-- Designer upload: đặt cạnh nút "Xuất ảnh" qua ng-content slot -->
+    <label slot="extra-actions" class="btn-upload-design" *ngIf="canUploadDesignImage()" [class.disabled]="isUploadingDesign">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      {{ isUploadingDesign ? 'Đang upload...' : (order.designImageUrl ? 'Thay ảnh thiết kế' : 'Upload ảnh thiết kế') }}
+      <input type="file" accept="image/*" hidden (change)="onDesignImageSelected($event)" [disabled]="isUploadingDesign">
+    </label>
+  </app-order-card>
 
   <div class="content-grid">
     <!-- Left Column -->
@@ -159,20 +170,16 @@
         <p class="style-notes">{{ order.styleNotes }}</p>
       </div>
 
-      <!-- Ảnh thiết kế (Designer upload) -->
-      <div class="info-card">
+      <!-- Ảnh thiết kế (Designer upload qua nút cạnh "Xuất ảnh đơn hàng" ở trên) -->
+      <div class="info-card" *ngIf="order.designImageUrl || canUploadDesignImage()">
         <h3>Ảnh đơn hàng (thiết kế)</h3>
         <div *ngIf="order.designImageUrl">
           <img [src]="resolveImageUrl(order.designImageUrl)" alt="Design"
                style="max-width:100%;border:1px solid #e2e8f0;border-radius:8px;">
         </div>
-        <div *ngIf="!order.designImageUrl" style="color:#64748b;font-size:14px;">Chưa có ảnh thiết kế.</div>
-        <div *ngIf="canUploadDesignImage()" style="margin-top:12px;">
-          <label class="btn btn-primary" style="cursor:pointer;">
-            {{ isUploadingDesign ? 'Đang upload...' : (order.designImageUrl ? 'Thay ảnh' : 'Upload ảnh thiết kế') }}
-            <input type="file" accept="image/*" hidden (change)="onDesignImageSelected($event)" [disabled]="isUploadingDesign">
-          </label>
-          <div class="alert alert-danger" *ngIf="designUploadError" style="margin-top:8px;">{{ designUploadError }}</div>
+        <div *ngIf="!order.designImageUrl" style="color:#64748b;font-size:14px;">
+          Chưa có ảnh thiết kế.
+          <ng-container *ngIf="canUploadDesignImage()"> Dùng nút "Upload ảnh thiết kế" cạnh "Xuất ảnh đơn hàng" phía trên.</ng-container>
         </div>
       </div>
 

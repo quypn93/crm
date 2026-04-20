@@ -1,5 +1,6 @@
 import { Component, ElementRef, Input, OnChanges, AfterViewInit, ViewChild } from '@angular/core';
 import { Order } from '../../../core/models/order.model';
+import { environment } from '../../../../environments/environment';
 import html2canvas from 'html2canvas';
 
 @Component({
@@ -16,6 +17,14 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
 
   ngAfterViewInit(): void { this.viewReady = true; if (this.order) this.generateQr(); }
   ngOnChanges(): void     { if (this.viewReady && this.order) this.generateQr(); }
+
+  // Dùng để build URL ảnh thiết kế (API serve static ở /uploads/... cùng origin với apiUrl)
+  resolveImageUrl(path?: string): string {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const origin = (environment.apiUrl || '').replace(/\/api\/?$/, '');
+    return origin + (path.startsWith('/') ? path : '/' + path);
+  }
 
   private generateQr(): void {
     import('qrcode').then(QRCode => {

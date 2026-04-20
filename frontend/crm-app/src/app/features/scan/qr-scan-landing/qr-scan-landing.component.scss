@@ -26,9 +26,39 @@
 }
 
 .user-info {
-  text-align: right;
-  .user-name { display: block; font-size: 13px; font-weight: 500; }
-  .user-role { display: block; font-size: 11px; color: #94a3b8; }
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .user-meta {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+  }
+  .user-name { font-size: 13px; font-weight: 500; }
+  .user-role { font-size: 11px; color: #94a3b8; }
+}
+
+.btn-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: rgba(255, 255, 255, 0.2); }
+}
+
+@media (max-width: 480px) {
+  .btn-logout-text { display: none; } // mobile: chỉ hiện icon
+  .btn-logout { padding: 7px 9px; }
 }
 
 .loading-state, .error-state {

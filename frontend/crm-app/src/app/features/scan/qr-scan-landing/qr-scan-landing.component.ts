@@ -42,6 +42,15 @@ export class QrScanLandingComponent implements OnInit {
     });
   }
 
+  logout(): void {
+    if (!confirm('Bạn có chắc muốn đăng xuất?')) return;
+    this.authService.logout();
+    // Reload trạng thái trên trang scan hiện tại (giữ URL token).
+    this.isAuthenticated = false;
+    this.currentUserRoles = [];
+    this.progress = null;
+  }
+
   ngOnInit(): void {
     this.token = this.route.snapshot.paramMap.get('token')
               || this.route.parent?.snapshot.paramMap.get('token')

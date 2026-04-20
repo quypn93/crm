@@ -65,6 +65,18 @@
 | finishing1@crm.com | Finishing@123 | Finishing 1 | FinishingStaff |
 | finishing2@crm.com | Finishing@123 | Finishing 2 | FinishingStaff |
 
+### Khâu 5 · Kiểm tra chất lượng (QualityControl)
+
+| Email | Password | Tên | Role |
+|---|---|---|---|
+| qc1@crm.com | QC@123456 | QC 1 | QualityControl |
+| qc2@crm.com | QC@123456 | QC 2 | QualityControl |
+| qc3@crm.com | QC@123456 | QC 3 | QualityControl |
+| qc4@crm.com | QC@123456 | QC 4 | QualityControl |
+| qc5@crm.com | QC@123456 | QC 5 | QualityControl |
+
+> QC là role có sẵn từ đầu, danh sách đầy đủ (kèm QualityManager) xem ở section **Kiểm tra chất lượng** phía dưới.
+
 ### Khâu 6 · Đóng gói (PackagingStaff)
 
 | Email | Password | Tên | Role |
