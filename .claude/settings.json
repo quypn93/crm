@@ -46,7 +46,8 @@
       "Bash(cmd.exe /c \"netstat -ano | findstr :4200\")",
       "Bash(cmd.exe /c \"taskkill /PID 13432 /F\")",
       "Bash(git checkout *)",
-      "Read(//d/d/Task/CRM/backend/CRM.Infrastructure/Repositories/**)"
+      "Read(//d/d/Task/CRM/backend/CRM.Infrastructure/Repositories/**)",
+      "Bash(tasklist //FI \"PID eq 49764\")"
     ],
     "additionalDirectories": [
       "\\tmp"

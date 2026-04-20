@@ -65,7 +65,7 @@ builder.Services.AddSwaggerGen(options =>
 
 // Configure Database
 builder.Services.AddDbContext<CrmDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -151,14 +151,25 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole(RoleNames.Admin, RoleNames.SalesManager));
 });
 
-// Configure CORS
+// Configure CORS — đọc AllowedOrigins từ config, fallback về localhost cho dev.
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
         policy.SetIsOriginAllowed(origin =>
               {
-                  try { return new Uri(origin).Host == "localhost"; }
+                  try
+                  {
+                      var host = new Uri(origin).Host;
+                      if (host == "localhost") return true;
+                      return allowedOrigins.Any(allowed =>
+                      {
+                          try { return new Uri(allowed).Host.Equals(host, StringComparison.OrdinalIgnoreCase); }
+                          catch { return false; }
+                      });
+                  }
                   catch { return false; }
               })
               .AllowAnyMethod()
@@ -197,7 +208,10 @@ builder.Services.AddScoped<IDepositTransactionService, DepositTransactionService
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+var enableSwagger = app.Environment.IsDevelopment()
+    || builder.Configuration.GetValue<bool>("EnableSwagger");
+
+if (enableSwagger)
 {
     app.UseSwagger();
     app.UseSwaggerUI(options =>
@@ -207,7 +221,12 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// HTTPS redirect chỉ bật khi dev — production Nginx làm TLS termination.
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
 // CORS phải nằm trước StaticFiles để ảnh /uploads có CORS headers
 // (cần cho crossorigin="anonymous" + html2canvas khi export ảnh đơn hàng).
 app.UseCors("AllowAngular");
@@ -216,10 +235,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Apply migrations and seed data in development
-if (app.Environment.IsDevelopment())
+// Apply migrations + seed idempotent data ở mọi environment.
+// Seeder có check AnyAsync nên không duplicate nếu chạy lại.
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<CrmDbContext>();
     db.Database.Migrate();
     await DataSeeder.SeedAsync(db);

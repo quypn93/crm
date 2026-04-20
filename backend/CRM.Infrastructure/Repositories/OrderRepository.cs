@@ -55,6 +55,7 @@ public class OrderRepository : Repository<Order>, IOrderRepository
         Guid? dealId,
         Guid? assignedTo,
         Guid? createdBy,
+        Guid? designerUserId,
         OrderStatus? status,
         PaymentStatus? paymentStatus,
         DateTime? orderDateFrom,
@@ -94,6 +95,9 @@ public class OrderRepository : Repository<Order>, IOrderRepository
 
         if (createdBy.HasValue)
             query = query.Where(o => o.CreatedByUserId == createdBy.Value);
+
+        if (designerUserId.HasValue)
+            query = query.Where(o => o.DesignerUserId == designerUserId.Value);
 
         if (status.HasValue)
             query = query.Where(o => o.Status == status.Value);

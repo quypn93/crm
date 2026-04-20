@@ -120,7 +120,7 @@ public class DepositTransactionConfiguration : IEntityTypeConfiguration<DepositT
         builder.Property(x => x.ExternalId).HasColumnName("CassoId").HasMaxLength(100);
         builder.Property(x => x.Amount).HasPrecision(18, 2);
         builder.HasIndex(x => x.Code);
-        builder.HasIndex(x => x.ExternalId).IsUnique().HasFilter("[CassoId] IS NOT NULL");
+        builder.HasIndex(x => x.ExternalId).IsUnique().HasFilter("\"CassoId\" IS NOT NULL");
         builder.HasOne(x => x.MatchedOrder)
             .WithMany()
             .HasForeignKey(x => x.MatchedOrderId)

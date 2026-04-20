@@ -44,6 +44,7 @@ public class OrderService : IOrderService
             filter.DealId,
             filter.AssignedTo,
             filter.CreatedBy,
+            filter.DesignerUserId,
             filter.Status,
             filter.PaymentStatus,
             filter.OrderDateFrom,

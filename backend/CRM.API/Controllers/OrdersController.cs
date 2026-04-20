@@ -25,14 +25,23 @@ public class OrdersController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<ApiResponse<PaginatedResult<OrderDto>>>> GetAll([FromQuery] OrderFilterDto filter)
     {
-        // SalesRep chỉ xem đơn mình tạo
         var userRoles = GetCurrentUserRoles().ToList();
+
+        // SalesRep chỉ xem đơn mình tạo
         var isSalesRepOnly = userRoles.Contains(RoleNames.SalesRep)
             && !userRoles.Contains(RoleNames.Admin)
             && !userRoles.Contains(RoleNames.SalesManager);
 
         if (isSalesRepOnly)
             filter.CreatedBy = GetCurrentUserId();
+
+        // Designer chỉ xem đơn được assign
+        var isDesignerOnly = userRoles.Contains(RoleNames.Designer)
+            && !userRoles.Contains(RoleNames.Admin)
+            && !userRoles.Contains(RoleNames.DesignManager);
+
+        if (isDesignerOnly)
+            filter.DesignerUserId = GetCurrentUserId();
 
         var result = await _orderService.GetPagedAsync(filter);
         return Ok(ApiResponse<PaginatedResult<OrderDto>>.Ok(result));
@@ -46,13 +55,23 @@ public class OrdersController : ControllerBase
         if (order == null)
             return NotFound(ApiResponse<OrderDto>.Fail("Không tìm thấy đơn hàng."));
 
-        // SalesRep chỉ xem đơn mình tạo
         var userRoles = GetCurrentUserRoles().ToList();
+        var currentUserId = GetCurrentUserId();
+
+        // SalesRep chỉ xem đơn mình tạo
         var isSalesRepOnly = userRoles.Contains(RoleNames.SalesRep)
             && !userRoles.Contains(RoleNames.Admin)
             && !userRoles.Contains(RoleNames.SalesManager);
 
-        if (isSalesRepOnly && order.CreatedByUserId != GetCurrentUserId())
+        if (isSalesRepOnly && order.CreatedByUserId != currentUserId)
+            return Forbid();
+
+        // Designer chỉ xem đơn được assign cho mình
+        var isDesignerOnly = userRoles.Contains(RoleNames.Designer)
+            && !userRoles.Contains(RoleNames.Admin)
+            && !userRoles.Contains(RoleNames.DesignManager);
+
+        if (isDesignerOnly && order.DesignerUserId != currentUserId)
             return Forbid();
 
         return Ok(ApiResponse<OrderDto>.Ok(order));

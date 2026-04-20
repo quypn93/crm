@@ -191,6 +191,7 @@ public class OrderFilterDto
     public Guid? DealId { get; set; }
     public Guid? AssignedTo { get; set; }
     public Guid? CreatedBy { get; set; }
+    public Guid? DesignerUserId { get; set; }
     public OrderStatus? Status { get; set; }
     public PaymentStatus? PaymentStatus { get; set; }
     public DateTime? OrderDateFrom { get; set; }
