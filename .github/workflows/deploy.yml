@@ -74,8 +74,15 @@ jobs:
       - name: Smoke test
         run: |
           sleep 5
-          curl -fsS -o /dev/null -w "HTTP %{http_code}\n" https://crm.xanhuniform.com/ || exit 1
-          curl -fsS -X POST https://crm.xanhuniform.com/api/auth/login \
+          # Frontend: expect 200
+          FE=$(curl -sS -o /dev/null -w "%{http_code}" https://crm.xanhuniform.com/)
+          echo "Frontend: HTTP $FE"
+          [ "$FE" = "200" ] || exit 1
+
+          # API login with bogus creds: expect 401 (API alive + rejecting auth)
+          API=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -X POST https://crm.xanhuniform.com/api/auth/login \
             -H "Content-Type: application/json" \
-            -d '{"email":"smoke","password":"test"}' \
-            -o /dev/null -w "API %{http_code}\n"
+            -d '{"email":"smoke","password":"test"}')
+          echo "API: HTTP $API"
+          [ "$API" = "401" ] || [ "$API" = "400" ] || exit 1
