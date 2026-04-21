@@ -170,6 +170,12 @@ export class OrderListComponent implements OnInit {
   }
 
   moveToProduction(order: Order): void {
+    const confirmed = confirm(
+      `Chuyển đơn ${order.orderNumber} sang trạng thái "Đang sản xuất"?\n\n` +
+      `Sau khi chuyển, đơn hàng sẽ KHÔNG thể chỉnh sửa được nữa.`
+    );
+    if (!confirmed) return;
+
     const req: UpdateOrderStatusRequest = { status: OrderStatus.InProduction, notes: '' };
     this.orderService.updateOrderStatus(order.id, req).subscribe({
       next: () => this.loadOrders()

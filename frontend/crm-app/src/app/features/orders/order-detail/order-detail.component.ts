@@ -187,6 +187,15 @@ export class OrderDetailComponent implements OnInit {
   updateStatus(): void {
     if (!this.order || this.newStatus === null) return;
 
+    // Xác nhận trước khi chuyển sang InProduction — sau bước này không sửa được đơn nữa.
+    if (this.newStatus === OrderStatus.InProduction) {
+      const confirmed = confirm(
+        `Chuyển đơn ${this.order.orderNumber} sang trạng thái "Đang sản xuất"?\n\n` +
+        `Sau khi chuyển, đơn hàng sẽ KHÔNG thể chỉnh sửa được nữa.`
+      );
+      if (!confirmed) return;
+    }
+
     const request: UpdateOrderStatusRequest = {
       status: this.newStatus,
       notes: this.statusNotes
