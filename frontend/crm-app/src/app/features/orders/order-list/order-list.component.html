@@ -4,7 +4,7 @@
       <h1>Đơn hàng</h1>
       <p class="subtitle">Quản lý đơn hàng và theo dõi trạng thái</p>
     </div>
-    <button class="btn btn-primary" (click)="addOrder()">
+    <button class="btn btn-primary" (click)="addOrder()" *ngIf="canCreateOrder">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -139,7 +139,7 @@
                 <path d="M16 10a4 4 0 0 1-8 0"></path>
               </svg>
               <p>Chưa có đơn hàng nào</p>
-              <button class="btn btn-primary" (click)="addOrder()">Tạo đơn hàng đầu tiên</button>
+              <button class="btn btn-primary" (click)="addOrder()" *ngIf="canCreateOrder">Tạo đơn hàng đầu tiên</button>
             </div>
           </td>
         </tr>

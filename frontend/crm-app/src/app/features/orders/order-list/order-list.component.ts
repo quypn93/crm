@@ -28,6 +28,8 @@ export class OrderListComponent implements OnInit {
 
   readonly OrderStatus = OrderStatus;
 
+  canCreateOrder = false;
+
   constructor(
     private orderService: OrderService,
     private authService: AuthService,
@@ -36,6 +38,7 @@ export class OrderListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.canCreateOrder = this.authService.canCreateOrders();
     this.loadOrders();
   }
 

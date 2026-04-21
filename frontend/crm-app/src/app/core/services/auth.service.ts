@@ -159,6 +159,10 @@ export class AuthService {
   }
 
   // Specific permission checks
+  canCreateOrders(): boolean {
+    return this.hasAnyRole([RoleNames.Admin, RoleNames.SalesManager, RoleNames.SalesRep]);
+  }
+
   canDeleteOrders(): boolean {
     return this.hasAnyRole([RoleNames.Admin, RoleNames.SalesManager, RoleNames.SalesRep]);
   }
