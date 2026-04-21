@@ -34,7 +34,7 @@
   <div class="scan-content" *ngIf="!isLoading">
     <div class="order-card" *ngIf="publicOrder?.designImageUrl">
       <img [src]="resolveImageUrl(publicOrder?.designImageUrl)" alt="Đơn hàng"
-           style="width:100%;border-radius:8px;display:block;">
+           style="width:100%;display:block;">
     </div>
     <!-- Fallback: khi designer chưa upload ảnh thì dùng order-card do sale tạo -->
     <app-order-card *ngIf="publicOrder && !publicOrder.designImageUrl" [order]="publicOrder"></app-order-card>

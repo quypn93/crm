@@ -18,13 +18,15 @@ $card-h:    900px;
 
 // ── Card root ────────────────────────────────────────────────
 .card-root {
+  box-sizing: border-box;
   width: $card-w;
   font-family: Arial, sans-serif;
   background: #fff;
   border: 2px solid $red;
   transform-origin: top left;
   transform: scale(var(--card-scale));
-  // Kéo layout về đúng kích thước visual sau khi scale (cho cả wrapper tự co lại)
+  // Kéo layout về đúng kích thước visual sau khi scale (cho cả wrapper tự co lại).
+  // box-sizing: border-box giữ border nằm trong $card-w/$card-h để scale không clip góc.
   margin-right: calc(#{$card-w} * (var(--card-scale) - 1));
   margin-bottom: calc(#{$card-h} * (var(--card-scale) - 1));
   display: flex;
