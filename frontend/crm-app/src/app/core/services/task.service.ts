@@ -37,15 +37,23 @@ export interface Task {
 }
 
 export interface TaskSearchParams {
-  searchTerm?: string;
+  search?: string;
   status?: TaskStatus;
   priority?: TaskPriority;
   customerId?: string;
   dealId?: string;
-  assignedToUserId?: string;
+  assignedTo?: string;
+  createdBy?: string;
   isOverdue?: boolean;
   page?: number;
   pageSize?: number;
+}
+
+export interface AssignableUser {
+  id: string;
+  fullName: string;
+  email: string;
+  roles: string[];
 }
 
 export interface PagedResult<T> {
@@ -90,6 +98,10 @@ export class TaskService {
     return this.api.get<Task[]>('tasks/my-tasks');
   }
 
+  getAssignableUsers(): Observable<AssignableUser[]> {
+    return this.api.get<AssignableUser[]>('tasks/assignable-users');
+  }
+
   getOverdueTasks(): Observable<Task[]> {
     return this.api.get<Task[]>('tasks/overdue');
   }
@@ -103,7 +115,7 @@ export class TaskService {
   }
 
   updateTaskStatus(id: string, status: TaskStatus): Observable<Task> {
-    return this.api.patch<Task>(`tasks/${id}/status`, { status });
+    return this.api.put<Task>(`tasks/${id}/status`, { taskId: id, status });
   }
 
   deleteTask(id: string): Observable<void> {

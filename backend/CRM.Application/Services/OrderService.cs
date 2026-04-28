@@ -5,6 +5,7 @@ using CRM.Application.Interfaces;
 using CRM.Core.Entities;
 using CRM.Core.Enums;
 using CRM.Core.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace CRM.Application.Services;
 
@@ -14,14 +15,19 @@ public class OrderService : IOrderService
     private readonly IMapper _mapper;
     private readonly IQrCodeService _qrCodeService;
     private readonly IOrderProductionService _orderProductionService;
+    private readonly IGhtkShipmentService _ghtkService;
+    private readonly ILogger<OrderService> _logger;
 
     public OrderService(IUnitOfWork unitOfWork, IMapper mapper,
-        IQrCodeService qrCodeService, IOrderProductionService orderProductionService)
+        IQrCodeService qrCodeService, IOrderProductionService orderProductionService,
+        IGhtkShipmentService ghtkService, ILogger<OrderService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _qrCodeService = qrCodeService;
         _orderProductionService = orderProductionService;
+        _ghtkService = ghtkService;
+        _logger = logger;
     }
 
     public async Task<OrderDto?> GetByIdAsync(Guid id)
@@ -97,6 +103,17 @@ public class OrderService : IOrderService
                 throw new KeyNotFoundException("Không tìm thấy giao dịch.");
         }
 
+        // Verify design and derive designer if DesignId provided.
+        Guid? resolvedDesignerUserId = dto.DesignerUserId;
+        if (dto.DesignId.HasValue)
+        {
+            var design = await _unitOfWork.Designs.GetByIdAsync(dto.DesignId.Value);
+            if (design == null)
+                throw new KeyNotFoundException("Không tìm thấy thiết kế.");
+            // Designer gắn vào đơn = người đã làm ra design đó.
+            resolvedDesignerUserId = design.AssignedToUserId ?? dto.DesignerUserId;
+        }
+
         // Production days option → compute CompletionDate and ReturnDate automatically
         ProductionDaysOption? prodOption = null;
         DateTime? completionDate = dto.CompletionDate;
@@ -122,9 +139,15 @@ public class OrderService : IOrderService
             ProductionDaysOptionId = dto.ProductionDaysOptionId,
             ProductionDays = prodOption?.Days,
             DepositCode = dto.DepositCode,
-            ShippingAddress = dto.ShippingAddress ?? customer?.Address,
-            ShippingCity = dto.ShippingCity ?? customer?.City,
+            DeliveryMethod = dto.DeliveryMethod,
+            ShippingContactName = dto.ShippingContactName ?? customer?.Name,
             ShippingPhone = dto.ShippingPhone ?? customer?.Phone,
+            ShippingAddress = dto.ShippingAddress ?? customer?.Address,
+            ShippingProvinceCode = dto.ShippingProvinceCode,
+            ShippingProvinceName = dto.ShippingProvinceName,
+            ShippingWardCode = dto.ShippingWardCode,
+            ShippingWardName = dto.ShippingWardName,
+            ShippingCity = dto.ShippingCity ?? customer?.City,
             ShippingNotes = dto.ShippingNotes,
             DiscountPercent = dto.DiscountPercent,
             TaxPercent = dto.TaxPercent,
@@ -133,7 +156,8 @@ public class OrderService : IOrderService
             StyleNotes = dto.StyleNotes,
             CreatedByUserId = userId,
             AssignedToUserId = dto.AssignedToUserId ?? userId,
-            DesignerUserId = dto.DesignerUserId
+            DesignerUserId = resolvedDesignerUserId,
+            DesignId = dto.DesignId
         };
 
         // Add items - resolve names from pool ids
@@ -186,9 +210,15 @@ public class OrderService : IOrderService
         order.ProductionDaysOptionId = dto.ProductionDaysOptionId;
         order.ProductionDays = prodOption?.Days ?? order.ProductionDays;
         order.DepositCode = dto.DepositCode;
-        order.ShippingAddress = dto.ShippingAddress;
-        order.ShippingCity = dto.ShippingCity;
+        order.DeliveryMethod = dto.DeliveryMethod;
+        order.ShippingContactName = dto.ShippingContactName;
         order.ShippingPhone = dto.ShippingPhone;
+        order.ShippingAddress = dto.ShippingAddress;
+        order.ShippingProvinceCode = dto.ShippingProvinceCode;
+        order.ShippingProvinceName = dto.ShippingProvinceName;
+        order.ShippingWardCode = dto.ShippingWardCode;
+        order.ShippingWardName = dto.ShippingWardName;
+        order.ShippingCity = dto.ShippingCity;
         order.ShippingNotes = dto.ShippingNotes;
         order.DiscountPercent = dto.DiscountPercent;
         order.TaxPercent = dto.TaxPercent;
@@ -196,7 +226,21 @@ public class OrderService : IOrderService
         order.InternalNotes = dto.InternalNotes;
         order.StyleNotes = dto.StyleNotes;
         order.AssignedToUserId = dto.AssignedToUserId;
-        order.DesignerUserId = dto.DesignerUserId;
+
+        // Nếu chọn design có sẵn → gán designer = người làm ra design.
+        if (dto.DesignId.HasValue)
+        {
+            var design = await _unitOfWork.Designs.GetByIdAsync(dto.DesignId.Value);
+            if (design == null)
+                throw new KeyNotFoundException("Không tìm thấy thiết kế.");
+            order.DesignId = dto.DesignId;
+            order.DesignerUserId = design.AssignedToUserId ?? dto.DesignerUserId;
+        }
+        else
+        {
+            order.DesignId = null;
+            order.DesignerUserId = dto.DesignerUserId;
+        }
 
         // Xoá toàn bộ items cũ bằng ExecuteDelete (raw SQL DELETE WHERE OrderId=X),
         // không đi qua change tracker → tránh lỗi "0 rows affected" của pattern .Clear().
@@ -253,6 +297,23 @@ public class OrderService : IOrderService
 
         if (dto.Status == OrderStatus.Delivered)
             order.ActualDeliveryDate = DateTime.UtcNow;
+
+        // Auto-create GHTK shipment khi chuyển sang ReadyToShip và delivery method = GHTK.
+        // Không block status update nếu GHTK lỗi — log và giữ nguyên luồng.
+        if (dto.Status == OrderStatus.ReadyToShip
+            && order.DeliveryMethod == DeliveryMethod.GHTK
+            && string.IsNullOrWhiteSpace(order.GhtkLabel)
+            && _ghtkService.IsConfigured)
+        {
+            try
+            {
+                await _ghtkService.CreateShipmentAsync(order.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Auto-create GHTK shipment failed for order {OrderId}", order.Id);
+            }
+        }
 
         if (!string.IsNullOrWhiteSpace(dto.Notes))
             order.InternalNotes = $"{order.InternalNotes}\n[{DateTime.UtcNow:dd/MM/yyyy HH:mm}] {dto.Notes}";

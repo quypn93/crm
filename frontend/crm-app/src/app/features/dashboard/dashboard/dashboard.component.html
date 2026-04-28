@@ -5,6 +5,7 @@
     <p *ngIf="isProductionDashboard()">Tổng quan tình hình sản xuất đơn hàng.</p>
     <p *ngIf="isQualityDashboard()">Tổng quan kiểm tra chất lượng sản phẩm.</p>
     <p *ngIf="isDeliveryDashboard()">Tổng quan tình hình giao hàng.</p>
+    <p *ngIf="isContentDashboard()">Tổng quan công việc của bạn.</p>
   </div>
 
   <div class="loading" *ngIf="isLoading">
@@ -96,6 +97,52 @@
       </div>
     </div>
 
+  </ng-container>
+
+  <!-- Content Dashboard (ContentManager/ContentStaff) — chỉ task, không có đơn hàng/doanh thu -->
+  <ng-container *ngIf="!isLoading && isContentDashboard() && stats">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon orange">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Công việc đang xử lý</span>
+          <span class="stat-value">{{ stats.pendingTasksCount }}</span>
+          <span class="stat-change negative" *ngIf="stats.overdueTasksCount > 0">{{ stats.overdueTasksCount }} quá hạn</span>
+          <span class="stat-change positive" *ngIf="stats.overdueTasksCount === 0">Tất cả đúng hạn</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon red" *ngIf="stats.overdueTasksCount > 0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <div class="stat-icon green" *ngIf="stats.overdueTasksCount === 0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Quá hạn</span>
+          <span class="stat-value">{{ stats.overdueTasksCount }}</span>
+          <span class="stat-change" *ngIf="stats.overdueTasksCount > 0">Cần xử lý gấp</span>
+          <span class="stat-change positive" *ngIf="stats.overdueTasksCount === 0">Không có việc trễ</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-content" style="margin-top: 16px;">
+      <a routerLink="/tasks" class="btn-small">Mở danh sách công việc →</a>
+    </div>
   </ng-container>
 
   <!-- Production Dashboard -->

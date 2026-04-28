@@ -1,3 +1,4 @@
+using System.Text.Json;
 using CRM.Core.Entities;
 using CRM.Core.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,9 @@ public static class DataSeeder
         await SeedUsersAsync(context);
         await context.SaveChangesAsync();
 
+        await EnsureContentStaffAsync(context);
+        await context.SaveChangesAsync();
+
         await SeedSampleDataAsync(context);
         await context.SaveChangesAsync();
 
@@ -28,6 +32,51 @@ public static class DataSeeder
 
         await SeedLookupsAsync(context);
         await context.SaveChangesAsync();
+
+        await SeedVietnamLocationsAsync(context);
+        await context.SaveChangesAsync();
+    }
+
+    // Seed 34 tỉnh + xã/phường từ JSON file. Thay file JSON để bổ sung đủ dữ liệu chính thức.
+    private static async Task SeedVietnamLocationsAsync(CrmDbContext context)
+    {
+        var seedsDir = Path.Combine(AppContext.BaseDirectory, "Data", "Seeds");
+        var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+        if (!await context.Provinces.AnyAsync())
+        {
+            var provincesPath = Path.Combine(seedsDir, "vietnam-provinces.json");
+            if (File.Exists(provincesPath))
+            {
+                var json = await File.ReadAllTextAsync(provincesPath);
+                var items = JsonSerializer.Deserialize<List<Province>>(json, jsonOptions) ?? new();
+                context.Provinces.AddRange(items);
+            }
+        }
+
+        if (!await context.Wards.AnyAsync())
+        {
+            var wardsPath = Path.Combine(seedsDir, "vietnam-wards.json");
+            if (File.Exists(wardsPath))
+            {
+                // Lưu provinces trước (nếu là lần đầu seed) để FK hợp lệ.
+                await context.SaveChangesAsync();
+
+                var json = await File.ReadAllTextAsync(wardsPath);
+                var items = JsonSerializer.Deserialize<List<Ward>>(json, jsonOptions) ?? new();
+
+                // Điền FullName nếu JSON không cung cấp, để hiển thị nhanh.
+                var provinceMap = await context.Provinces
+                    .ToDictionaryAsync(p => p.Code, p => p.FullName);
+                foreach (var w in items)
+                {
+                    if (string.IsNullOrWhiteSpace(w.FullName) && provinceMap.TryGetValue(w.ProvinceCode, out var pFull))
+                        w.FullName = $"{w.Name}, {pFull}";
+                }
+
+                context.Wards.AddRange(items);
+            }
+        }
     }
 
     private static async Task SeedDealStagesAsync(CrmDbContext context)
@@ -144,6 +193,54 @@ public static class DataSeeder
             MakeUser("designer4@crm.com", "Design@123", "Design", "4", "0956001004"),
             MakeUser("designer5@crm.com", "Design@123", "Design", "5", "0956001005"),
         }, RoleNames.Designer);
+    }
+
+    // Idempotent: ensure Content roles + sample users exist on existing DBs
+    // that were created before the AddContentStaffRole / AddContentManagerRole migrations.
+    private static async Task EnsureContentStaffAsync(CrmDbContext context)
+    {
+        var contentStaffRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == RoleNames.ContentStaff);
+        if (contentStaffRole == null)
+        {
+            contentStaffRole = new Role
+            {
+                Id = Guid.Parse("13131313-1313-1313-1313-131313131313"),
+                Name = RoleNames.ContentStaff,
+                Description = "Nhân viên content (giao việc cho design)",
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            };
+            context.Roles.Add(contentStaffRole);
+            await context.SaveChangesAsync();
+        }
+
+        var contentManagerRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == RoleNames.ContentManager);
+        if (contentManagerRole == null)
+        {
+            contentManagerRole = new Role
+            {
+                Id = Guid.Parse("14141414-1414-1414-1414-141414141414"),
+                Name = RoleNames.ContentManager,
+                Description = "Trưởng phòng content",
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            };
+            context.Roles.Add(contentManagerRole);
+            await context.SaveChangesAsync();
+        }
+
+        var sampleEmails = new[] { "content.manager@crm.com", "content1@crm.com", "content2@crm.com" };
+        var existing = await context.Users.Where(u => sampleEmails.Contains(u.Email)).Select(u => u.Email).ToListAsync();
+
+        async Task AddIfMissing(string email, User user, Role role)
+        {
+            if (existing.Contains(email)) return;
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
+        }
+
+        await AddIfMissing("content.manager@crm.com", MakeUser("content.manager@crm.com", "Manager@123", "Content", "Manager", "0967000001"), contentManagerRole);
+        await AddIfMissing("content1@crm.com", MakeUser("content1@crm.com", "Content@123", "Content", "1", "0967001001"), contentStaffRole);
+        await AddIfMissing("content2@crm.com", MakeUser("content2@crm.com", "Content@123", "Content", "2", "0967001002"), contentStaffRole);
     }
 
     private static async Task SeedSampleDataAsync(CrmDbContext context)

@@ -30,6 +30,7 @@ public class TaskRepository : Repository<TaskItem>, ITaskRepository
         Guid? customerId,
         Guid? dealId,
         Guid? assignedTo,
+        Guid? createdBy,
         DateTime? dueDateFrom,
         DateTime? dueDateTo,
         bool? isOverdue,
@@ -68,6 +69,9 @@ public class TaskRepository : Repository<TaskItem>, ITaskRepository
 
         if (assignedTo.HasValue)
             query = query.Where(t => t.AssignedToUserId == assignedTo.Value);
+
+        if (createdBy.HasValue)
+            query = query.Where(t => t.CreatedByUserId == createdBy.Value);
 
         if (dueDateFrom.HasValue)
             query = query.Where(t => t.DueDate >= dueDateFrom.Value);

@@ -18,22 +18,23 @@
   }
 
   h1 {
-    font-size: 24px;
-    font-weight: 600;
-    color: #1e293b;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--text-primary);
     margin: 0;
   }
 
   .subtitle {
-    color: #64748b;
-    margin: 4px 0 0;
+    color: var(--text-secondary);
+    margin: 6px 0 0;
     font-size: 14px;
   }
 }
 
 .header-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -43,16 +44,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  border-radius: var(--radius);
   cursor: pointer;
-  color: #64748b;
-  transition: all 0.2s;
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition), color var(--transition), background var(--transition);
 
   &:hover {
-    border-color: #6366f1;
-    color: #6366f1;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: var(--primary-50);
   }
 }
 
@@ -65,8 +68,8 @@
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid #e2e8f0;
-  border-top-color: #6366f1;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -76,21 +79,27 @@
 }
 
 .alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   margin-bottom: 20px;
+  font-size: 14px;
+  border: 1px solid transparent;
 
   &.alert-error {
-    background: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
+    background: var(--danger-soft);
+    color: var(--danger-color);
+    border-color: var(--danger-soft-2);
   }
 }
 
 .detail-container {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
@@ -102,32 +111,39 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
   padding-bottom: 24px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
   margin-bottom: 24px;
 
   .deal-info {
     h2 {
       font-size: 20px;
-      font-weight: 600;
-      color: #1e293b;
+      font-weight: 650;
+      letter-spacing: -0.015em;
+      color: var(--text-primary);
       margin: 0 0 8px;
     }
   }
 
   .stage-badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 4px 12px;
-    border-radius: 20px;
+    border-radius: var(--radius-pill);
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
     color: #fff;
+    border: 1px solid transparent;
   }
 
   .deal-value {
     font-size: 28px;
     font-weight: 700;
-    color: #059669;
+    font-family: var(--font-mono);
+    color: var(--success-strong);
   }
 }
 
@@ -139,11 +155,11 @@
   }
 
   h3 {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
-    color: #64748b;
+    color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     margin: 0 0 16px;
   }
 }
@@ -162,19 +178,22 @@
   .label {
     display: block;
     font-size: 12px;
-    color: #94a3b8;
+    color: var(--text-muted);
     margin-bottom: 4px;
+    font-weight: 500;
   }
 
   .value {
     font-size: 14px;
-    color: #1e293b;
+    color: var(--text-primary);
 
     a {
-      color: #6366f1;
+      color: var(--primary-color);
       text-decoration: none;
+      transition: color var(--transition-fast);
 
       &:hover {
+        color: var(--primary-hover);
         text-decoration: underline;
       }
     }
@@ -189,21 +208,21 @@
   .progress-bar {
     width: 100px;
     height: 6px;
-    background: #e2e8f0;
-    border-radius: 3px;
+    background: var(--gray-200);
+    border-radius: var(--radius-pill);
     overflow: hidden;
 
     .progress {
       height: 100%;
-      background: #6366f1;
-      border-radius: 3px;
+      background: var(--gradient-primary);
+      border-radius: var(--radius-pill);
     }
   }
 }
 
 .notes {
   font-size: 14px;
-  color: #475569;
+  color: var(--gray-700);
   line-height: 1.6;
   margin: 0;
   white-space: pre-wrap;
@@ -214,46 +233,55 @@
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  border: none;
-  border-radius: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform var(--transition-fast), background var(--transition), box-shadow var(--transition), border-color var(--transition), color var(--transition);
+
+  &:active { transform: translateY(1px); }
 
   &.btn-secondary {
-    background: #f1f5f9;
-    color: #475569;
+    background: var(--bg-primary);
+    color: var(--gray-700);
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-xs);
 
     &:hover {
-      background: #e2e8f0;
+      background: var(--gray-50);
+      border-color: var(--border-strong);
+      color: var(--text-primary);
     }
   }
 
   &.btn-success {
-    background: #dcfce7;
-    color: #15803d;
+    background: var(--success-soft);
+    color: var(--success-strong);
+    border-color: var(--success-soft-2);
 
     &:hover {
-      background: #bbf7d0;
+      background: var(--success-soft-2);
     }
   }
 
   &.btn-warning {
-    background: #fef3c7;
-    color: #b45309;
+    background: var(--warning-soft);
+    color: var(--warning-strong);
+    border-color: var(--warning-soft-2);
 
     &:hover {
-      background: #fde68a;
+      background: var(--warning-soft-2);
     }
   }
 
   &.btn-danger {
-    background: #fef2f2;
-    color: #dc2626;
+    background: var(--danger-soft);
+    color: var(--danger-color);
+    border-color: var(--danger-soft-2);
 
     &:hover {
-      background: #fee2e2;
+      background: var(--danger-soft-2);
     }
   }
 }

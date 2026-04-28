@@ -1,8 +1,24 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { ApiService } from './api.service';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiService, ApiResponse } from './api.service';
 
 // Enums
+export enum DesignStatus {
+  Assigned = 0,
+  InProgress = 1,
+  Completed = 2,
+  Cancelled = 3
+}
+
+export const DesignStatusLabels: Record<DesignStatus, string> = {
+  [DesignStatus.Assigned]: 'Đã giao',
+  [DesignStatus.InProgress]: 'Đang làm',
+  [DesignStatus.Completed]: 'Hoàn thành',
+  [DesignStatus.Cancelled]: 'Đã huỷ'
+};
+
 export enum ComponentType {
   Collar = 1,
   Sleeve = 2,
@@ -80,6 +96,39 @@ export interface Design {
   createdByUserName?: string;
   createdAt: string;
   updatedAt?: string;
+
+  // Assignment flow
+  status: DesignStatus;
+  statusName?: string;
+  assignedToUserId?: string;
+  assignedToUserName?: string;
+  shirtFormId?: string;
+  shirtFormName?: string;
+  accentColorFabricId?: string;
+  accentColorFabricName?: string;
+  chestLogoUrl?: string;
+  backLogoUrl?: string;
+  completedImageUrl?: string;
+  completedAt?: string;
+  assignmentNotes?: string;
+}
+
+export interface CreateDesignAssignmentDto {
+  designName: string;
+  assignedToUserId: string;
+  shirtFormId?: string;
+  colorFabricId?: string;
+  accentColorFabricId?: string;
+  chestLogoUrl?: string;
+  backLogoUrl?: string;
+  assignmentNotes?: string;
+  orderId?: string;
+  customerFullName?: string;
+}
+
+export interface CompleteDesignDto {
+  completedImageUrl: string;
+  note?: string;
 }
 
 export interface DesignDetail extends Design {
@@ -113,6 +162,8 @@ export interface DesignFilter {
   orderId?: string;
   colorFabricId?: string;
   createdByUserId?: string;
+  assignedToUserId?: string;
+  status?: DesignStatus;
   fromDate?: string;
   toDate?: string;
   page?: number;
@@ -185,7 +236,7 @@ export interface PagedResult<T> {
   providedIn: 'root'
 })
 export class DesignService {
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private http: HttpClient) {}
 
   // ColorFabric methods
   getColorFabrics(params?: ColorFabricFilter): Observable<PagedResult<ColorFabric>> {
@@ -284,6 +335,41 @@ export class DesignService {
 
   duplicateDesign(id: string, dto: DuplicateDesignDto): Observable<Design> {
     return this.api.post<Design>(`designs/${id}/duplicate`, dto);
+  }
+
+  // ─── Design Assignment flow ─────────────────────────────────────
+  getMyTasks(status?: DesignStatus): Observable<Design[]> {
+    const params = status !== undefined ? { status } : {};
+    return this.api.get<Design[]>('designs/my-tasks', this.api.buildParams(params));
+  }
+
+  getAvailableDesigns(): Observable<Design[]> {
+    return this.api.get<Design[]>('designs/available');
+  }
+
+  createAssignment(dto: CreateDesignAssignmentDto): Observable<Design> {
+    return this.api.post<Design>('designs/assign', dto);
+  }
+
+  updateAssignment(id: string, dto: CreateDesignAssignmentDto): Observable<Design> {
+    return this.api.put<Design>(`designs/${id}/assignment`, dto);
+  }
+
+  completeDesign(id: string, dto: CompleteDesignDto): Observable<Design> {
+    return this.api.post<Design>(`designs/${id}/complete`, dto);
+  }
+
+  updateDesignStatus(id: string, status: DesignStatus): Observable<Design> {
+    return this.api.put<Design>(`designs/${id}/status`, { status });
+  }
+
+  /** Upload ảnh (logo hoặc ảnh hoàn thành). Trả về URL từ backend. */
+  uploadImage(file: File): Observable<string> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http
+      .post<ApiResponse<{ url: string }>>(`${environment.apiUrl}/designs/upload-image`, form)
+      .pipe(map(r => r.data.url));
   }
 
   // Helper methods

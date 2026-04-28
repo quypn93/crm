@@ -10,6 +10,7 @@ import {
   Order,
   OrderStatus,
   PaymentStatus,
+  DeliveryMethod,
   OrderStatusLabels,
   PaymentStatusLabels,
   OrderStatusColors,
@@ -363,6 +364,98 @@ export class OrderDetailComponent implements OnInit {
   // Designer upload
   isUploadingDesign = false;
   designUploadError = '';
+
+  // GHTK state
+  readonly DeliveryMethod = DeliveryMethod;
+  isGhtkBusy = false;
+  ghtkError = '';
+
+  isGhtkOrder(): boolean {
+    return this.order?.deliveryMethod === DeliveryMethod.GHTK;
+  }
+
+  canCreateGhtk(): boolean {
+    return this.isGhtkOrder()
+      && !this.order?.ghtkLabel
+      && this.authService.hasAnyRole(['Admin', 'SalesManager', 'SalesRep', 'DeliveryManager', 'DeliveryStaff']);
+  }
+
+  canCancelGhtk(): boolean {
+    return this.isGhtkOrder()
+      && !!this.order?.ghtkLabel
+      && this.order?.status !== OrderStatus.Delivered
+      && this.order?.status !== OrderStatus.Completed
+      && this.authService.hasAnyRole(['Admin', 'SalesManager', 'DeliveryManager']);
+  }
+
+  estimateGhtkFee(): void {
+    if (!this.order) return;
+    this.isGhtkBusy = true;
+    this.ghtkError = '';
+    this.orderService.estimateGhtkFee(this.order.id).subscribe({
+      next: (fee) => {
+        this.isGhtkBusy = false;
+        this.toast.success(`Phí GHTK ước tính: ${this.formatCurrency(fee.fee + fee.insuranceFee)}`);
+        this.loadOrder(this.order!.id);
+      },
+      error: (err) => {
+        this.isGhtkBusy = false;
+        this.ghtkError = err?.error?.message || 'Không lấy được phí GHTK.';
+      }
+    });
+  }
+
+  createGhtkShipment(): void {
+    if (!this.order) return;
+    if (!confirm(`Tạo vận đơn GHTK cho đơn ${this.order.orderNumber}?`)) return;
+    this.isGhtkBusy = true;
+    this.ghtkError = '';
+    this.orderService.createGhtkShipment(this.order.id).subscribe({
+      next: () => {
+        this.isGhtkBusy = false;
+        this.toast.success('Đã tạo vận đơn GHTK.');
+        this.loadOrder(this.order!.id);
+      },
+      error: (err) => {
+        this.isGhtkBusy = false;
+        this.ghtkError = err?.error?.message || 'Tạo vận đơn GHTK thất bại.';
+      }
+    });
+  }
+
+  cancelGhtkShipment(): void {
+    if (!this.order) return;
+    if (!confirm(`Huỷ vận đơn GHTK ${this.order.ghtkLabel}?`)) return;
+    this.isGhtkBusy = true;
+    this.ghtkError = '';
+    this.orderService.cancelGhtkShipment(this.order.id).subscribe({
+      next: () => {
+        this.isGhtkBusy = false;
+        this.toast.success('Đã huỷ vận đơn GHTK.');
+        this.loadOrder(this.order!.id);
+      },
+      error: (err) => {
+        this.isGhtkBusy = false;
+        this.ghtkError = err?.error?.message || 'Huỷ vận đơn GHTK thất bại.';
+      }
+    });
+  }
+
+  syncGhtkStatus(): void {
+    if (!this.order) return;
+    this.isGhtkBusy = true;
+    this.ghtkError = '';
+    this.orderService.syncGhtkStatus(this.order.id).subscribe({
+      next: () => {
+        this.isGhtkBusy = false;
+        this.loadOrder(this.order!.id);
+      },
+      error: (err) => {
+        this.isGhtkBusy = false;
+        this.ghtkError = err?.error?.message || 'Đồng bộ trạng thái GHTK thất bại.';
+      }
+    });
+  }
 
   canUploadDesignImage(): boolean {
     return this.authService.hasAnyRole(['Admin', 'Designer']);

@@ -40,6 +40,10 @@ public static class RoleNames
     public const string DesignManager = "DesignManager";
     public const string Designer = "Designer";
 
+    // Content (giao việc cho design)
+    public const string ContentManager = "ContentManager";
+    public const string ContentStaff = "ContentStaff";
+
     // Role groups for authorization
     public static readonly string[] AllRoles = {
         Admin,
@@ -48,7 +52,8 @@ public static class RoleNames
         CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff,
         QualityManager, QualityControl,
         DeliveryManager, DeliveryStaff,
-        DesignManager, Designer
+        DesignManager, Designer,
+        ContentManager, ContentStaff
     };
     public static readonly string[] SalesRoles = { Admin, SalesManager, SalesRep };
     public static readonly string[] ManagerRoles = { Admin, SalesManager };

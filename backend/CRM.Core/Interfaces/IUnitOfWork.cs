@@ -17,6 +17,8 @@ public interface IUnitOfWork : IDisposable
     IDesignRepository Designs { get; }
     IProductionStageRepository ProductionStages { get; }
     IOrderProductionStepRepository OrderProductionSteps { get; }
+    IProvinceRepository Provinces { get; }
+    IWardRepository Wards { get; }
 
     // Lookup pools + admin-managed tables
     IRepository<Collection> Collections { get; }

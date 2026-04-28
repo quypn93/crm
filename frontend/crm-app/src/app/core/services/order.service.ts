@@ -20,6 +20,22 @@ import {
   PaymentStatusColors
 } from '../models/order.model';
 
+export interface GhtkFee {
+  fee: number;
+  insuranceFee: number;
+  deliveryType?: string;
+}
+
+export interface GhtkShipment {
+  label?: string;
+  trackingUrl?: string;
+  status?: string;
+  statusCode?: number;
+  fee?: number;
+  insuranceFee?: number;
+  syncedAt?: string;
+}
+
 export interface OrderSearchParams {
   search?: string;
   customerId?: string;
@@ -148,6 +164,27 @@ export class OrderService {
     const form = new FormData();
     form.append('file', file);
     return this.api.post<Order>(`orders/${orderId}/design-image`, form);
+  }
+
+  // ─── GHTK ───────────────────────────────────────────────────
+  getGhtkStatus(): Observable<{ configured: boolean }> {
+    return this.api.get<{ configured: boolean }>('ghtk/status');
+  }
+
+  estimateGhtkFee(orderId: string): Observable<GhtkFee> {
+    return this.api.post<GhtkFee>(`ghtk/orders/${orderId}/estimate-fee`, {});
+  }
+
+  createGhtkShipment(orderId: string): Observable<GhtkShipment> {
+    return this.api.post<GhtkShipment>(`ghtk/orders/${orderId}/create`, {});
+  }
+
+  cancelGhtkShipment(orderId: string): Observable<void> {
+    return this.api.post<void>(`ghtk/orders/${orderId}/cancel`, {});
+  }
+
+  syncGhtkStatus(orderId: string): Observable<GhtkShipment> {
+    return this.api.post<GhtkShipment>(`ghtk/orders/${orderId}/sync`, {});
   }
 
   getPublicByToken(token: string): Observable<Order> {

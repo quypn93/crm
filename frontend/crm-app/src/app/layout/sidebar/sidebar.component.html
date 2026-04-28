@@ -12,8 +12,7 @@
   <nav class="sidebar-nav">
     <a *ngFor="let item of menuItems"
        [routerLink]="item.route"
-       routerLinkActive="active"
-       [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+       [class.active]="isMenuActive(item)"
        class="nav-item"
        [title]="isCollapsed ? item.label : ''">
 

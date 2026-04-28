@@ -1,0 +1,128 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>{{ editMode ? 'Chỉnh sửa thiết kế' : 'Giao thiết kế cho designer' }}</h1>
+    <p class="subtitle">
+      {{ editMode ? 'Cập nhật spec hoặc đổi designer phụ trách' : 'Chọn mẫu áo, màu sắc, logo và designer phụ trách' }}
+    </p>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">Đang tải...</div>
+
+  <div class="alert alert-warning" *ngIf="readOnly">
+    Thiết kế đã hoàn thành — không thể chỉnh sửa assignment.
+    <span *ngIf="currentStatus !== null">Trạng thái: <strong>{{ statusLabels[currentStatus] }}</strong></span>
+  </div>
+
+  <div class="completed-preview" *ngIf="completedImageUrl">
+    <label>Ảnh hoàn thành từ designer:</label>
+    <a [href]="resolveUrl(completedImageUrl)" target="_blank">
+      <img [src]="resolveUrl(completedImageUrl)" alt="Completed design">
+    </a>
+  </div>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="form-sections">
+      <!-- ① Thông tin cơ bản -->
+      <div class="form-section">
+        <h2 class="section-title">Thông tin thiết kế</h2>
+        <div class="form-grid">
+          <div class="form-group col-span-2">
+            <label>Tên thiết kế <span class="required">*</span></label>
+            <input type="text" formControlName="designName" placeholder="VD: Áo polo Tech Viet - Đợt 1">
+            <div class="err" *ngIf="f['designName'].touched && f['designName'].invalid">Bắt buộc nhập.</div>
+          </div>
+          <div class="form-group col-span-2">
+            <label>Khách hàng</label>
+            <input type="text" formControlName="customerFullName" placeholder="Tên công ty / khách hàng">
+          </div>
+        </div>
+      </div>
+
+      <!-- ② Spec áo -->
+      <div class="form-section">
+        <h2 class="section-title">Thông số áo</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Mẫu áo <span class="required">*</span></label>
+            <select formControlName="shirtFormId">
+              <option value="">-- Chọn mẫu --</option>
+              <option *ngFor="let f of shirtForms" [value]="f.id">{{ f.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Màu áo chính <span class="required">*</span></label>
+            <select formControlName="colorFabricId">
+              <option value="">-- Chọn màu --</option>
+              <option *ngFor="let c of colorFabrics" [value]="c.id">{{ c.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Màu phối</label>
+            <select formControlName="accentColorFabricId">
+              <option value="">-- Không có --</option>
+              <option *ngFor="let c of colorFabrics" [value]="c.id">{{ c.name }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ Logo -->
+      <div class="form-section">
+        <h2 class="section-title">Logo khách hàng</h2>
+        <div class="logo-grid">
+          <div class="logo-slot">
+            <label>Logo ngực</label>
+            <div class="logo-preview" *ngIf="f['chestLogoUrl'].value">
+              <img [src]="resolveUrl(f['chestLogoUrl'].value)" alt="Chest logo">
+              <button type="button" class="btn-remove" (click)="clearLogo('chest')">×</button>
+            </div>
+            <input type="file" accept="image/*" (change)="onLogoSelected($event, 'chest')" [disabled]="chestLogoUploading">
+            <div class="hint" *ngIf="chestLogoUploading">Đang upload...</div>
+            <div class="err" *ngIf="chestLogoError">{{ chestLogoError }}</div>
+          </div>
+
+          <div class="logo-slot">
+            <label>Logo lưng</label>
+            <div class="logo-preview" *ngIf="f['backLogoUrl'].value">
+              <img [src]="resolveUrl(f['backLogoUrl'].value)" alt="Back logo">
+              <button type="button" class="btn-remove" (click)="clearLogo('back')">×</button>
+            </div>
+            <input type="file" accept="image/*" (change)="onLogoSelected($event, 'back')" [disabled]="backLogoUploading">
+            <div class="hint" *ngIf="backLogoUploading">Đang upload...</div>
+            <div class="err" *ngIf="backLogoError">{{ backLogoError }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ④ Designer + notes -->
+      <div class="form-section">
+        <h2 class="section-title">Giao việc</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Designer phụ trách <span class="required">*</span></label>
+            <select formControlName="assignedToUserId">
+              <option value="">-- Chọn designer --</option>
+              <option *ngFor="let d of designers" [value]="d.id">{{ d.firstName }} {{ d.lastName }}</option>
+            </select>
+            <div class="err" *ngIf="f['assignedToUserId'].touched && f['assignedToUserId'].invalid">Bắt buộc chọn designer.</div>
+          </div>
+          <div class="form-group col-span-2">
+            <label>Ghi chú cho designer</label>
+            <textarea formControlName="assignmentNotes" rows="3"
+              placeholder="VD: Cần hoàn thành trước thứ 5. Chú ý tone màu đồng bộ với bộ nhận diện..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Hủy</button>
+      <button type="submit" class="btn btn-primary" [disabled]="isSubmitting || readOnly" *ngIf="!readOnly">
+        <span class="spinner-small" *ngIf="isSubmitting"></span>
+        {{ editMode ? 'Cập nhật' : 'Giao cho designer' }}
+      </button>
+    </div>
+  </form>
+</div>

@@ -3,6 +3,7 @@ using CRM.Application.DTOs.Auth;
 using CRM.Application.DTOs.Customer;
 using CRM.Application.DTOs.Deal;
 using CRM.Application.DTOs.Design;
+using CRM.Application.DTOs.Location;
 using CRM.Application.DTOs.Order;
 using CRM.Application.DTOs.Production;
 using CRM.Application.DTOs.Task;
@@ -80,10 +81,16 @@ public class MappingProfile : Profile
             .ForMember(d => d.AssignedToUserName, opt => opt.MapFrom(s => s.AssignedToUser != null ? $"{s.AssignedToUser.FirstName} {s.AssignedToUser.LastName}" : null))
             .ForMember(d => d.ItemsCount, opt => opt.MapFrom(s => s.Items.Count))
             .ForMember(d => d.DesignerUserName, opt => opt.MapFrom(s => s.DesignerUser != null ? $"{s.DesignerUser.FirstName} {s.DesignerUser.LastName}" : null))
-            .ForMember(d => d.ProductionDaysOptionName, opt => opt.MapFrom(s => s.ProductionDaysOption != null ? s.ProductionDaysOption.Name : null));
+            .ForMember(d => d.ProductionDaysOptionName, opt => opt.MapFrom(s => s.ProductionDaysOption != null ? s.ProductionDaysOption.Name : null))
+            .ForMember(d => d.DesignName, opt => opt.MapFrom(s => s.Design != null ? s.Design.DesignName : null))
+            .ForMember(d => d.DesignCompletedImageUrl, opt => opt.MapFrom(s => s.Design != null ? s.Design.CompletedImageUrl : null));
 
         CreateMap<OrderItem, OrderItemDto>();
         CreateMap<CreateOrderItemDto, OrderItem>();
+
+        // Location mappings
+        CreateMap<Province, ProvinceDto>();
+        CreateMap<Ward, WardDto>();
 
         // New admin lookups
         CreateMap<Collection, CRM.Application.DTOs.Lookup.CollectionDto>();
@@ -108,6 +115,9 @@ public class MappingProfile : Profile
         // Design mappings
         CreateMap<Design, DesignDto>()
             .ForMember(d => d.ColorFabricName, opt => opt.MapFrom(s => s.ColorFabric != null ? s.ColorFabric.Name : null))
+            .ForMember(d => d.AccentColorFabricName, opt => opt.MapFrom(s => s.AccentColorFabric != null ? s.AccentColorFabric.Name : null))
+            .ForMember(d => d.ShirtFormName, opt => opt.MapFrom(s => s.ShirtForm != null ? s.ShirtForm.Name : null))
+            .ForMember(d => d.AssignedToUserName, opt => opt.MapFrom(s => s.AssignedToUser != null ? $"{s.AssignedToUser.FirstName} {s.AssignedToUser.LastName}" : null))
             .ForMember(d => d.OrderNumber, opt => opt.MapFrom(s => s.Order != null ? s.Order.OrderNumber : null))
             .ForMember(d => d.CreatedByUserName, opt => opt.MapFrom(s => s.CreatedByUser != null ? $"{s.CreatedByUser.FirstName} {s.CreatedByUser.LastName}" : null));
 

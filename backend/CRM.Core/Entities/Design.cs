@@ -1,8 +1,22 @@
+using CRM.Core.Enums;
+
 namespace CRM.Core.Entities;
 
 public class Design : BaseEntity
 {
     public string DesignName { get; set; } = string.Empty;
+
+    // ── Assignment flow ────────────────────────────────────────────────
+    // Sale tạo assignment → chọn designer → designer upload ảnh hoàn thành.
+    public DesignStatus Status { get; set; } = DesignStatus.Assigned;
+    public Guid? AssignedToUserId { get; set; }         // Designer nhận job
+    public Guid? ShirtFormId { get; set; }              // Mẫu áo (từ pool ProductForm)
+    public Guid? AccentColorFabricId { get; set; }      // Màu phối (ColorFabricId dùng làm màu chính)
+    public string? ChestLogoUrl { get; set; }           // Logo ngực — sale upload
+    public string? BackLogoUrl { get; set; }            // Logo lưng — sale upload
+    public string? CompletedImageUrl { get; set; }      // Ảnh design cuối — designer upload
+    public DateTime? CompletedAt { get; set; }
+    public string? AssignmentNotes { get; set; }        // Sale ghi chú cho designer
     public string? DesignData { get; set; }              // Canvas JSON data
     public string? SelectedComponents { get; set; }      // JSON array of component IDs
     public string? Designer { get; set; }
@@ -41,6 +55,9 @@ public class Design : BaseEntity
 
     // Navigation properties
     public virtual ColorFabric? ColorFabric { get; set; }
+    public virtual ColorFabric? AccentColorFabric { get; set; }
+    public virtual ProductForm? ShirtForm { get; set; }
     public virtual Order? Order { get; set; }
     public virtual User? CreatedByUser { get; set; }
+    public virtual User? AssignedToUser { get; set; }
 }

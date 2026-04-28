@@ -125,6 +125,16 @@
 
 ---
 
+## Content
+
+| Email | Password | Tên | Role |
+|---|---|---|---|
+| content.manager@crm.com | Manager@123 | Content Manager | ContentManager |
+| content1@crm.com | Content@123 | Content 1 | ContentStaff |
+| content2@crm.com | Content@123 | Content 2 | ContentStaff |
+
+---
+
 ## Roles
 
 | Role | Mô tả |
@@ -145,6 +155,8 @@
 | DeliveryStaff | Nhân viên giao hàng |
 | DesignManager | Trưởng phòng thiết kế |
 | Designer | Nhân viên thiết kế |
+| ContentManager | Trưởng phòng content |
+| ContentStaff | Nhân viên content (giao việc cho design) |
 
 ---
 
@@ -164,3 +176,25 @@
 - `ProductionStaff` (đa năng) được phép complete khâu sản xuất, **không** được complete khâu QC.
 - `QualityManager` được phép complete khâu QC.
 - Các role chuyên môn chỉ được complete đúng khâu của mình.
+
+---
+
+## Quy tắc giao việc (Tasks)
+
+Endpoint `GET /api/tasks/assignable-users` trả về danh sách user mà tài khoản hiện tại được phép giao việc, theo bảng dưới:
+
+| Role người giao | Giao được cho |
+|---|---|
+| Admin (Giám đốc) | Mọi Manager + mọi staff |
+| SalesManager | SalesRep |
+| ProductionManager | ProductionStaff + Cutting/Sewing/Printing/Finishing/PackagingStaff |
+| QualityManager | QualityControl |
+| DeliveryManager | DeliveryStaff |
+| DesignManager | Designer |
+| ContentManager | ContentStaff + Designer |
+| ContentStaff | Designer |
+
+**Ghi chú:**
+- Nếu không chọn người nhận, công việc tự gán cho người tạo.
+- Khi tạo/sửa task có chỉ định người nhận khác mình, backend validate quyền theo bảng trên — vi phạm sẽ trả lỗi 400.
+- Trang `/tasks` có 2 tab: **"Việc được giao cho tôi"** và **"Việc tôi đã giao"**.

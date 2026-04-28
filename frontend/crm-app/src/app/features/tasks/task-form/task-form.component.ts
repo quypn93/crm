@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TaskService, TaskPriority, TaskStatus } from '../../../core/services/task.service';
+import { TaskService, TaskPriority, TaskStatus, AssignableUser } from '../../../core/services/task.service';
 import { CustomerService, Customer } from '../../../core/services/customer.service';
 import { DealService, Deal } from '../../../core/services/deal.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-task-form',
@@ -21,12 +22,16 @@ export class TaskFormComponent implements OnInit {
   priorityOptions = this.taskService.getPriorityOptions();
   customers: Customer[] = [];
   deals: Deal[] = [];
+  assignableUsers: AssignableUser[] = [];
+  canEditFields = true;
+  canEditStatus = true;
 
   constructor(
     private fb: FormBuilder,
     private taskService: TaskService,
     private customerService: CustomerService,
     private dealService: DealService,
+    private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute
   ) {
@@ -37,13 +42,15 @@ export class TaskFormComponent implements OnInit {
       priority: [TaskPriority.Medium, [Validators.required]],
       dueDate: [''],
       customerId: [''],
-      dealId: ['']
+      dealId: [''],
+      assignedToUserId: ['']
     });
   }
 
   ngOnInit(): void {
     this.loadCustomers();
     this.loadDeals();
+    this.loadAssignableUsers();
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id && id !== 'new') {
@@ -69,6 +76,14 @@ export class TaskFormComponent implements OnInit {
     });
   }
 
+  loadAssignableUsers(): void {
+    this.taskService.getAssignableUsers().subscribe({
+      next: (users) => {
+        this.assignableUsers = users || [];
+      }
+    });
+  }
+
   loadTask(): void {
     if (!this.taskId) return;
 
@@ -82,8 +97,10 @@ export class TaskFormComponent implements OnInit {
           priority: task.priority,
           dueDate: task.dueDate ? this.formatDate(new Date(task.dueDate)) : '',
           customerId: task.customerId || '',
-          dealId: task.dealId || ''
+          dealId: task.dealId || '',
+          assignedToUserId: task.assignedToUserId || ''
         });
+        this.applyPermissions(task);
         this.isLoading = false;
       },
       error: () => {
@@ -91,6 +108,28 @@ export class TaskFormComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  // Người tạo + Admin: full edit. Assignee: chỉ status. Khác: redirect.
+  private applyPermissions(task: { createdByUserId: string; assignedToUserId?: string }): void {
+    const userId = this.authService.getCurrentUser()?.id;
+    const isCreator = !!userId && task.createdByUserId === userId;
+    const isAssignee = !!userId && task.assignedToUserId === userId;
+    const isAdmin = this.authService.isAdmin();
+
+    this.canEditFields = isCreator || isAdmin;
+    this.canEditStatus = this.canEditFields || isAssignee;
+
+    if (!this.canEditStatus) {
+      this.router.navigate(['/tasks']);
+      return;
+    }
+
+    if (!this.canEditFields) {
+      Object.keys(this.taskForm.controls).forEach(key => {
+        if (key !== 'status') this.taskForm.get(key)?.disable();
+      });
+    }
   }
 
   formatDate(date: Date): string {
@@ -106,10 +145,24 @@ export class TaskFormComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
+    // Assignee chỉ được update status
+    if (this.isEditMode && this.taskId && !this.canEditFields && this.canEditStatus) {
+      const status = this.taskForm.get('status')?.value;
+      this.taskService.updateTaskStatus(this.taskId, status).subscribe({
+        next: () => this.router.navigate(['/tasks']),
+        error: (error) => {
+          this.isLoading = false;
+          this.errorMessage = error.error?.message || 'Cập nhật trạng thái thất bại.';
+        }
+      });
+      return;
+    }
+
     const formData = {
       ...this.taskForm.value,
       customerId: this.taskForm.value.customerId || null,
-      dealId: this.taskForm.value.dealId || null
+      dealId: this.taskForm.value.dealId || null,
+      assignedToUserId: this.taskForm.value.assignedToUserId || null
     };
 
     if (this.isEditMode && this.taskId) {

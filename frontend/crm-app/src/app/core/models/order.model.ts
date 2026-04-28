@@ -10,6 +10,18 @@ export enum OrderStatus {
   Cancelled = 8
 }
 
+export enum DeliveryMethod {
+  InHouse = 0,
+  Vehicle = 1,
+  GHTK = 2
+}
+
+export const DeliveryMethodLabels: Record<DeliveryMethod, string> = {
+  [DeliveryMethod.InHouse]: 'Nhà giao',
+  [DeliveryMethod.Vehicle]: 'Giao xe',
+  [DeliveryMethod.GHTK]:    'Giao Hàng Tiết Kiệm'
+};
+
 export enum PaymentStatus {
   Pending = 0,
   PartialPaid = 1,
@@ -100,12 +112,29 @@ export interface Order {
   completionDate?: Date;
   returnDate?: Date;
   shippedDate?: Date;
-  deliveryAddress?: string;
-  deliveryCity?: string;
-  deliveryDistrict?: string;
-  deliveryWard?: string;
-  deliveryPhone?: string;
-  deliveryContactName?: string;
+  // Shipping info — cấu trúc Tỉnh + Xã (sau sáp nhập 2025, bỏ cấp Huyện)
+  deliveryMethod?: DeliveryMethod;
+  deliveryMethodName?: string;
+  shippingContactName?: string;
+  shippingPhone?: string;
+  shippingAddress?: string;
+  shippingProvinceCode?: string;
+  shippingProvinceName?: string;
+  shippingWardCode?: string;
+  shippingWardName?: string;
+  shippingCity?: string;             // [legacy] dữ liệu cũ
+  shippingNotes?: string;
+
+  // GHTK tracking — chỉ có nếu deliveryMethod = GHTK
+  ghtkLabel?: string;
+  ghtkTrackingUrl?: string;
+  ghtkStatus?: string;
+  ghtkStatusCode?: number;
+  ghtkFee?: number;
+  ghtkInsuranceFee?: number;
+  ghtkLastError?: string;
+  ghtkSyncedAt?: Date;
+
   subTotal: number;
   discountPercent: number;
   discountAmount: number;
@@ -127,6 +156,9 @@ export interface Order {
   productionDays?: number;
   depositCode?: string;
   designImageUrl?: string;
+  designId?: string;
+  designName?: string;
+  designCompletedImageUrl?: string;
   createdAt: Date;
   updatedAt?: Date;
   createdByUserId: string;
@@ -166,12 +198,16 @@ export interface CreateOrderRequest {
   requiredDate?: Date;
   completionDate?: Date;
   returnDate?: Date;
-  deliveryAddress?: string;
-  deliveryCity?: string;
-  deliveryDistrict?: string;
-  deliveryWard?: string;
-  deliveryPhone?: string;
-  deliveryContactName?: string;
+  deliveryMethod?: DeliveryMethod;
+  shippingContactName?: string;
+  shippingPhone?: string;
+  shippingAddress?: string;
+  shippingProvinceCode?: string;
+  shippingProvinceName?: string;
+  shippingWardCode?: string;
+  shippingWardName?: string;
+  shippingCity?: string;
+  shippingNotes?: string;
   discountPercent?: number;
   taxPercent?: number;
   shippingFee?: number;
@@ -183,6 +219,7 @@ export interface CreateOrderRequest {
   depositCode?: string;
   assignedToUserId?: string;
   designerUserId?: string;
+  designId?: string;
   items: CreateOrderItemRequest[];
 }
 

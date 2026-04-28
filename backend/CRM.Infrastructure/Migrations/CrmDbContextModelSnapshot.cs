@@ -550,14 +550,39 @@ namespace CRM.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("AccentColorFabricId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AssignedToUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AssignmentNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<string>("BackImageUrl")
                         .HasColumnType("text");
+
+                    b.Property<string>("BackLogoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ChestLogoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<Guid?>("ColorFabricId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("ColorText")
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CompletedImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -627,6 +652,9 @@ namespace CRM.Infrastructure.Migrations
                     b.Property<string>("SelectedComponents")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("ShirtFormId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("SizeKid")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -642,6 +670,9 @@ namespace CRM.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<string>("StyleText")
                         .HasColumnType("text");
 
@@ -653,6 +684,10 @@ namespace CRM.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AccentColorFabricId");
+
+                    b.HasIndex("AssignedToUserId");
+
                     b.HasIndex("ColorFabricId");
 
                     b.HasIndex("CreatedAt");
@@ -660,6 +695,10 @@ namespace CRM.Infrastructure.Migrations
                     b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("OrderId");
+
+                    b.HasIndex("ShirtFormId");
+
+                    b.HasIndex("Status");
 
                     b.ToTable("Designs", (string)null);
                 });
@@ -733,9 +772,15 @@ namespace CRM.Infrastructure.Migrations
                     b.Property<Guid?>("DealId")
                         .HasColumnType("uuid");
 
+                    b.Property<int?>("DeliveryMethod")
+                        .HasColumnType("integer");
+
                     b.Property<string>("DepositCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("DesignId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("DesignImageUrl")
                         .HasMaxLength(500)
@@ -754,6 +799,36 @@ namespace CRM.Infrastructure.Migrations
 
                     b.Property<DateTime?>("ExpectedDeliveryDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("GhtkFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal?>("GhtkInsuranceFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("GhtkLabel")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("GhtkLastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("GhtkStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("GhtkStatusCode")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("GhtkSyncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GhtkTrackingUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("InternalNotes")
                         .HasColumnType("text");
@@ -806,12 +881,32 @@ namespace CRM.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("ShippingContactName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
                     b.Property<string>("ShippingNotes")
                         .HasColumnType("text");
 
                     b.Property<string>("ShippingPhone")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ShippingProvinceCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("ShippingProvinceName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("ShippingWardCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("ShippingWardName")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -848,7 +943,11 @@ namespace CRM.Infrastructure.Migrations
 
                     b.HasIndex("DealId");
 
+                    b.HasIndex("DesignId");
+
                     b.HasIndex("DesignerUserId");
+
+                    b.HasIndex("GhtkLabel");
 
                     b.HasIndex("OrderDate");
 
@@ -1150,6 +1249,37 @@ namespace CRM.Infrastructure.Migrations
                     b.ToTable("ProductionStages", (string)null);
                 });
 
+            modelBuilder.Entity("CRM.Core.Entities.Province", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Code");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("Provinces", (string)null);
+                });
+
             modelBuilder.Entity("CRM.Core.Entities.Role", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1290,6 +1420,20 @@ namespace CRM.Infrastructure.Migrations
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Nhân viên đóng gói",
                             Name = "PackagingStaff"
+                        },
+                        new
+                        {
+                            Id = new Guid("13131313-1313-1313-1313-131313131313"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Nhân viên content (giao việc cho design)",
+                            Name = "ContentStaff"
+                        },
+                        new
+                        {
+                            Id = new Guid("14141414-1414-1414-1414-141414141414"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Trưởng phòng content",
+                            Name = "ContentManager"
                         });
                 });
 
@@ -1487,6 +1631,41 @@ namespace CRM.Infrastructure.Migrations
                     b.ToTable("UserRoles", (string)null);
                 });
 
+            modelBuilder.Entity("CRM.Core.Entities.Ward", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("ProvinceCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Code");
+
+                    b.HasIndex("Name");
+
+                    b.HasIndex("ProvinceCode");
+
+                    b.ToTable("Wards", (string)null);
+                });
+
             modelBuilder.Entity("CRM.Core.Entities.ActivityLog", b =>
                 {
                     b.HasOne("CRM.Core.Entities.User", "User")
@@ -1638,6 +1817,16 @@ namespace CRM.Infrastructure.Migrations
 
             modelBuilder.Entity("CRM.Core.Entities.Design", b =>
                 {
+                    b.HasOne("CRM.Core.Entities.ColorFabric", "AccentColorFabric")
+                        .WithMany()
+                        .HasForeignKey("AccentColorFabricId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("CRM.Core.Entities.User", "AssignedToUser")
+                        .WithMany()
+                        .HasForeignKey("AssignedToUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("CRM.Core.Entities.ColorFabric", "ColorFabric")
                         .WithMany("Designs")
                         .HasForeignKey("ColorFabricId")
@@ -1653,11 +1842,22 @@ namespace CRM.Infrastructure.Migrations
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("CRM.Core.Entities.ProductForm", "ShirtForm")
+                        .WithMany()
+                        .HasForeignKey("ShirtFormId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AccentColorFabric");
+
+                    b.Navigation("AssignedToUser");
+
                     b.Navigation("ColorFabric");
 
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("Order");
+
+                    b.Navigation("ShirtForm");
                 });
 
             modelBuilder.Entity("CRM.Core.Entities.Order", b =>
@@ -1683,6 +1883,11 @@ namespace CRM.Infrastructure.Migrations
                         .HasForeignKey("DealId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("CRM.Core.Entities.Design", "Design")
+                        .WithMany()
+                        .HasForeignKey("DesignId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("CRM.Core.Entities.User", "DesignerUser")
                         .WithMany()
                         .HasForeignKey("DesignerUserId");
@@ -1699,6 +1904,8 @@ namespace CRM.Infrastructure.Migrations
                     b.Navigation("Customer");
 
                     b.Navigation("Deal");
+
+                    b.Navigation("Design");
 
                     b.Navigation("DesignerUser");
 
@@ -1810,6 +2017,17 @@ namespace CRM.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("CRM.Core.Entities.Ward", b =>
+                {
+                    b.HasOne("CRM.Core.Entities.Province", "Province")
+                        .WithMany("Wards")
+                        .HasForeignKey("ProvinceCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Province");
+                });
+
             modelBuilder.Entity("CRM.Core.Entities.Collection", b =>
                 {
                     b.Navigation("Colors");
@@ -1861,6 +2079,11 @@ namespace CRM.Infrastructure.Migrations
             modelBuilder.Entity("CRM.Core.Entities.ProductionStage", b =>
                 {
                     b.Navigation("Steps");
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.Province", b =>
+                {
+                    b.Navigation("Wards");
                 });
 
             modelBuilder.Entity("CRM.Core.Entities.Role", b =>

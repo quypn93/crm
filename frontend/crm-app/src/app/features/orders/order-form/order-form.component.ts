@@ -5,12 +5,14 @@ import { forkJoin, of } from 'rxjs';
 import { OrderService } from '../../../core/services/order.service';
 import { CustomerService, Customer } from '../../../core/services/customer.service';
 import { DealService, Deal } from '../../../core/services/deal.service';
-import { DesignService, ColorFabric } from '../../../core/services/design.service';
+import { DesignService, ColorFabric, Design } from '../../../core/services/design.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { UserManagementService, UserListItem } from '../../../core/services/user-management.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { CreateOrderItemRequest } from '../../../core/models/order.model';
+import { LocationService } from '../../../core/services/location.service';
+import { CreateOrderItemRequest, DeliveryMethod, DeliveryMethodLabels } from '../../../core/models/order.model';
 import { Collection, LookupItem, ProductionDaysOption } from '../../../core/models/lookup.model';
+import { Province, Ward } from '../../../core/models/location.model';
 
 @Component({
   selector: 'app-order-form',
@@ -44,8 +46,23 @@ export class OrderFormComponent implements OnInit {
 
   users: UserListItem[] = [];
   designers: UserListItem[] = [];
+  availableDesigns: Design[] = [];
   customerSearchText = '';
   showCustomerDropdown = false;
+
+  provinces: Province[] = [];
+  wards: Ward[] = [];
+  isLoadingWards = false;
+
+  readonly DeliveryMethod = DeliveryMethod;
+  readonly deliveryMethodOptions = [
+    { value: DeliveryMethod.InHouse, label: DeliveryMethodLabels[DeliveryMethod.InHouse] },
+    { value: DeliveryMethod.Vehicle, label: DeliveryMethodLabels[DeliveryMethod.Vehicle] },
+    { value: DeliveryMethod.GHTK,    label: DeliveryMethodLabels[DeliveryMethod.GHTK] }
+  ];
+
+  // null = chưa biết (đang load), true = đã cấu hình token + kho, false = chưa cấu hình.
+  ghtkConfigured: boolean | null = null;
 
   // Size grid
   readonly SIZE_LIST = ['S', 'M', 'L', 'XL', 'XXL', 'NC1', 'NC2', 'NC3'];
@@ -69,6 +86,7 @@ export class OrderFormComponent implements OnInit {
     private settingsService: SettingsService,
     private userService: UserManagementService,
     private authService: AuthService,
+    private locationService: LocationService,
     private router: Router,
     private route: ActivatedRoute
   ) {
@@ -82,12 +100,14 @@ export class OrderFormComponent implements OnInit {
       depositCode: [''],
       assignedToUserId: [''],
       designerUserId: [''],
-      deliveryContactName: [''],
-      deliveryPhone: [''],
-      deliveryAddress: [''],
-      deliveryWard: [''],
-      deliveryDistrict: [''],
-      deliveryCity: [''],
+      designId: [''],
+      deliveryMethod: [''],
+      shippingContactName: [''],
+      shippingPhone: [''],
+      shippingAddress: [''],
+      shippingProvinceCode: [''],
+      shippingWardCode: [''],
+      shippingNotes: [''],
       discountPercent: [0, [Validators.min(0), Validators.max(100)]],
       taxPercent: [10, [Validators.min(0), Validators.max(100)]],
       shippingFee: [0, [Validators.min(0)]],
@@ -116,6 +136,12 @@ export class OrderFormComponent implements OnInit {
       this.orderId = id;
     }
 
+    // Check GHTK config trạng thái — quyết định hint khi chọn hình thức GHTK.
+    this.orderService.getGhtkStatus().subscribe({
+      next: (s) => { this.ghtkConfigured = !!s?.configured; },
+      error: () => { this.ghtkConfigured = false; }
+    });
+
     forkJoin({
       customers: this.customerService.getCustomers({ page: 1, pageSize: 200 }),
       colors: this.designService.getAllColorFabrics(),
@@ -125,7 +151,9 @@ export class OrderFormComponent implements OnInit {
       collections: this.settingsService.getCollections(),
       productionDaysOptions: this.settingsService.getProductionDaysOptions(),
       users: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true }),
-      designers: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true, role: 'Designer' })
+      designers: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true, role: 'Designer' }),
+      provinces: this.locationService.getProvinces(),
+      availableDesigns: this.designService.getAvailableDesigns()
     }).subscribe({
       next: (res) => {
         this.customers = res.customers?.items || [];
@@ -137,6 +165,8 @@ export class OrderFormComponent implements OnInit {
         this.productionDaysOptions = (res.productionDaysOptions || []).filter(o => o.isActive);
         this.users = res.users?.items || [];
         this.designers = res.designers?.items || [];
+        this.provinces = res.provinces || [];
+        this.availableDesigns = res.availableDesigns || [];
 
         this.resetAttributeFilters();
 
@@ -154,6 +184,42 @@ export class OrderFormComponent implements OnInit {
     this.orderForm.get('productionDaysOptionId')?.valueChanges.subscribe(() => this.recalcDates());
     this.orderForm.get('orderDate')?.valueChanges.subscribe(() => this.recalcDates());
     this.orderForm.get('productInfo.collectionId')?.valueChanges.subscribe((id: string) => this.onCollectionChange(id));
+    this.orderForm.get('shippingProvinceCode')?.valueChanges.subscribe((code: string) => this.onProvinceChange(code));
+    this.orderForm.get('designId')?.valueChanges.subscribe((id: string) => this.onDesignChange(id));
+  }
+
+  /**
+   * Khi sale chọn "Design có sẵn": disable designer select (không cho chọn),
+   * auto-assign order về designer đã làm ra design đó.
+   */
+  onDesignChange(designId: string): void {
+    const designerCtrl = this.orderForm.get('designerUserId');
+    if (!designId) {
+      designerCtrl?.enable({ emitEvent: false });
+      return;
+    }
+    const design = this.availableDesigns.find(d => d.id === designId);
+    if (design?.assignedToUserId) {
+      designerCtrl?.setValue(design.assignedToUserId, { emitEvent: false });
+    }
+    designerCtrl?.disable({ emitEvent: false });
+  }
+
+  isDesignLocked(): boolean {
+    return !!this.orderForm.get('designId')?.value;
+  }
+
+  onProvinceChange(provinceCode: string, keepWard = false): void {
+    if (!keepWard) this.orderForm.get('shippingWardCode')?.setValue('');
+    if (!provinceCode) {
+      this.wards = [];
+      return;
+    }
+    this.isLoadingWards = true;
+    this.locationService.getWardsByProvince(provinceCode).subscribe({
+      next: (wards) => { this.wards = wards; this.isLoadingWards = false; },
+      error: () => { this.wards = []; this.isLoadingWards = false; }
+    });
   }
 
   get items(): FormArray { return this.orderForm.get('items') as FormArray; }
@@ -263,10 +329,9 @@ export class OrderFormComponent implements OnInit {
     const customer = this.customers.find(c => c.id === customerId);
     if (customer) {
       this.orderForm.patchValue({
-        deliveryAddress: customer.address || '',
-        deliveryCity: customer.city || '',
-        deliveryPhone: customer.phone || '',
-        deliveryContactName: customer.name || ''
+        shippingAddress: customer.address || '',
+        shippingPhone: customer.phone || '',
+        shippingContactName: customer.name || ''
       });
     }
   }
@@ -286,12 +351,12 @@ export class OrderFormComponent implements OnInit {
           depositCode: order.depositCode || '',
           assignedToUserId: order.assignedToUserId || '',
           designerUserId: order.designerUserId || '',
-          deliveryAddress: order.deliveryAddress || '',
-          deliveryCity: order.deliveryCity || '',
-          deliveryDistrict: order.deliveryDistrict || '',
-          deliveryWard: order.deliveryWard || '',
-          deliveryPhone: order.deliveryPhone || '',
-          deliveryContactName: order.deliveryContactName || '',
+          designId: order.designId || '',
+          deliveryMethod: order.deliveryMethod ?? '',
+          shippingContactName: order.shippingContactName || '',
+          shippingPhone: order.shippingPhone || '',
+          shippingAddress: order.shippingAddress || '',
+          shippingNotes: order.shippingNotes || '',
           discountPercent: order.discountPercent || 0,
           taxPercent: order.taxPercent || 10,
           shippingFee: order.shippingFee || 0,
@@ -300,6 +365,18 @@ export class OrderFormComponent implements OnInit {
           internalNotes: order.internalNotes || '',
           customerNotes: order.customerNotes || ''
         });
+
+        // Nếu đơn đã gắn design có sẵn — khoá designer dropdown.
+        if (order.designId) {
+          this.orderForm.get('designerUserId')?.disable({ emitEvent: false });
+        }
+
+        // Patch province + ward tách khỏi patchValue chính để không trigger cascade wipe ward.
+        if (order.shippingProvinceCode) {
+          this.orderForm.get('shippingProvinceCode')?.setValue(order.shippingProvinceCode, { emitEvent: false });
+          this.onProvinceChange(order.shippingProvinceCode, true);
+          this.orderForm.get('shippingWardCode')?.setValue(order.shippingWardCode || '', { emitEvent: false });
+        }
 
         const selectedCustomer = this.customers.find(c => c.id === order.customerId);
         if (selectedCustomer) this.customerSearchText = this.getCustomerDisplayName(selectedCustomer);
@@ -376,6 +453,8 @@ export class OrderFormComponent implements OnInit {
 
     const f = this.orderForm.getRawValue();
     const pi = f.productInfo || {};
+    const selectedProvince = this.provinces.find(p => p.code === f.shippingProvinceCode);
+    const selectedWard = this.wards.find(w => w.code === f.shippingWardCode);
     const orderData = {
       customerId: f.customerId || undefined,
       customerName: !f.customerId ? this.customerSearchText || undefined : undefined,
@@ -385,12 +464,18 @@ export class OrderFormComponent implements OnInit {
       depositCode: f.depositCode || undefined,
       assignedToUserId: f.assignedToUserId || undefined,
       designerUserId: f.designerUserId || undefined,
-      deliveryAddress: f.deliveryAddress,
-      deliveryCity: f.deliveryCity,
-      deliveryDistrict: f.deliveryDistrict,
-      deliveryWard: f.deliveryWard,
-      deliveryPhone: f.deliveryPhone,
-      deliveryContactName: f.deliveryContactName,
+      designId: f.designId || undefined,
+      deliveryMethod: f.deliveryMethod === '' || f.deliveryMethod === null || f.deliveryMethod === undefined
+        ? undefined
+        : Number(f.deliveryMethod) as DeliveryMethod,
+      shippingContactName: f.shippingContactName || undefined,
+      shippingPhone: f.shippingPhone || undefined,
+      shippingAddress: f.shippingAddress || undefined,
+      shippingProvinceCode: f.shippingProvinceCode || undefined,
+      shippingProvinceName: selectedProvince?.fullName || undefined,
+      shippingWardCode: f.shippingWardCode || undefined,
+      shippingWardName: selectedWard?.name || undefined,
+      shippingNotes: f.shippingNotes || undefined,
       discountPercent: f.discountPercent,
       taxPercent: f.taxPercent,
       shippingFee: f.shippingFee,

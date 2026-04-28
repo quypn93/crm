@@ -126,6 +126,14 @@ public class TasksController : ControllerBase
         return Ok(ApiResponse<IEnumerable<TaskDto>>.Ok(tasks));
     }
 
+    [HttpGet("assignable-users")]
+    public async Task<ActionResult<ApiResponse<IEnumerable<AssignableUserDto>>>> GetAssignableUsers()
+    {
+        var userId = GetCurrentUserId();
+        var users = await _taskService.GetAssignableUsersAsync(userId);
+        return Ok(ApiResponse<IEnumerable<AssignableUserDto>>.Ok(users));
+    }
+
     [HttpGet("overdue")]
     public async Task<ActionResult<ApiResponse<IEnumerable<TaskDto>>>> GetOverdue()
     {

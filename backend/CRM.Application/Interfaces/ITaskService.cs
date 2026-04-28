@@ -16,4 +16,5 @@ public interface ITaskService
     Task<IEnumerable<TaskDto>> GetTasksDueTodayAsync();
     Task<IEnumerable<TaskDto>> GetByCustomerAsync(Guid customerId);
     Task<IEnumerable<TaskDto>> GetByDealAsync(Guid dealId);
+    Task<IEnumerable<AssignableUserDto>> GetAssignableUsersAsync(Guid currentUserId);
 }

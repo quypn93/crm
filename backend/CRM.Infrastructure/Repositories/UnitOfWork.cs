@@ -23,6 +23,8 @@ public class UnitOfWork : IUnitOfWork
     private IDesignRepository? _designs;
     private IProductionStageRepository? _productionStages;
     private IOrderProductionStepRepository? _orderProductionSteps;
+    private IProvinceRepository? _provinces;
+    private IWardRepository? _wards;
     private IRepository<Collection>? _collections;
     private IRepository<Material>? _materials;
     private IRepository<ProductForm>? _productForms;
@@ -47,6 +49,8 @@ public class UnitOfWork : IUnitOfWork
     public IDesignRepository Designs => _designs ??= new DesignRepository(_context);
     public IProductionStageRepository ProductionStages => _productionStages ??= new ProductionStageRepository(_context);
     public IOrderProductionStepRepository OrderProductionSteps => _orderProductionSteps ??= new OrderProductionStepRepository(_context);
+    public IProvinceRepository Provinces => _provinces ??= new ProvinceRepository(_context);
+    public IWardRepository Wards => _wards ??= new WardRepository(_context);
     public IRepository<Collection> Collections => _collections ??= new Repository<Collection>(_context);
     public IRepository<Material> Materials => _materials ??= new Repository<Material>(_context);
     public IRepository<ProductForm> ProductForms => _productForms ??= new Repository<ProductForm>(_context);

@@ -13,6 +13,42 @@
     </button>
   </div>
 
+  <div class="tabs-bar">
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab === 'assigned-to-me'"
+      (click)="setTab('assigned-to-me')">
+      Việc được giao cho tôi
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab === 'created-by-me'"
+      (click)="setTab('created-by-me')">
+      Việc tôi đã giao
+    </button>
+
+    <div class="view-toggle">
+      <button
+        type="button"
+        class="view-btn"
+        [class.active]="viewMode === 'list'"
+        (click)="setViewMode('list')"
+        title="Danh sách">
+        Danh sách
+      </button>
+      <button
+        type="button"
+        class="view-btn"
+        [class.active]="viewMode === 'board'"
+        (click)="setViewMode('board')"
+        title="Bảng kéo thả">
+        Bảng
+      </button>
+    </div>
+  </div>
+
   <div class="filters-bar">
     <div class="search-input-wrapper">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -26,7 +62,7 @@
         placeholder="Tìm kiếm công việc...">
     </div>
 
-    <select (change)="onStatusChange($event)">
+    <select (change)="onStatusChange($event)" *ngIf="viewMode === 'list'">
       <option value="">Tất cả trạng thái</option>
       <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
     </select>
@@ -39,7 +75,53 @@
     <button class="btn btn-secondary" (click)="onSearch()">Tìm kiếm</button>
   </div>
 
-  <div class="table-container">
+  <!-- Board view: kanban kéo thả -->
+  <div class="board-container" *ngIf="viewMode === 'board'" cdkDropListGroup>
+    <div class="loading-overlay" *ngIf="isLoading">
+      <div class="spinner"></div>
+    </div>
+
+    <div
+      class="board-column"
+      *ngFor="let col of boardColumns"
+      [attr.data-status]="col.status">
+      <div class="board-column-header">
+        <span class="board-column-title">{{ col.label }}</span>
+        <span class="board-column-count">{{ col.tasks.length }}</span>
+      </div>
+      <div
+        class="board-column-body"
+        cdkDropList
+        [id]="'col-' + col.status"
+        [cdkDropListData]="col.tasks"
+        [cdkDropListConnectedTo]="boardListIds"
+        (cdkDropListDropped)="onCardDrop($event, col)">
+        <div
+          class="board-card"
+          *ngFor="let task of col.tasks"
+          cdkDrag
+          [cdkDragDisabled]="!canMoveCard(task)"
+          [class.overdue]="isOverdue(task)"
+          (click)="editTask(task)">
+          <div class="board-card-title">{{ task.title }}</div>
+          <div class="board-card-meta">
+            <span class="priority-badge" [class]="getPriorityClass(task.priority)">{{ getPriorityLabel(task.priority) }}</span>
+            <span class="board-card-date" *ngIf="task.dueDate" [class.overdue-text]="isOverdue(task)">
+              {{ task.dueDate | date:'dd/MM' }}
+            </span>
+          </div>
+          <div class="board-card-people" *ngIf="task.assignedToUserName || task.createdByUserName">
+            <span *ngIf="activeTab === 'assigned-to-me' && task.createdByUserName">Từ: {{ task.createdByUserName }}</span>
+            <span *ngIf="activeTab === 'created-by-me' && task.assignedToUserName">Cho: {{ task.assignedToUserName }}</span>
+          </div>
+        </div>
+        <div class="board-empty" *ngIf="col.tasks.length === 0">Trống</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- List view: bảng truyền thống -->
+  <div class="table-container" *ngIf="viewMode === 'list'">
     <div class="loading-overlay" *ngIf="isLoading">
       <div class="spinner"></div>
     </div>
@@ -52,6 +134,7 @@
           <th>Trạng thái</th>
           <th>Mức độ</th>
           <th>Hạn chót</th>
+          <th>{{ activeTab === 'assigned-to-me' ? 'Người giao' : 'Người nhận' }}</th>
           <th>Khách hàng</th>
           <th class="actions-col">Thao tác</th>
         </tr>
@@ -92,6 +175,9 @@
               {{ task.dueDate ? (task.dueDate | date:'dd/MM/yyyy') : '-' }}
             </span>
           </td>
+          <td>
+            {{ (activeTab === 'assigned-to-me' ? task.createdByUserName : task.assignedToUserName) || '-' }}
+          </td>
           <td>{{ task.customerName || '-' }}</td>
           <td class="actions-col">
             <div class="action-buttons">
@@ -111,7 +197,7 @@
           </td>
         </tr>
         <tr *ngIf="tasks.length === 0 && !isLoading">
-          <td colspan="7" class="empty-state">
+          <td colspan="8" class="empty-state">
             <div class="empty-content">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                 <path d="M9 11l3 3L22 4"></path>
@@ -126,7 +212,7 @@
     </table>
   </div>
 
-  <div class="pagination" *ngIf="totalPages > 1">
+  <div class="pagination" *ngIf="viewMode === 'list' && totalPages > 1">
     <button
       class="page-btn"
       [disabled]="currentPage === 1"

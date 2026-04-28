@@ -7,7 +7,7 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
   template: `
     <div class="page-container">
       <div class="page-header">
-        <h1>Lịch sử cộng tiền (Techcombank)</h1>
+        <h1>Lịch sử cộng tiền</h1>
         <button class="btn btn-primary" (click)="showForm = true">+ Thêm thủ công</button>
       </div>
 
@@ -115,7 +115,7 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
 export class DepositsAdminComponent implements OnInit {
   deposits: DepositTransaction[] = [];
   showForm = false;
-  formData: any = { code: '', amount: 0, bankName: 'Techcombank', accountNumber: '', description: '', transactionDate: new Date().toISOString().slice(0, 16) };
+  formData: any = { code: '', amount: 0, bankName: '', accountNumber: '', description: '', transactionDate: new Date().toISOString().slice(0, 16) };
 
   constructor(private settings: SettingsService) {}
 
@@ -128,7 +128,7 @@ export class DepositsAdminComponent implements OnInit {
     if (!this.formData.code || !this.formData.amount) return;
     this.settings.createDeposit(this.formData).subscribe(() => {
       this.showForm = false;
-      this.formData = { code: '', amount: 0, bankName: 'Techcombank', accountNumber: '', description: '', transactionDate: new Date().toISOString().slice(0, 16) };
+      this.formData = { code: '', amount: 0, bankName: '', accountNumber: '', description: '', transactionDate: new Date().toISOString().slice(0, 16) };
       this.load();
     });
   }

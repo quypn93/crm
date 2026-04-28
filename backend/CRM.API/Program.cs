@@ -2,6 +2,7 @@ using System.Text;
 using CRM.Application.Mappings;
 using CRM.Application.Services;
 using CRM.Infrastructure.Services;
+using CRM.Infrastructure.Services.Ghtk;
 using CRM.Application.Interfaces;
 using CRM.Core.Interfaces;
 using CRM.Infrastructure.Data;
@@ -204,6 +205,15 @@ builder.Services.AddScoped<IProductFormService, ProductFormService>();
 builder.Services.AddScoped<IProductSpecificationService, ProductSpecificationService>();
 builder.Services.AddScoped<IProductionDaysOptionService, ProductionDaysOptionService>();
 builder.Services.AddScoped<IDepositTransactionService, DepositTransactionService>();
+builder.Services.AddScoped<ILocationService, LocationService>();
+
+// GHTK integration — endpoint & shipment orchestrator
+builder.Services.Configure<GhtkOptions>(builder.Configuration.GetSection("Ghtk"));
+builder.Services.AddHttpClient<IGhtkClient, GhtkClient>(c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddScoped<IGhtkShipmentService, GhtkShipmentService>();
 
 var app = builder.Build();
 

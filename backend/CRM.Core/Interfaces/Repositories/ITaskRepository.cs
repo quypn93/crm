@@ -13,6 +13,7 @@ public interface ITaskRepository : IRepository<TaskItem>
         Guid? customerId,
         Guid? dealId,
         Guid? assignedTo,
+        Guid? createdBy,
         DateTime? dueDateFrom,
         DateTime? dueDateTo,
         bool? isOverdue,

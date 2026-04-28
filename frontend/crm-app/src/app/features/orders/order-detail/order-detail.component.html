@@ -60,6 +60,26 @@
     </button>
   </div>
 
+  <!-- Banner thông báo designer cần upload ảnh đơn hàng có thiết kế -->
+  <div class="design-image-banner"
+       *ngIf="order && order.designId && !order.designImageUrl"
+       [class.actionable]="canUploadDesignImage()">
+    <div class="design-image-banner-content">
+      <div class="design-image-banner-icon">🎨</div>
+      <div class="design-image-banner-text">
+        <strong *ngIf="canUploadDesignImage()">Bạn cần upload ảnh đơn hàng đã có thiết kế</strong>
+        <strong *ngIf="!canUploadDesignImage()">Đơn hàng đang chờ designer upload ảnh đã có thiết kế</strong>
+        <span *ngIf="order.designName">
+          Thiết kế: <strong>{{ order.designName }}</strong>
+          <span *ngIf="order.designerUserName"> — Designer: <strong>{{ order.designerUserName }}</strong></span>
+        </span>
+        <span *ngIf="!canUploadDesignImage()">
+          Ảnh sẽ hiện tại mục "Ảnh thiết kế" bên dưới khi designer upload xong.
+        </span>
+      </div>
+    </div>
+  </div>
+
   <!-- Order Card Export -->
   <app-order-card [order]="order">
     <!-- Designer upload: đặt cạnh nút "Xuất ảnh" qua ng-content slot -->
@@ -97,20 +117,83 @@
         <h3>Thông tin giao hàng</h3>
         <div class="info-grid">
           <div class="info-item">
+            <span class="label">Hình thức giao</span>
+            <span class="value">{{ order.deliveryMethodName || '-' }}</span>
+          </div>
+
+          <!-- GHTK tracking — chỉ hiện khi đơn chọn GHTK -->
+          <div class="info-item full-width ghtk-panel" *ngIf="isGhtkOrder()">
+            <div class="ghtk-header">
+              <strong>Vận đơn GHTK</strong>
+              <div class="ghtk-actions">
+                <button type="button" class="btn btn-sm btn-outline"
+                        *ngIf="!order.ghtkLabel"
+                        [disabled]="isGhtkBusy"
+                        (click)="estimateGhtkFee()">Tính phí ước tính</button>
+                <button type="button" class="btn btn-sm btn-primary"
+                        *ngIf="canCreateGhtk()"
+                        [disabled]="isGhtkBusy"
+                        (click)="createGhtkShipment()">Tạo vận đơn GHTK</button>
+                <button type="button" class="btn btn-sm btn-outline"
+                        *ngIf="order.ghtkLabel"
+                        [disabled]="isGhtkBusy"
+                        (click)="syncGhtkStatus()">Đồng bộ</button>
+                <button type="button" class="btn btn-sm btn-danger"
+                        *ngIf="canCancelGhtk()"
+                        [disabled]="isGhtkBusy"
+                        (click)="cancelGhtkShipment()">Huỷ vận đơn</button>
+              </div>
+            </div>
+            <div class="alert alert-danger" *ngIf="ghtkError">{{ ghtkError }}</div>
+            <div class="ghtk-body" *ngIf="order.ghtkLabel; else noLabel">
+              <div class="ghtk-row">
+                <span class="label">Mã vận đơn</span>
+                <span class="value">
+                  <a *ngIf="order.ghtkTrackingUrl" [href]="order.ghtkTrackingUrl" target="_blank" rel="noopener">{{ order.ghtkLabel }}</a>
+                  <ng-container *ngIf="!order.ghtkTrackingUrl">{{ order.ghtkLabel }}</ng-container>
+                </span>
+              </div>
+              <div class="ghtk-row">
+                <span class="label">Trạng thái</span>
+                <span class="value">{{ order.ghtkStatus || '-' }} <em *ngIf="order.ghtkStatusCode !== undefined">(code {{ order.ghtkStatusCode }})</em></span>
+              </div>
+              <div class="ghtk-row" *ngIf="order.ghtkFee">
+                <span class="label">Phí GHTK</span>
+                <span class="value">{{ formatCurrency(order.ghtkFee) }}<span *ngIf="order.ghtkInsuranceFee"> + BH {{ formatCurrency(order.ghtkInsuranceFee) }}</span></span>
+              </div>
+              <div class="ghtk-row" *ngIf="order.ghtkSyncedAt">
+                <span class="label">Đồng bộ</span>
+                <span class="value">{{ order.ghtkSyncedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="ghtk-row" *ngIf="order.ghtkLastError">
+                <span class="label">Lỗi gần nhất</span>
+                <span class="value text-danger">{{ order.ghtkLastError }}</span>
+              </div>
+            </div>
+            <ng-template #noLabel>
+              <div class="ghtk-body" *ngIf="order.ghtkFee">
+                Phí GHTK ước tính: <strong>{{ formatCurrency(order.ghtkFee) }}</strong>
+              </div>
+              <div class="ghtk-body muted" *ngIf="!order.ghtkFee">
+                Chưa tạo vận đơn GHTK. Sẽ tự tạo khi đơn chuyển sang "Sẵn sàng giao" (nếu GHTK đã cấu hình).
+              </div>
+            </ng-template>
+          </div>
+          <div class="info-item">
             <span class="label">Người nhận</span>
-            <span class="value">{{ order.deliveryContactName || '-' }}</span>
+            <span class="value">{{ order.shippingContactName || '-' }}</span>
           </div>
           <div class="info-item">
             <span class="label">Số điện thoại</span>
-            <span class="value">{{ order.deliveryPhone || '-' }}</span>
+            <span class="value">{{ order.shippingPhone || '-' }}</span>
           </div>
           <div class="info-item full-width">
             <span class="label">Địa chỉ</span>
             <span class="value">
-              {{ order.deliveryAddress || '-' }}
-              <span *ngIf="order.deliveryWard">, {{ order.deliveryWard }}</span>
-              <span *ngIf="order.deliveryDistrict">, {{ order.deliveryDistrict }}</span>
-              <span *ngIf="order.deliveryCity">, {{ order.deliveryCity }}</span>
+              {{ order.shippingAddress || '-' }}
+              <span *ngIf="order.shippingWardName">, {{ order.shippingWardName }}</span>
+              <span *ngIf="order.shippingProvinceName">, {{ order.shippingProvinceName }}</span>
+              <span *ngIf="!order.shippingProvinceName && order.shippingCity">, {{ order.shippingCity }}</span>
             </span>
           </div>
           <div class="info-item">

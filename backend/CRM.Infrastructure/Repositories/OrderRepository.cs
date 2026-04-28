@@ -21,6 +21,7 @@ public class OrderRepository : Repository<Order>, IOrderRepository
             .Include(o => o.AssignedToUser)
             .Include(o => o.DesignerUser)
             .Include(o => o.ProductionDaysOption)
+            .Include(o => o.Design)
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.Id == id);
     }

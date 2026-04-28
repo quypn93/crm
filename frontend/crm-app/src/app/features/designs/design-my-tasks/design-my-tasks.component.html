@@ -1,0 +1,86 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Thiết kế của tôi</h1>
+    <p class="subtitle">Các thiết kế được giao cho bạn. Ảnh bản cuối sẽ upload vào từng đơn hàng tương ứng.</p>
+  </div>
+
+  <div class="filter-bar">
+    <label>Lọc trạng thái:</label>
+    <select (change)="onFilterChange($any($event.target).value)">
+      <option value="">Tất cả</option>
+      <option [value]="DesignStatus.Assigned">Đã giao</option>
+      <option [value]="DesignStatus.InProgress">Đang làm</option>
+      <option [value]="DesignStatus.Completed">Hoàn thành</option>
+      <option [value]="DesignStatus.Cancelled">Đã huỷ</option>
+    </select>
+  </div>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <div class="loading" *ngIf="isLoading">Đang tải...</div>
+
+  <div class="empty" *ngIf="!isLoading && tasks.length === 0">
+    Bạn chưa có thiết kế nào được giao.
+  </div>
+
+  <div class="tasks" *ngIf="!isLoading && tasks.length > 0">
+    <div class="task-card" *ngFor="let t of tasks">
+      <div class="task-head">
+        <h3>{{ t.designName }}</h3>
+        <span class="status-badge" [attr.data-status]="t.status">{{ statusLabels[t.status] }}</span>
+      </div>
+
+      <div class="task-meta">
+        <span *ngIf="t.customerFullName">Khách: <strong>{{ t.customerFullName }}</strong></span>
+        <span *ngIf="t.orderNumber">Đơn: <strong>{{ t.orderNumber }}</strong></span>
+        <span *ngIf="t.createdAt">Nhận: {{ t.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+        <span *ngIf="t.completedAt">Hoàn thành: {{ t.completedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+      </div>
+
+      <div class="task-spec">
+        <div class="spec-row"><span class="label">Mẫu áo</span><span>{{ t.shirtFormName || '—' }}</span></div>
+        <div class="spec-row"><span class="label">Màu áo</span><span>{{ t.colorFabricName || '—' }}</span></div>
+        <div class="spec-row"><span class="label">Màu phối</span><span>{{ t.accentColorFabricName || '—' }}</span></div>
+      </div>
+
+      <div class="task-logos">
+        <div class="logo-item" *ngIf="t.chestLogoUrl">
+          <div class="logo-label">Logo ngực</div>
+          <a [href]="resolveUrl(t.chestLogoUrl)" target="_blank">
+            <img [src]="resolveUrl(t.chestLogoUrl)" alt="Chest logo">
+          </a>
+        </div>
+        <div class="logo-item" *ngIf="t.backLogoUrl">
+          <div class="logo-label">Logo lưng</div>
+          <a [href]="resolveUrl(t.backLogoUrl)" target="_blank">
+            <img [src]="resolveUrl(t.backLogoUrl)" alt="Back logo">
+          </a>
+        </div>
+      </div>
+
+      <div class="task-notes" *ngIf="t.assignmentNotes">
+        <strong>Ghi chú sale:</strong>
+        <p>{{ t.assignmentNotes }}</p>
+      </div>
+
+      <div class="task-actions" *ngIf="availableTransitions(t.status).length > 0">
+        <button *ngFor="let s of availableTransitions(t.status)"
+                type="button"
+                class="btn btn-sm"
+                [class.btn-primary]="s === DesignStatus.InProgress"
+                [class.btn-success]="s === DesignStatus.Completed"
+                [class.btn-danger]="s === DesignStatus.Cancelled"
+                [class.btn-outline]="s === DesignStatus.Assigned"
+                [disabled]="busyId === t.id"
+                (click)="updateStatus(t, s)">
+          <ng-container [ngSwitch]="s">
+            <ng-container *ngSwitchCase="DesignStatus.InProgress">▶ Bắt đầu làm</ng-container>
+            <ng-container *ngSwitchCase="DesignStatus.Completed">✓ Hoàn thành</ng-container>
+            <ng-container *ngSwitchCase="DesignStatus.Cancelled">✕ Huỷ</ng-container>
+            <ng-container *ngSwitchCase="DesignStatus.Assigned">↩ Trả về chưa làm</ng-container>
+          </ng-container>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

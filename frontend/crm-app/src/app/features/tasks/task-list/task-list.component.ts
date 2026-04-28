@@ -1,6 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { CdkDragDrop, transferArrayItem } from '@angular/cdk/drag-drop';
 import { TaskService, Task, TaskSearchParams, TaskStatus, TaskPriority } from '../../../core/services/task.service';
+import { AuthService } from '../../../core/services/auth.service';
+
+type TaskTab = 'assigned-to-me' | 'created-by-me';
+type ViewMode = 'list' | 'board';
+
+interface BoardColumn {
+  status: TaskStatus;
+  label: string;
+  tasks: Task[];
+}
 
 @Component({
   selector: 'app-task-list',
@@ -17,6 +28,16 @@ export class TaskListComponent implements OnInit {
   pageSize = 10;
   totalItems = 0;
   totalPages = 0;
+  activeTab: TaskTab = 'assigned-to-me';
+  viewMode: ViewMode = 'list';
+
+  boardColumns: BoardColumn[] = [
+    { status: TaskStatus.Pending,    label: 'Chờ xử lý',     tasks: [] },
+    { status: TaskStatus.InProgress, label: 'Đang thực hiện', tasks: [] },
+    { status: TaskStatus.Completed,  label: 'Hoàn thành',    tasks: [] },
+    { status: TaskStatus.Cancelled,  label: 'Đã hủy',        tasks: [] }
+  ];
+  boardListIds = this.boardColumns.map(c => `col-${c.status}`);
 
   // Expose enums to template
   TaskStatus = TaskStatus;
@@ -27,6 +48,7 @@ export class TaskListComponent implements OnInit {
 
   constructor(
     private taskService: TaskService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
@@ -34,14 +56,32 @@ export class TaskListComponent implements OnInit {
     this.loadTasks();
   }
 
+  setTab(tab: TaskTab): void {
+    if (this.activeTab === tab) return;
+    this.activeTab = tab;
+    this.currentPage = 1;
+    this.loadTasks();
+  }
+
+  setViewMode(mode: ViewMode): void {
+    if (this.viewMode === mode) return;
+    this.viewMode = mode;
+    this.currentPage = 1;
+    this.loadTasks();
+  }
+
   loadTasks(): void {
     this.isLoading = true;
+    const userId = this.authService.getCurrentUser()?.id;
     const params: TaskSearchParams = {
-      searchTerm: this.searchTerm,
-      status: this.selectedStatus ?? undefined,
+      search: this.searchTerm || undefined,
+      // Board mode hiển thị mọi cột nên bỏ filter status; status filter chỉ áp ở list mode.
+      status: this.viewMode === 'list' ? (this.selectedStatus ?? undefined) : undefined,
       priority: this.selectedPriority ?? undefined,
-      page: this.currentPage,
-      pageSize: this.pageSize
+      page: this.viewMode === 'board' ? 1 : this.currentPage,
+      pageSize: this.viewMode === 'board' ? 500 : this.pageSize,
+      assignedTo: this.activeTab === 'assigned-to-me' ? userId : undefined,
+      createdBy: this.activeTab === 'created-by-me' ? userId : undefined
     };
 
     this.taskService.getTasks(params).subscribe({
@@ -49,13 +89,52 @@ export class TaskListComponent implements OnInit {
         this.tasks = response?.items || [];
         this.totalItems = response?.totalCount || 0;
         this.totalPages = response?.totalPages || 0;
+        this.distributeBoard();
         this.isLoading = false;
       },
       error: () => {
         this.tasks = [];
+        this.distributeBoard();
         this.isLoading = false;
       }
     });
+  }
+
+  private distributeBoard(): void {
+    this.boardColumns.forEach(col => col.tasks = []);
+    for (const t of this.tasks) {
+      const col = this.boardColumns.find(c => c.status === t.status);
+      if (col) col.tasks.push(t);
+    }
+  }
+
+  // Drag-drop handler — đổi status khi card thả sang cột khác.
+  onCardDrop(event: CdkDragDrop<Task[]>, target: BoardColumn): void {
+    if (event.previousContainer === event.container) return;
+
+    const task = event.previousContainer.data[event.previousIndex];
+    if (!this.canMoveCard(task)) {
+      // Không có quyền — không di chuyển. UI đã optimistic, ta phải rollback.
+      return;
+    }
+
+    transferArrayItem(event.previousContainer.data, event.container.data, event.previousIndex, event.currentIndex);
+    const previousStatus = task.status;
+    task.status = target.status;
+
+    this.taskService.updateTaskStatus(task.id, target.status).subscribe({
+      error: () => {
+        // Rollback nếu BE từ chối.
+        task.status = previousStatus;
+        this.distributeBoard();
+      }
+    });
+  }
+
+  canMoveCard(task: Task): boolean {
+    const userId = this.authService.getCurrentUser()?.id;
+    if (!userId) return false;
+    return this.authService.isAdmin() || task.createdByUserId === userId || task.assignedToUserId === userId;
   }
 
   onSearch(): void {

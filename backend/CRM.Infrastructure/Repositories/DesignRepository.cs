@@ -1,4 +1,5 @@
 using CRM.Core.Entities;
+using CRM.Core.Enums;
 using CRM.Core.Interfaces.Repositories;
 using CRM.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -15,10 +16,38 @@ public class DesignRepository : Repository<Design>, IDesignRepository
     {
         return await _dbSet
             .Include(d => d.ColorFabric)
+            .Include(d => d.AccentColorFabric)
+            .Include(d => d.ShirtForm)
+            .Include(d => d.AssignedToUser)
             .Include(d => d.Order)
                 .ThenInclude(o => o!.Customer)
             .Include(d => d.CreatedByUser)
             .FirstOrDefaultAsync(d => d.Id == id);
+    }
+
+    public async Task<IEnumerable<Design>> GetAssignedToUserAsync(Guid userId, DesignStatus? status = null)
+    {
+        var q = _dbSet
+            .Include(d => d.ColorFabric)
+            .Include(d => d.AccentColorFabric)
+            .Include(d => d.ShirtForm)
+            .Include(d => d.Order)
+            .Where(d => d.AssignedToUserId == userId);
+        if (status.HasValue) q = q.Where(d => d.Status == status.Value);
+        return await q.OrderByDescending(d => d.CreatedAt).ToListAsync();
+    }
+
+    public async Task<IEnumerable<Design>> GetAvailableAsync()
+    {
+        // "Available" = design đã Completed (dù có ảnh hay chưa — designer có thể hoàn thành rồi upload ảnh cho Order thay vì Design).
+        return await _dbSet
+            .Include(d => d.ColorFabric)
+            .Include(d => d.AccentColorFabric)
+            .Include(d => d.ShirtForm)
+            .Include(d => d.AssignedToUser)
+            .Where(d => d.Status == DesignStatus.Completed)
+            .OrderByDescending(d => d.CompletedAt)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<Design>> GetByOrderAsync(Guid orderId)
@@ -46,6 +75,8 @@ public class DesignRepository : Repository<Design>, IDesignRepository
         Guid? orderId,
         Guid? colorFabricId,
         Guid? createdByUserId,
+        Guid? assignedToUserId,
+        DesignStatus? status,
         DateTime? fromDate,
         DateTime? toDate,
         int page,
@@ -55,10 +86,19 @@ public class DesignRepository : Repository<Design>, IDesignRepository
     {
         var query = _dbSet
             .Include(d => d.ColorFabric)
+            .Include(d => d.AccentColorFabric)
+            .Include(d => d.ShirtForm)
+            .Include(d => d.AssignedToUser)
             .Include(d => d.Order)
                 .ThenInclude(o => o!.Customer)
             .Include(d => d.CreatedByUser)
             .AsQueryable();
+
+        if (assignedToUserId.HasValue)
+            query = query.Where(d => d.AssignedToUserId == assignedToUserId.Value);
+
+        if (status.HasValue)
+            query = query.Where(d => d.Status == status.Value);
 
         // Apply filters
         if (!string.IsNullOrWhiteSpace(search))

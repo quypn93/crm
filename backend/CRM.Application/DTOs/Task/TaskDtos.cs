@@ -60,6 +60,7 @@ public class TaskFilterDto
     public Guid? CustomerId { get; set; }
     public Guid? DealId { get; set; }
     public Guid? AssignedTo { get; set; }
+    public Guid? CreatedBy { get; set; }
     public DateTime? DueDateFrom { get; set; }
     public DateTime? DueDateTo { get; set; }
     public bool? IsOverdue { get; set; }
@@ -67,6 +68,14 @@ public class TaskFilterDto
     public int PageSize { get; set; } = 20;
     public string? SortBy { get; set; }
     public string SortOrder { get; set; } = "desc";
+}
+
+public class AssignableUserDto
+{
+    public Guid Id { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string[] Roles { get; set; } = Array.Empty<string>();
 }
 
 public static class TaskPriorityNames

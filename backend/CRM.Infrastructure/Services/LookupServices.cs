@@ -258,10 +258,10 @@ public class DepositTransactionService : IDepositTransactionService
             // Ưu tiên `code` (SePay tự parse từ nội dung CK), fallback sang referenceCode
             Code = !string.IsNullOrWhiteSpace(payload.Code) ? payload.Code! : (payload.ReferenceCode ?? externalId),
             Amount = payload.TransferAmount,
-            BankName = payload.Gateway ?? "Techcombank",
+            BankName = payload.Gateway ?? string.Empty,
             AccountNumber = payload.AccountNumber,
-            Description = payload.Content ?? payload.Description,
-            TransactionDate = DateTime.TryParse(payload.TransactionDate, out var t) ? t : DateTime.UtcNow,
+            Description = ExtractRealContent(payload.Content ?? payload.Description),
+            TransactionDate = ParseSePayDateUtc(payload.TransactionDate),
             Source = "sepay",
             ExternalId = externalId
         };
@@ -291,4 +291,40 @@ public class DepositTransactionService : IDepositTransactionService
         MatchedOrderId = e.MatchedOrderId,
         CreatedAt = e.CreatedAt
     };
+
+    private static readonly TimeZoneInfo VnTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+        OperatingSystem.IsWindows() ? "SE Asia Standard Time" : "Asia/Ho_Chi_Minh");
+
+    // SePay gửi `transactionDate` dạng "yyyy-MM-dd HH:mm:ss" theo giờ Việt Nam, không kèm timezone.
+    // PostgreSQL `timestamptz` chỉ chấp nhận DateTime.Kind=Utc nên phải convert.
+    private static DateTime ParseSePayDateUtc(string? raw)
+    {
+        if (!DateTime.TryParse(raw, out var t)) return DateTime.UtcNow;
+        return t.Kind == DateTimeKind.Unspecified
+            ? TimeZoneInfo.ConvertTimeToUtc(t, VnTimeZone)
+            : t.ToUniversalTime();
+    }
+
+    // BIDV/VCB hay bọc nội dung CK trong metadata, vd:
+    //   MBVCB.13929087925.885563.PHAM NHU QUY chuyen tien.CT tu 1018590541 PHAM NHU QUY toi 96247KJUNZ PHAM
+    // → phần khách thực sự gõ chỉ là "PHAM NHU QUY chuyen tien".
+    private static readonly System.Text.RegularExpressions.Regex BankPrefixRegex =
+        new(@"^[A-Z0-9]+(\.\d+)+\.", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private static string? ExtractRealContent(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return raw;
+        var s = raw;
+
+        // Cắt suffix ".CT tu ..." / ".CT toi ..." (bank tự thêm thông tin from/to)
+        var ctIdx = s.IndexOf(".CT ", StringComparison.OrdinalIgnoreCase);
+        if (ctIdx > 0) s = s.Substring(0, ctIdx);
+
+        // Cắt prefix dạng "MBVCB.13929087925.885563."
+        var m = BankPrefixRegex.Match(s);
+        if (m.Success) s = s.Substring(m.Length);
+
+        s = s.Trim();
+        return string.IsNullOrEmpty(s) ? raw : s;
+    }
 }

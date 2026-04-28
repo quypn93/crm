@@ -43,9 +43,29 @@ public class DesignConfiguration : IEntityTypeConfiguration<Design>
         builder.Property(d => d.SaleStaff)
             .HasMaxLength(200);
 
+        builder.Property(d => d.ChestLogoUrl).HasMaxLength(500);
+        builder.Property(d => d.BackLogoUrl).HasMaxLength(500);
+        builder.Property(d => d.CompletedImageUrl).HasMaxLength(500);
+        builder.Property(d => d.AssignmentNotes).HasMaxLength(1000);
+
         builder.HasOne(d => d.ColorFabric)
             .WithMany(cf => cf.Designs)
             .HasForeignKey(d => d.ColorFabricId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(d => d.AccentColorFabric)
+            .WithMany()
+            .HasForeignKey(d => d.AccentColorFabricId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(d => d.ShirtForm)
+            .WithMany()
+            .HasForeignKey(d => d.ShirtFormId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(d => d.AssignedToUser)
+            .WithMany()
+            .HasForeignKey(d => d.AssignedToUserId)
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasOne(d => d.Order)
@@ -61,6 +81,8 @@ public class DesignConfiguration : IEntityTypeConfiguration<Design>
         builder.HasIndex(d => d.OrderId);
         builder.HasIndex(d => d.ColorFabricId);
         builder.HasIndex(d => d.CreatedByUserId);
+        builder.HasIndex(d => d.AssignedToUserId);
+        builder.HasIndex(d => d.Status);
         builder.HasIndex(d => d.CreatedAt);
     }
 }

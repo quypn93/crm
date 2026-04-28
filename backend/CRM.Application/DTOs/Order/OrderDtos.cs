@@ -38,10 +38,32 @@ public class OrderDto
     // Designer upload
     public string? DesignImageUrl { get; set; }
 
-    public string? ShippingAddress { get; set; }
-    public string? ShippingCity { get; set; }
+    // Design có sẵn
+    public Guid? DesignId { get; set; }
+    public string? DesignName { get; set; }
+    public string? DesignCompletedImageUrl { get; set; }
+
+    public DeliveryMethod? DeliveryMethod { get; set; }
+    public string? DeliveryMethodName => GetDeliveryMethodName(DeliveryMethod);
+    public string? ShippingContactName { get; set; }
     public string? ShippingPhone { get; set; }
+    public string? ShippingAddress { get; set; }
+    public string? ShippingProvinceCode { get; set; }
+    public string? ShippingProvinceName { get; set; }
+    public string? ShippingWardCode { get; set; }
+    public string? ShippingWardName { get; set; }
+    public string? ShippingCity { get; set; }
     public string? ShippingNotes { get; set; }
+
+    // GHTK tracking (read-only — chỉ set qua flow GhtkShipmentService)
+    public string? GhtkLabel { get; set; }
+    public string? GhtkTrackingUrl { get; set; }
+    public string? GhtkStatus { get; set; }
+    public int? GhtkStatusCode { get; set; }
+    public decimal? GhtkFee { get; set; }
+    public decimal? GhtkInsuranceFee { get; set; }
+    public string? GhtkLastError { get; set; }
+    public DateTime? GhtkSyncedAt { get; set; }
 
     public PaymentStatus PaymentStatus { get; set; }
     public string PaymentStatusName => GetPaymentStatusName(PaymentStatus);
@@ -82,6 +104,14 @@ public class OrderDto
         OrderStatus.Completed => "Hoàn thành",
         OrderStatus.Cancelled => "Đã hủy",
         _ => "Không xác định"
+    };
+
+    private static string? GetDeliveryMethodName(DeliveryMethod? method) => method switch
+    {
+        Core.Enums.DeliveryMethod.InHouse => "Nhà giao",
+        Core.Enums.DeliveryMethod.Vehicle => "Giao xe",
+        Core.Enums.DeliveryMethod.GHTK    => "Giao Hàng Tiết Kiệm",
+        _ => null
     };
 
     private static string GetPaymentStatusName(PaymentStatus status) => status switch
@@ -133,9 +163,15 @@ public class CreateOrderDto
     public DateTime? ReturnDate { get; set; }
     public Guid? ProductionDaysOptionId { get; set; }
     public string? DepositCode { get; set; }
-    public string? ShippingAddress { get; set; }
-    public string? ShippingCity { get; set; }
+    public DeliveryMethod? DeliveryMethod { get; set; }
+    public string? ShippingContactName { get; set; }
     public string? ShippingPhone { get; set; }
+    public string? ShippingAddress { get; set; }
+    public string? ShippingProvinceCode { get; set; }
+    public string? ShippingProvinceName { get; set; }
+    public string? ShippingWardCode { get; set; }
+    public string? ShippingWardName { get; set; }
+    public string? ShippingCity { get; set; }
     public string? ShippingNotes { get; set; }
     public decimal DiscountPercent { get; set; }
     public decimal TaxPercent { get; set; } = 10;
@@ -144,6 +180,7 @@ public class CreateOrderDto
     public string? StyleNotes { get; set; }
     public Guid? AssignedToUserId { get; set; }
     public Guid? DesignerUserId { get; set; }
+    public Guid? DesignId { get; set; }
     public List<CreateOrderItemDto> Items { get; set; } = new();
 }
 

@@ -4,21 +4,21 @@
 }
 
 .settings-sidebar {
-  width: 220px;
+  width: 240px;
   flex-shrink: 0;
-  background: #fff;
-  border-right: 1px solid #e2e8f0;
+  background: var(--bg-primary);
+  border-right: 1px solid var(--border-color);
   padding: 0;
 }
 
 .sidebar-header {
-  padding: 20px 20px 12px;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid var(--border-color);
 
   h2 {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
-    color: #94a3b8;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.06em;
     margin: 0;
@@ -26,7 +26,7 @@
 }
 
 .settings-nav {
-  padding: 8px;
+  padding: 10px;
 }
 
 .nav-item {
@@ -34,23 +34,25 @@
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   text-decoration: none;
-  color: #475569;
-  transition: all 0.2s;
-  margin-bottom: 2px;
+  color: var(--gray-700);
+  transition: background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+  margin-bottom: 4px;
 
   &:hover {
-    background: #f8fafc;
-    color: #1e293b;
+    background: var(--gray-50);
+    color: var(--text-primary);
   }
 
   &.active {
-    background: #eef2ff;
-    color: #4f46e5;
+    background: var(--gradient-primary);
+    color: #fff;
+    box-shadow: var(--shadow-primary);
 
-    .nav-icon { color: #4f46e5; }
-    .nav-label { color: #4f46e5; font-weight: 600; }
+    .nav-icon { color: #fff; }
+    .nav-label { color: #fff; font-weight: 600; }
+    .nav-desc { color: rgba(255, 255, 255, 0.8); }
   }
 }
 
@@ -61,8 +63,8 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: #64748b;
-  transition: color 0.2s;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
 }
 
 .nav-text {
@@ -73,18 +75,18 @@
 
 .nav-label {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.2;
 }
 
 .nav-desc {
   font-size: 11px;
-  color: #94a3b8;
-  margin-top: 1px;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 
 .settings-content {
   flex: 1;
   overflow: auto;
-  background: #f8fafc;
+  background: var(--bg-app);
 }

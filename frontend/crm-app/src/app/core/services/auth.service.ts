@@ -17,7 +17,9 @@ export const RoleNames = {
   DeliveryManager: 'DeliveryManager',
   DeliveryStaff: 'DeliveryStaff',
   DesignManager: 'DesignManager',
-  Designer: 'Designer'
+  Designer: 'Designer',
+  ContentManager: 'ContentManager',
+  ContentStaff: 'ContentStaff'
 } as const;
 
 // Role groups for permission checks
@@ -29,7 +31,16 @@ export const RoleGroups = {
   QualityRoles: [RoleNames.Admin, RoleNames.QualityManager, RoleNames.QualityControl],
   DeliveryRoles: [RoleNames.Admin, RoleNames.DeliveryManager, RoleNames.DeliveryStaff],
   DesignRoles: [RoleNames.Admin, RoleNames.DesignManager, RoleNames.Designer],
-  OperationalRoles: [RoleNames.Admin, RoleNames.ProductionManager, RoleNames.ProductionStaff, RoleNames.QualityManager, RoleNames.QualityControl, RoleNames.DeliveryManager, RoleNames.DeliveryStaff]
+  OperationalRoles: [RoleNames.Admin, RoleNames.ProductionManager, RoleNames.ProductionStaff, RoleNames.QualityManager, RoleNames.QualityControl, RoleNames.DeliveryManager, RoleNames.DeliveryStaff],
+  // Roles được phép truy cập đơn hàng — mọi role nghiệp vụ trừ Content (Manager + Staff)
+  OrderRoles: [
+    RoleNames.Admin,
+    RoleNames.SalesManager, RoleNames.SalesRep,
+    RoleNames.ProductionManager, RoleNames.ProductionStaff,
+    RoleNames.QualityManager, RoleNames.QualityControl,
+    RoleNames.DeliveryManager, RoleNames.DeliveryStaff,
+    RoleNames.DesignManager, RoleNames.Designer
+  ]
 };
 
 @Injectable({

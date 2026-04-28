@@ -8,6 +8,8 @@ import { DesignDetailComponent } from './design-detail/design-detail.component';
 import { ColorFabricsComponent } from './color-fabrics/color-fabrics.component';
 import { ShirtComponentsComponent } from './shirt-components/shirt-components.component';
 import { DesignCanvasComponent } from './design-canvas/design-canvas.component';
+import { DesignAssignComponent } from './design-assign/design-assign.component';
+import { DesignMyTasksComponent } from './design-my-tasks/design-my-tasks.component';
 
 @NgModule({
   declarations: [
@@ -16,7 +18,9 @@ import { DesignCanvasComponent } from './design-canvas/design-canvas.component';
     DesignDetailComponent,
     ColorFabricsComponent,
     ShirtComponentsComponent,
-    DesignCanvasComponent
+    DesignCanvasComponent,
+    DesignAssignComponent,
+    DesignMyTasksComponent
   ],
   imports: [
     CommonModule,

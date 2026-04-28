@@ -34,6 +34,8 @@ public class CrmDbContext : DbContext
     public DbSet<CollectionSpecification> CollectionSpecifications => Set<CollectionSpecification>();
     public DbSet<ProductionDaysOption> ProductionDaysOptions => Set<ProductionDaysOption>();
     public DbSet<DepositTransaction> DepositTransactions => Set<DepositTransaction>();
+    public DbSet<Province> Provinces => Set<Province>();
+    public DbSet<Ward> Wards => Set<Ward>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

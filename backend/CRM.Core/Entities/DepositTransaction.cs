@@ -4,7 +4,7 @@ public class DepositTransaction : BaseEntity
 {
     public string Code { get; set; } = string.Empty;          // Mã giao dịch từ Casso / bank ref
     public decimal Amount { get; set; }
-    public string BankName { get; set; } = "Techcombank";
+    public string BankName { get; set; } = string.Empty;
     public string? AccountNumber { get; set; }
     public string? Description { get; set; }                  // Nội dung chuyển khoản
     public DateTime TransactionDate { get; set; }

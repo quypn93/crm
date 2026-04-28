@@ -55,6 +55,20 @@
               <option value="">Chưa giao</option>
               <option *ngFor="let u of designers" [value]="u.id">{{ u.firstName }} {{ u.lastName }}</option>
             </select>
+            <div class="hint" *ngIf="isDesignLocked()">
+              Đã chọn design có sẵn — designer tự gán theo design.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Design có sẵn</label>
+            <select formControlName="designId">
+              <option value="">-- Không dùng design có sẵn --</option>
+              <option *ngFor="let d of availableDesigns" [value]="d.id">
+                {{ d.designName }}<span *ngIf="d.assignedToUserName"> — {{ d.assignedToUserName }}</span>
+              </option>
+            </select>
+            <div class="hint">Chọn design đã hoàn thành để tái sử dụng cho đơn này.</div>
           </div>
 
           <div class="form-group">
@@ -192,33 +206,64 @@
         </div>
       </div>
 
-      <!-- ⑥ Giao hàng -->
+      <!-- ⑥ Giao hàng — cấu trúc 2 cấp (Tỉnh + Xã) theo hành chính 2025 -->
       <div class="form-section">
         <h2 class="section-title">Thông tin giao hàng</h2>
+
+        <div class="delivery-method-group">
+          <label class="group-label">Hình thức giao hàng</label>
+          <div class="radio-row">
+            <label class="radio-item" *ngFor="let opt of deliveryMethodOptions">
+              <input type="radio" formControlName="deliveryMethod" [value]="opt.value">
+              <span>{{ opt.label }}</span>
+            </label>
+          </div>
+          <ng-container *ngIf="orderForm.get('deliveryMethod')?.value === DeliveryMethod.GHTK">
+            <div class="hint" *ngIf="ghtkConfigured === true">
+              Vận đơn GHTK sẽ được tạo tự động khi đơn chuyển sang "Sẵn sàng giao".
+            </div>
+            <div class="hint hint-warning" *ngIf="ghtkConfigured === false">
+              ⚠ GHTK chưa cấu hình — đơn vẫn lưu nhãn "GHTK" nhưng không tạo vận đơn tự động.
+              Yêu cầu admin điền token + thông tin kho trong <code>appsettings.Ghtk</code>.
+            </div>
+          </ng-container>
+        </div>
+
         <div class="form-grid">
           <div class="form-group">
             <label>Người nhận</label>
-            <input type="text" formControlName="deliveryContactName" placeholder="Tên người nhận">
+            <input type="text" formControlName="shippingContactName" placeholder="Tên người nhận">
           </div>
           <div class="form-group">
             <label>Số điện thoại</label>
-            <input type="text" formControlName="deliveryPhone" placeholder="Số điện thoại">
-          </div>
-          <div class="form-group full-width">
-            <label>Địa chỉ</label>
-            <input type="text" formControlName="deliveryAddress" placeholder="Số nhà, đường">
-          </div>
-          <div class="form-group">
-            <label>Phường/Xã</label>
-            <input type="text" formControlName="deliveryWard" placeholder="Phường/Xã">
-          </div>
-          <div class="form-group">
-            <label>Quận/Huyện</label>
-            <input type="text" formControlName="deliveryDistrict" placeholder="Quận/Huyện">
+            <input type="text" formControlName="shippingPhone" placeholder="Số điện thoại">
           </div>
           <div class="form-group">
             <label>Tỉnh/Thành phố</label>
-            <input type="text" formControlName="deliveryCity" placeholder="Tỉnh/Thành phố">
+            <select formControlName="shippingProvinceCode">
+              <option value="">-- Chọn tỉnh/thành --</option>
+              <option *ngFor="let p of provinces" [value]="p.code">{{ p.fullName }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Phường/Xã</label>
+            <select formControlName="shippingWardCode"
+                    [attr.disabled]="!orderForm.get('shippingProvinceCode')?.value ? true : null">
+              <option value="">-- Chọn phường/xã --</option>
+              <option *ngFor="let w of wards" [value]="w.code">{{ w.name }}</option>
+            </select>
+            <div class="hint" *ngIf="isLoadingWards">Đang tải danh sách xã/phường...</div>
+            <div class="hint" *ngIf="!isLoadingWards && !wards.length && orderForm.get('shippingProvinceCode')?.value">
+              Chưa có dữ liệu xã/phường cho tỉnh này.
+            </div>
+          </div>
+          <div class="form-group full-width">
+            <label>Địa chỉ chi tiết</label>
+            <input type="text" formControlName="shippingAddress" placeholder="Số nhà, đường, thôn/xóm...">
+          </div>
+          <div class="form-group full-width">
+            <label>Ghi chú giao hàng</label>
+            <input type="text" formControlName="shippingNotes" placeholder="Giờ giao, lưu ý gọi trước...">
           </div>
         </div>
       </div>

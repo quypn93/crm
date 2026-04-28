@@ -2,6 +2,8 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 import { AuthGuard } from './core/guards/auth.guard';
+import { RoleGuard } from './core/guards/role.guard';
+import { RoleGroups } from './core/services/auth.service';
 
 const routes: Routes = [
   {
@@ -36,6 +38,8 @@ const routes: Routes = [
       },
       {
         path: 'orders',
+        canActivate: [RoleGuard],
+        data: { roles: RoleGroups.OrderRoles },
         loadChildren: () => import('./features/orders/orders.module').then(m => m.OrdersModule)
       },
       {

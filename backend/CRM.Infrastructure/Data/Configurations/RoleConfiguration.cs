@@ -39,7 +39,9 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
             new Role { Id = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"), Name = RoleNames.SewingStaff,       Description = "Nhân viên may",                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
             new Role { Id = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"), Name = RoleNames.PrintingStaff,     Description = "Nhân viên in / thêu logo",         CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
             new Role { Id = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff"), Name = RoleNames.FinishingStaff,    Description = "Nhân viên hoàn thiện",             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new Role { Id = Guid.Parse("12121212-1212-1212-1212-121212121212"), Name = RoleNames.PackagingStaff,    Description = "Nhân viên đóng gói",               CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+            new Role { Id = Guid.Parse("12121212-1212-1212-1212-121212121212"), Name = RoleNames.PackagingStaff,    Description = "Nhân viên đóng gói",               CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new Role { Id = Guid.Parse("13131313-1313-1313-1313-131313131313"), Name = RoleNames.ContentStaff,      Description = "Nhân viên content (giao việc cho design)", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new Role { Id = Guid.Parse("14141414-1414-1414-1414-141414141414"), Name = RoleNames.ContentManager,    Description = "Trưởng phòng content",                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
         );
     }
 }

@@ -8,8 +8,8 @@
         </svg>
       </button>
       <div>
-        <h1>{{ isEditMode ? 'Chỉnh sửa công việc' : 'Thêm công việc mới' }}</h1>
-        <p class="subtitle">{{ isEditMode ? 'Cập nhật thông tin công việc' : 'Nhập thông tin công việc mới' }}</p>
+        <h1>{{ isEditMode ? (canEditFields ? 'Chỉnh sửa công việc' : 'Cập nhật trạng thái') : 'Thêm công việc mới' }}</h1>
+        <p class="subtitle">{{ isEditMode ? (canEditFields ? 'Cập nhật thông tin công việc' : 'Bạn được giao việc này — chỉ có thể đổi trạng thái') : 'Nhập thông tin công việc mới' }}</p>
       </div>
     </div>
   </div>
@@ -49,14 +49,14 @@
           <div class="form-group">
             <label for="priority">Mức độ ưu tiên <span class="required">*</span></label>
             <select id="priority" formControlName="priority">
-              <option *ngFor="let option of priorityOptions" [value]="option.value">{{ option.label }}</option>
+              <option *ngFor="let option of priorityOptions" [ngValue]="option.value">{{ option.label }}</option>
             </select>
           </div>
 
           <div class="form-group" *ngIf="isEditMode">
             <label for="status">Trạng thái</label>
             <select id="status" formControlName="status">
-              <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
+              <option *ngFor="let option of statusOptions" [ngValue]="option.value">{{ option.label }}</option>
             </select>
           </div>
 
@@ -70,27 +70,46 @@
         </div>
       </div>
 
-      <div class="form-section">
-        <h3>Liên kết</h3>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="customerId">Khách hàng</label>
-            <select id="customerId" formControlName="customerId">
-              <option value="">-- Chọn khách hàng --</option>
-              <option *ngFor="let customer of customers" [value]="customer.id">{{ customer.name }}</option>
-            </select>
-          </div>
+      <ng-container *ngIf="canEditFields">
+        <div class="form-section">
+          <h3>Giao việc</h3>
 
           <div class="form-group">
-            <label for="dealId">Giao dịch</label>
-            <select id="dealId" formControlName="dealId">
-              <option value="">-- Chọn giao dịch --</option>
-              <option *ngFor="let deal of deals" [value]="deal.id">{{ deal.title }}</option>
+            <label for="assignedToUserId">Giao cho</label>
+            <select id="assignedToUserId" formControlName="assignedToUserId">
+              <option value="">-- Tự nhận việc --</option>
+              <option *ngFor="let u of assignableUsers" [value]="u.id">
+                {{ u.fullName }} ({{ u.roles.join(', ') }})
+              </option>
             </select>
+            <small class="hint" *ngIf="assignableUsers.length === 0">
+              Bạn chưa có quyền giao việc cho ai. Công việc sẽ tự nhận về tài khoản hiện tại.
+            </small>
           </div>
         </div>
-      </div>
+
+        <div class="form-section">
+          <h3>Liên kết</h3>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="customerId">Khách hàng</label>
+              <select id="customerId" formControlName="customerId">
+                <option value="">-- Chọn khách hàng --</option>
+                <option *ngFor="let customer of customers" [value]="customer.id">{{ customer.name }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="dealId">Giao dịch</label>
+              <select id="dealId" formControlName="dealId">
+                <option value="">-- Chọn giao dịch --</option>
+                <option *ngFor="let deal of deals" [value]="deal.id">{{ deal.title }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </ng-container>
 
       <div class="alert alert-error" *ngIf="errorMessage">
         {{ errorMessage }}
@@ -99,7 +118,7 @@
       <div class="form-actions">
         <button type="button" class="btn btn-secondary" (click)="cancel()">Hủy</button>
         <button type="submit" class="btn btn-primary" [disabled]="isLoading">
-          <span *ngIf="!isLoading">{{ isEditMode ? 'Cập nhật' : 'Thêm công việc' }}</span>
+          <span *ngIf="!isLoading">{{ isEditMode ? (canEditFields ? 'Cập nhật' : 'Cập nhật trạng thái') : 'Thêm công việc' }}</span>
           <span *ngIf="isLoading" class="spinner-small"></span>
         </button>
       </div>

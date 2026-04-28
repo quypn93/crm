@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { DashboardService, DashboardStats, ProductionDashboard, QualityDashboard, DeliveryDashboard } from '../../../core/services/dashboard.service';
 import { AuthService, RoleNames } from '../../../core/services/auth.service';
 
-type DashboardType = 'sales' | 'production' | 'quality' | 'delivery';
+type DashboardType = 'sales' | 'production' | 'quality' | 'delivery' | 'content';
 
 @Component({
   selector: 'app-dashboard',
@@ -32,6 +32,13 @@ export class DashboardComponent implements OnInit {
   }
 
   private determineDashboardType(): void {
+    // Content team không liên quan đơn hàng — chỉ hiển thị task của họ.
+    const roles = this.authService.getUserRoles();
+    if (roles.includes(RoleNames.ContentManager) || roles.includes(RoleNames.ContentStaff)) {
+      this.dashboardType = 'content';
+      return;
+    }
+
     const primaryRole = this.authService.getPrimaryRole();
 
     switch (primaryRole) {
@@ -62,6 +69,10 @@ export class DashboardComponent implements OnInit {
         break;
       case 'delivery':
         this.loadDeliveryDashboard();
+        break;
+      case 'content':
+        // Content tận dụng getStats() để lấy task counts; bỏ qua field về đơn hàng.
+        this.loadSalesDashboard();
         break;
       default:
         this.loadSalesDashboard();
@@ -139,5 +150,9 @@ export class DashboardComponent implements OnInit {
 
   isDeliveryDashboard(): boolean {
     return this.dashboardType === 'delivery';
+  }
+
+  isContentDashboard(): boolean {
+    return this.dashboardType === 'content';
   }
 }
