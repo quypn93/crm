@@ -67,13 +67,39 @@ jobs:
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/crm-web/
 
       - name: Restart backend service
+        # Restart, đợi app khởi động (migrate + seed), kiểm tra service thật sự active
+        # và app đang listen port 5000. Dump journalctl ngay nếu fail để khỏi phải SSH thủ công.
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "sudo systemctl restart crm-api && sleep 3 && sudo systemctl status crm-api --no-pager | head -15"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -se' <<'REMOTE'
+          set -euo pipefail
+          sudo systemctl restart crm-api
+
+          # Đợi tới 60s cho app start (migrate + seed có thể tốn vài giây)
+          for i in {1..30}; do
+            if sudo ss -tlnp 2>/dev/null | grep -q '127.0.0.1:5000'; then
+              echo "App listening on :5000 after ${i}x2s"
+              break
+            fi
+            sleep 2
+          done
+
+          # Final health check — fail nếu service không active hoặc port không listen
+          if ! sudo systemctl is-active --quiet crm-api; then
+            echo "::error::crm-api service is NOT active"
+            sudo systemctl status crm-api --no-pager || true
+            sudo journalctl -u crm-api --since "2 minutes ago" --no-pager | tail -120
+            exit 1
+          fi
+          if ! sudo ss -tlnp 2>/dev/null | grep -q '127.0.0.1:5000'; then
+            echo "::error::crm-api service active but not listening on :5000"
+            sudo journalctl -u crm-api --since "2 minutes ago" --no-pager | tail -120
+            exit 1
+          fi
+          echo "crm-api healthy"
+          REMOTE
 
       - name: Smoke test
         run: |
-          sleep 5
           # Frontend: expect 200
           FE=$(curl -sS -o /dev/null -w "%{http_code}" https://crm.xanhuniform.com/)
           echo "Frontend: HTTP $FE"
