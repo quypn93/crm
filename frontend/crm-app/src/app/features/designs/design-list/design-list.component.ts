@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { DesignService, Design, DesignFilter } from '../../../core/services/design.service';
+import { AuthService, RoleNames } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-design-list',
@@ -18,7 +19,8 @@ export class DesignListComponent implements OnInit {
 
   constructor(
     private designService: DesignService,
-    private router: Router
+    private router: Router,
+    private auth: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -84,7 +86,11 @@ export class DesignListComponent implements OnInit {
   }
 
   addDesign(): void {
-    this.router.navigate(['/designs/new']);
+    // Sale tạo thiết kế = giao việc cho designer (form assign).
+    // Designer/Admin/DesignManager dùng canvas editor đầy đủ.
+    const isSale = this.auth.hasAnyRole([RoleNames.SalesRep, RoleNames.SalesManager])
+      && !this.auth.hasAnyRole([RoleNames.Admin, RoleNames.DesignManager, RoleNames.Designer]);
+    this.router.navigate([isSale ? '/designs/assign' : '/designs/new']);
   }
 
   manageColorFabrics(): void {
