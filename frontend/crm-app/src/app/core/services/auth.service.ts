@@ -93,9 +93,17 @@ export class AuthService {
   }
 
   logout(): void {
+    // clearAuth chạy ở cả success và error — tránh stuck nếu API logout 401/timeout.
     this.api.post('auth/logout', {}).subscribe({
-      complete: () => this.clearAuth()
+      next: () => this.clearAuth(),
+      error: () => this.clearAuth()
     });
+  }
+
+  // Clear session phía client mà không gọi API. Dùng cho interceptor khi refresh-token fail
+  // — gọi logout() ở đó sẽ tạo request mới → 401 → recursion vô tận.
+  forceLogout(): void {
+    this.clearAuth();
   }
 
   changePassword(request: ChangePasswordRequest): Observable<void> {

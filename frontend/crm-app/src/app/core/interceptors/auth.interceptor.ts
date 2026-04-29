@@ -36,7 +36,10 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-        if (error.status === 401 && !request.url.includes('auth/login')) {
+        // Skip refresh logic cho login/refresh — login 401 là sai mật khẩu (caller xử lý),
+        // refresh 401 nghĩa là refresh token cũng hết hạn → catchError ở handle401Error tự forceLogout.
+        const isAuthEndpoint = request.url.includes('auth/login') || request.url.includes('auth/refresh-token');
+        if (error.status === 401 && !isAuthEndpoint) {
           return this.handle401Error(request, next);
         }
         return throwError(() => error);
@@ -65,7 +68,7 @@ export class AuthInterceptor implements HttpInterceptor {
         }),
         catchError((error) => {
           this.isRefreshing = false;
-          this.authService.logout();
+          this.authService.forceLogout();
           return throwError(() => error);
         })
       );
