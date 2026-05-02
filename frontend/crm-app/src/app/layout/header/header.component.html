@@ -18,6 +18,8 @@
   </div>
 
   <div class="header-right">
+    <app-notification-bell></app-notification-bell>
+
     <div class="user-menu" (click)="toggleUserMenu()">
       <div class="user-avatar">
         {{ currentUser?.firstName?.charAt(0) || 'U' }}{{ currentUser?.lastName?.charAt(0) || '' }}

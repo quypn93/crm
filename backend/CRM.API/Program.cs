@@ -2,6 +2,7 @@ using System.Text;
 using CRM.Application.Mappings;
 using CRM.Application.Services;
 using CRM.Infrastructure.Services;
+using CRM.Infrastructure.Services.Email;
 using CRM.Infrastructure.Services.Ghtk;
 using CRM.Application.Interfaces;
 using CRM.Core.Interfaces;
@@ -13,6 +14,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using CRM.Core.Entities;
 using CRM.API.Authorization;
+using CRM.API.BackgroundJobs;
+using CRM.API.Hubs;
+using CRM.API.Realtime;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -89,6 +93,22 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
         ClockSkew = TimeSpan.Zero
+    };
+
+    // SignalR cần token qua query string vì WebSocket không gửi được Authorization header.
+    // Chỉ chấp nhận access_token query khi path bắt đầu bằng /hubs.
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = ctx =>
+        {
+            var accessToken = ctx.Request.Query["access_token"];
+            var path = ctx.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+            {
+                ctx.Token = accessToken!;
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -215,6 +235,35 @@ builder.Services.AddHttpClient<IGhtkClient, GhtkClient>(c =>
 });
 builder.Services.AddScoped<IGhtkShipmentService, GhtkShipmentService>();
 
+// Notification system
+builder.Services.AddSignalR();
+builder.Services.Configure<NotificationOptions>(builder.Configuration.GetSection("Notifications"));
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
+builder.Services.AddScoped<IRealtimeNotifier, SignalRNotifier>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<INotificationPreferenceService, NotificationPreferenceService>();
+builder.Services.AddScoped<INotificationDispatcher, NotificationDispatcher>();
+
+// Background jobs
+builder.Services.AddScoped<ITaskReminderJob, TaskReminderJob>();
+builder.Services.AddScoped<INotificationCleanupJob, NotificationCleanupJob>();
+builder.Services.AddHostedService<TaskReminderHostedService>();
+builder.Services.AddHostedService<NotificationCleanupHostedService>();
+
+// Email sender — auto-detect: SMTP nếu Username + Password + Host đã set, ngược lại NoOp.
+// Khi user cấp credentials sau, chỉ cần đổi appsettings/env var, không phải sửa code.
+var emailConfigured = !string.IsNullOrWhiteSpace(builder.Configuration["Email:Host"])
+    && !string.IsNullOrWhiteSpace(builder.Configuration["Email:Username"])
+    && !string.IsNullOrWhiteSpace(builder.Configuration["Email:Password"]);
+if (emailConfigured)
+{
+    builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+}
+else
+{
+    builder.Services.AddScoped<IEmailSender, NoOpEmailSender>();
+}
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
@@ -244,6 +293,7 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 // Apply migrations + seed idempotent data ở mọi environment.
 // Seeder có check AnyAsync nên không duplicate nếu chạy lại.

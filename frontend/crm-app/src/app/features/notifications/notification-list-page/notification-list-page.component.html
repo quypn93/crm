@@ -1,0 +1,52 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Thông báo</h1>
+      <p class="muted">{{ totalCount }} thông báo</p>
+    </div>
+    <div class="actions">
+      <button class="btn-secondary" (click)="toggleFilter()">
+        {{ unreadOnly ? 'Xem tất cả' : 'Chỉ chưa đọc' }}
+      </button>
+      <button class="btn-secondary" (click)="onMarkAllRead()">Đánh dấu tất cả đã đọc</button>
+    </div>
+  </div>
+
+  <div class="list" [class.loading-overlay]="loading">
+    <div class="empty" *ngIf="!loading && notifications.length === 0">
+      <p>Chưa có thông báo nào.</p>
+    </div>
+
+    <div
+      *ngFor="let n of notifications"
+      class="row"
+      [class.unread]="!n.isRead"
+      (click)="onItemClick(n)"
+    >
+      <div class="row-main">
+        <div class="row-title">
+          <span class="badge-type">{{ typeLabel(n.type) }}</span>
+          <span class="title-text">{{ n.title }}</span>
+        </div>
+        <div class="row-message">{{ n.message }}</div>
+        <div class="row-meta">{{ formatDateTime(n.createdAt) }}</div>
+      </div>
+      <button class="row-delete" (click)="onDelete(n, $event)" title="Xoá">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button (click)="goToPage(page - 1)" [disabled]="page === 1">‹</button>
+    <button
+      *ngFor="let p of pages()"
+      (click)="goToPage(p)"
+      [class.active]="p === page"
+    >{{ p }}</button>
+    <button (click)="goToPage(page + 1)" [disabled]="page === totalPages">›</button>
+  </div>
+</div>

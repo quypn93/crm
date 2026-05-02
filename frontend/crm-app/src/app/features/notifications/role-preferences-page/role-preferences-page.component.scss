@@ -1,0 +1,157 @@
+.page {
+  padding: 24px 28px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  h1 {
+    margin: 0;
+    font-size: 22px;
+    color: #111827;
+  }
+
+  .muted {
+    color: #6b7280;
+    margin: 4px 0 0;
+    font-size: 13px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+  }
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: #1d4ed8;
+  }
+
+  &:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+}
+
+.btn-secondary {
+  background: #fff;
+  color: #374151;
+  border-color: #e5e7eb;
+
+  &:hover:not(:disabled) {
+    background: #f9fafb;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.legend {
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  .default-marker {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fef3c7;
+    border: 1px solid #fbbf24;
+  }
+}
+
+.loading {
+  padding: 60px 16px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.table-wrap {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th,
+  td {
+    padding: 10px 12px;
+    text-align: center;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  thead th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  thead tr.sub th {
+    font-weight: 500;
+    color: #6b7280;
+    font-size: 12px;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .role-col {
+    text-align: left;
+    font-weight: 500;
+    color: #111827;
+    white-space: nowrap;
+    min-width: 200px;
+  }
+
+  tbody tr:hover {
+    background: #f9fafb;
+  }
+}
+
+.cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+
+  &.is-default {
+    background: #fef3c7;
+  }
+}

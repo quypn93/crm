@@ -735,6 +735,96 @@ namespace CRM.Infrastructure.Migrations
                     b.ToTable("Materials", (string)null);
                 });
 
+            modelBuilder.Entity("CRM.Core.Entities.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("EntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EntityType")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RecipientUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("RecipientUserId", "IsRead", "CreatedAt")
+                        .HasDatabaseName("IX_Notifications_Recipient_Unread_Created");
+
+                    b.ToTable("Notifications", (string)null);
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.NotificationRolePreference", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Email")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("InApp")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId", "Type")
+                        .IsUnique();
+
+                    b.ToTable("NotificationRolePreferences", (string)null);
+                });
+
             modelBuilder.Entity("CRM.Core.Entities.Order", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1552,6 +1642,35 @@ namespace CRM.Infrastructure.Migrations
                     b.ToTable("Tasks", (string)null);
                 });
 
+            modelBuilder.Entity("CRM.Core.Entities.TaskNotificationLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId", "Type")
+                        .IsUnique();
+
+                    b.ToTable("TaskNotificationLogs", (string)null);
+                });
+
             modelBuilder.Entity("CRM.Core.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1860,6 +1979,28 @@ namespace CRM.Infrastructure.Migrations
                     b.Navigation("ShirtForm");
                 });
 
+            modelBuilder.Entity("CRM.Core.Entities.Notification", b =>
+                {
+                    b.HasOne("CRM.Core.Entities.User", "RecipientUser")
+                        .WithMany()
+                        .HasForeignKey("RecipientUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RecipientUser");
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.NotificationRolePreference", b =>
+                {
+                    b.HasOne("CRM.Core.Entities.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+                });
+
             modelBuilder.Entity("CRM.Core.Entities.Order", b =>
                 {
                     b.HasOne("CRM.Core.Entities.User", "AssignedToUser")
@@ -1996,6 +2137,17 @@ namespace CRM.Infrastructure.Migrations
                     b.Navigation("Customer");
 
                     b.Navigation("Deal");
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.TaskNotificationLog", b =>
+                {
+                    b.HasOne("CRM.Core.Entities.TaskItem", "Task")
+                        .WithMany()
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Task");
                 });
 
             modelBuilder.Entity("CRM.Core.Entities.UserRole", b =>

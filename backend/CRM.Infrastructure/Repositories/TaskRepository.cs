@@ -201,4 +201,34 @@ public class TaskRepository : Repository<TaskItem>, ITaskRepository
 
         return await query.CountAsync();
     }
+
+    public async Task<IEnumerable<TaskItem>> GetDueSoonNotNotifiedAsync(DateTime now, DateTime horizon, NotificationType logType)
+    {
+        // Anti-join: task không có TaskNotificationLog trùng (TaskId, Type).
+        return await _dbSet
+            .Include(t => t.AssignedToUser)
+            .Where(t =>
+                t.AssignedToUserId.HasValue &&
+                t.DueDate.HasValue &&
+                t.DueDate.Value >= now &&
+                t.DueDate.Value <= horizon &&
+                t.Status != TaskStatusEnum.Completed &&
+                !_context.TaskNotificationLogs.Any(l => l.TaskId == t.Id && l.Type == logType))
+            .OrderBy(t => t.DueDate)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<TaskItem>> GetOverdueNotNotifiedAsync(DateTime now, NotificationType logType)
+    {
+        return await _dbSet
+            .Include(t => t.AssignedToUser)
+            .Where(t =>
+                t.AssignedToUserId.HasValue &&
+                t.DueDate.HasValue &&
+                t.DueDate.Value < now &&
+                t.Status != TaskStatusEnum.Completed &&
+                !_context.TaskNotificationLogs.Any(l => l.TaskId == t.Id && l.Type == logType))
+            .OrderBy(t => t.DueDate)
+            .ToListAsync();
+    }
 }

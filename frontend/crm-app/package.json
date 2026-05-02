@@ -19,6 +19,7 @@
     "@angular/platform-browser": "^16.2.0",
     "@angular/platform-browser-dynamic": "^16.2.0",
     "@angular/router": "^16.2.0",
+    "@microsoft/signalr": "^10.0.0",
     "@types/fabric": "^5.3.11",
     "@types/jsbarcode": "^3.11.4",
     "@types/qrcode": "^1.5.6",

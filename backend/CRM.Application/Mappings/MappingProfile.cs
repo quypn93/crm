@@ -4,6 +4,7 @@ using CRM.Application.DTOs.Customer;
 using CRM.Application.DTOs.Deal;
 using CRM.Application.DTOs.Design;
 using CRM.Application.DTOs.Location;
+using CRM.Application.DTOs.Notification;
 using CRM.Application.DTOs.Order;
 using CRM.Application.DTOs.Production;
 using CRM.Application.DTOs.Task;
@@ -143,5 +144,8 @@ public class MappingProfile : Profile
 
         CreateMap<CreateDesignDto, Design>();
         CreateMap<UpdateDesignDto, Design>();
+
+        // Notification mappings
+        CreateMap<Notification, NotificationDto>();
     }
 }

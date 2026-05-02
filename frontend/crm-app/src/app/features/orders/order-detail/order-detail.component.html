@@ -296,7 +296,7 @@
             <span>Giảm giá ({{ order.discountPercent }}%)</span>
             <span class="discount">-{{ formatCurrency(order.discountAmount) }}</span>
           </div>
-          <div class="summary-row">
+          <div class="summary-row" *ngIf="order.taxAmount > 0">
             <span>Thuế VAT ({{ order.taxPercent }}%)</span>
             <span>{{ formatCurrency(order.taxAmount) }}</span>
           </div>

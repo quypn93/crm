@@ -28,4 +28,15 @@ public interface ITaskRepository : IRepository<TaskItem>
     Task<IEnumerable<TaskItem>> GetTasksDueTodayAsync();
     Task<int> GetPendingTasksCountAsync(Guid? userId = null);
     Task<int> GetOverdueTasksCountAsync(Guid? userId = null);
+
+    /// <summary>
+    /// Tasks có DueDate trong [now, horizon], chưa Completed, có Assignee, và CHƯA có log notification loại đã cho.
+    /// Dùng cho background reminder để tránh gửi trùng.
+    /// </summary>
+    Task<IEnumerable<TaskItem>> GetDueSoonNotNotifiedAsync(DateTime now, DateTime horizon, NotificationType logType);
+
+    /// <summary>
+    /// Tasks có DueDate &lt; now, chưa Completed, có Assignee, và CHƯA có log notification loại đã cho.
+    /// </summary>
+    Task<IEnumerable<TaskItem>> GetOverdueNotNotifiedAsync(DateTime now, NotificationType logType);
 }

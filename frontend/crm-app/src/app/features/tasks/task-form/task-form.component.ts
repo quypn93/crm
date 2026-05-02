@@ -160,6 +160,7 @@ export class TaskFormComponent implements OnInit {
 
     const formData = {
       ...this.taskForm.value,
+      dueDate: this.taskForm.value.dueDate || null,
       customerId: this.taskForm.value.customerId || null,
       dealId: this.taskForm.value.dealId || null,
       assignedToUserId: this.taskForm.value.assignedToUserId || null

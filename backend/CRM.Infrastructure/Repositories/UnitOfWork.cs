@@ -31,6 +31,9 @@ public class UnitOfWork : IUnitOfWork
     private IRepository<ProductSpecification>? _productSpecs;
     private IRepository<ProductionDaysOption>? _productionDaysOptions;
     private IRepository<DepositTransaction>? _depositTransactions;
+    private INotificationRepository? _notifications;
+    private INotificationRolePreferenceRepository? _notificationRolePreferences;
+    private ITaskNotificationLogRepository? _taskNotificationLogs;
 
     public UnitOfWork(CrmDbContext context)
     {
@@ -57,6 +60,9 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<ProductSpecification> ProductSpecifications => _productSpecs ??= new Repository<ProductSpecification>(_context);
     public IRepository<ProductionDaysOption> ProductionDaysOptions => _productionDaysOptions ??= new Repository<ProductionDaysOption>(_context);
     public IRepository<DepositTransaction> DepositTransactions => _depositTransactions ??= new Repository<DepositTransaction>(_context);
+    public INotificationRepository Notifications => _notifications ??= new NotificationRepository(_context);
+    public INotificationRolePreferenceRepository NotificationRolePreferences => _notificationRolePreferences ??= new NotificationRolePreferenceRepository(_context);
+    public ITaskNotificationLogRepository TaskNotificationLogs => _taskNotificationLogs ??= new TaskNotificationLogRepository(_context);
 
     public async Task<int> SaveChangesAsync()
     {

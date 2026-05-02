@@ -99,7 +99,16 @@
           <div class="form-group">
             <label>Mã cọc tiền</label>
             <input type="text" formControlName="depositCode" placeholder="Mã giao dịch ngân hàng">
-            <div class="hint">Sale điền mã khớp với lịch sử cộng tiền của mình.</div>
+            <div class="hint" *ngIf="!orderForm.get('depositCode')?.value">
+              Sale điền mã khớp với lịch sử cộng tiền của mình.
+            </div>
+            <div class="hint" *ngIf="matchedDeposit" style="color:#16a34a;font-weight:500;">
+              ✓ Đã khớp: {{ formatCurrency(matchedDeposit.amount) }}
+              <span *ngIf="matchedDeposit.bankName"> — {{ matchedDeposit.bankName }}</span>
+            </div>
+            <div class="hint" *ngIf="matchedDeposit === undefined" style="color:#dc2626;">
+              ⚠ Mã không khớp với lịch sử cộng tiền — kiểm tra lại.
+            </div>
           </div>
         </div>
       </div>
@@ -277,10 +286,6 @@
             <input type="number" formControlName="discountPercent" min="0" max="100">
           </div>
           <div class="form-group">
-            <label>Thuế VAT (%)</label>
-            <input type="number" formControlName="taxPercent" min="0" max="100">
-          </div>
-          <div class="form-group">
             <label>Phí vận chuyển</label>
             <input type="number" formControlName="shippingFee" min="0">
           </div>
@@ -300,11 +305,17 @@
           <div class="summary-row" *ngIf="calculateDiscountAmount() > 0">
             <span>Giảm giá</span><span class="discount">-{{ formatCurrency(calculateDiscountAmount()) }}</span>
           </div>
-          <div class="summary-row"><span>Thuế VAT</span><span>{{ formatCurrency(calculateTaxAmount()) }}</span></div>
           <div class="summary-row" *ngIf="(orderForm.get('shippingFee')?.value || 0) > 0">
             <span>Vận chuyển</span><span>{{ formatCurrency(orderForm.get('shippingFee')?.value || 0) }}</span>
           </div>
           <div class="summary-row total"><span>Tổng cộng</span><span>{{ formatCurrency(calculateTotal()) }}</span></div>
+          <div class="summary-row" *ngIf="matchedDeposit">
+            <span>Tiền cọc đã thu</span>
+            <span class="discount">-{{ formatCurrency(getDepositAmount()) }}</span>
+          </div>
+          <div class="summary-row total" *ngIf="matchedDeposit">
+            <span>Còn phải thu</span><span>{{ formatCurrency(calculateRemaining()) }}</span>
+          </div>
         </div>
       </div>
 

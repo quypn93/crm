@@ -11,7 +11,7 @@ import { UserManagementService, UserListItem } from '../../../core/services/user
 import { AuthService } from '../../../core/services/auth.service';
 import { LocationService } from '../../../core/services/location.service';
 import { CreateOrderItemRequest, DeliveryMethod, DeliveryMethodLabels } from '../../../core/models/order.model';
-import { Collection, LookupItem, ProductionDaysOption } from '../../../core/models/lookup.model';
+import { Collection, LookupItem, ProductionDaysOption, DepositTransaction } from '../../../core/models/lookup.model';
 import { Province, Ward } from '../../../core/models/location.model';
 
 @Component({
@@ -53,6 +53,11 @@ export class OrderFormComponent implements OnInit {
   provinces: Province[] = [];
   wards: Ward[] = [];
   isLoadingWards = false;
+
+  // Deposit lookup theo mã giao dịch (sale gõ vào ô "Mã cọc tiền"):
+  // null = chưa nhập mã, undefined = đã nhập nhưng không khớp, object = đã khớp.
+  deposits: DepositTransaction[] = [];
+  matchedDeposit: DepositTransaction | null | undefined = null;
 
   readonly DeliveryMethod = DeliveryMethod;
   readonly deliveryMethodOptions = [
@@ -109,7 +114,7 @@ export class OrderFormComponent implements OnInit {
       shippingWardCode: [''],
       shippingNotes: [''],
       discountPercent: [0, [Validators.min(0), Validators.max(100)]],
-      taxPercent: [10, [Validators.min(0), Validators.max(100)]],
+      taxPercent: [0, [Validators.min(0), Validators.max(100)]],
       shippingFee: [0, [Validators.min(0)]],
       paymentMethod: [''],
       styleNotes: [''],
@@ -153,7 +158,8 @@ export class OrderFormComponent implements OnInit {
       users: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true }),
       designers: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true, role: 'Designer' }),
       provinces: this.locationService.getProvinces(),
-      availableDesigns: this.designService.getAvailableDesigns()
+      availableDesigns: this.designService.getAvailableDesigns(),
+      deposits: this.settingsService.getDeposits()
     }).subscribe({
       next: (res) => {
         this.customers = res.customers?.items || [];
@@ -167,6 +173,7 @@ export class OrderFormComponent implements OnInit {
         this.designers = res.designers?.items || [];
         this.provinces = res.provinces || [];
         this.availableDesigns = res.availableDesigns || [];
+        this.deposits = res.deposits || [];
 
         this.resetAttributeFilters();
 
@@ -178,6 +185,9 @@ export class OrderFormComponent implements OnInit {
             this.orderForm.get('assignedToUserId')?.setValue(currentUser.id);
           }
         }
+
+        // Re-match deposit nếu đã có sẵn depositCode (edit mode hoặc form đã prefill).
+        this.onDepositCodeChange(this.orderForm.get('depositCode')?.value || '');
       }
     });
 
@@ -186,6 +196,24 @@ export class OrderFormComponent implements OnInit {
     this.orderForm.get('productInfo.collectionId')?.valueChanges.subscribe((id: string) => this.onCollectionChange(id));
     this.orderForm.get('shippingProvinceCode')?.valueChanges.subscribe((code: string) => this.onProvinceChange(code));
     this.orderForm.get('designId')?.valueChanges.subscribe((id: string) => this.onDesignChange(id));
+    this.orderForm.get('depositCode')?.valueChanges.subscribe((code: string) => this.onDepositCodeChange(code));
+  }
+
+  /**
+   * Khớp mã cọc tiền sale gõ vào với danh sách giao dịch ngân hàng.
+   * - Trim + so sánh case-insensitive để chấp nhận cả gõ tay lẫn paste từ SMS.
+   * - Trống → reset matchedDeposit về null (không trừ).
+   * - Có gõ nhưng không khớp → set undefined (để hint UI báo "không khớp").
+   */
+  onDepositCodeChange(rawCode: string): void {
+    const code = (rawCode || '').trim();
+    if (!code) { this.matchedDeposit = null; return; }
+    const found = this.deposits.find(d => (d.code || '').trim().toLowerCase() === code.toLowerCase());
+    this.matchedDeposit = found ?? undefined;
+  }
+
+  getDepositAmount(): number {
+    return this.matchedDeposit ? this.matchedDeposit.amount : 0;
   }
 
   /**
@@ -358,7 +386,7 @@ export class OrderFormComponent implements OnInit {
           shippingAddress: order.shippingAddress || '',
           shippingNotes: order.shippingNotes || '',
           discountPercent: order.discountPercent || 0,
-          taxPercent: order.taxPercent || 10,
+          taxPercent: order.taxPercent || 0,
           shippingFee: order.shippingFee || 0,
           paymentMethod: order.paymentMethod || '',
           styleNotes: order.styleNotes || '',
@@ -432,12 +460,13 @@ export class OrderFormComponent implements OnInit {
     return this.calculateSubTotal() * ((this.orderForm.get('discountPercent')?.value || 0) / 100);
   }
 
-  calculateTaxAmount(): number {
-    return (this.calculateSubTotal() - this.calculateDiscountAmount()) * ((this.orderForm.get('taxPercent')?.value || 0) / 100);
+  calculateTotal(): number {
+    return this.calculateSubTotal() - this.calculateDiscountAmount() + (this.orderForm.get('shippingFee')?.value || 0);
   }
 
-  calculateTotal(): number {
-    return this.calculateSubTotal() - this.calculateDiscountAmount() + this.calculateTaxAmount() + (this.orderForm.get('shippingFee')?.value || 0);
+  // Còn phải thu sau khi đã trừ tiền cọc (nếu mã cọc khớp).
+  calculateRemaining(): number {
+    return Math.max(0, this.calculateTotal() - this.getDepositAmount());
   }
 
   formatCurrency(value: number): string {

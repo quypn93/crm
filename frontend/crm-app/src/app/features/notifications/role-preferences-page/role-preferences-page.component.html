@@ -1,0 +1,63 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Cấu hình thông báo</h1>
+      <p class="muted">Bật/tắt thông báo in-app và email cho từng role.</p>
+    </div>
+    <div class="actions">
+      <button class="btn-secondary" (click)="reset()" [disabled]="saving">Khôi phục mặc định</button>
+      <button class="btn-primary" (click)="save()" [disabled]="!hasDirty() || saving">
+        {{ saving ? 'Đang lưu...' : 'Lưu thay đổi' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span class="default-marker"></span> = đang dùng mặc định (chưa override)
+  </div>
+
+  <div class="loading" *ngIf="loading">Đang tải...</div>
+
+  <div class="table-wrap" *ngIf="!loading">
+    <table>
+      <thead>
+        <tr>
+          <th class="role-col">Role</th>
+          <th *ngFor="let t of types" colspan="2">{{ typeLabel(t) }}</th>
+        </tr>
+        <tr class="sub">
+          <th class="role-col"></th>
+          <ng-container *ngFor="let t of types">
+            <th>In-app</th>
+            <th>Email</th>
+          </ng-container>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of rows">
+          <td class="role-col">{{ roleLabel(row.roleName) }}</td>
+          <ng-container *ngFor="let t of types">
+            <td>
+              <label class="cell" [class.is-default]="row.cells[t].isDefault">
+                <input
+                  type="checkbox"
+                  [checked]="row.cells[t].inApp"
+                  (change)="onCellToggle(row, t, 'inApp')"
+                />
+              </label>
+            </td>
+            <td>
+              <label class="cell" [class.is-default]="row.cells[t].isDefault">
+                <input
+                  type="checkbox"
+                  [checked]="row.cells[t].email"
+                  (change)="onCellToggle(row, t, 'email')"
+                />
+              </label>
+            </td>
+          </ng-container>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

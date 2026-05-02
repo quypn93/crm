@@ -36,6 +36,9 @@ public class CrmDbContext : DbContext
     public DbSet<DepositTransaction> DepositTransactions => Set<DepositTransaction>();
     public DbSet<Province> Provinces => Set<Province>();
     public DbSet<Ward> Wards => Set<Ward>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<NotificationRolePreference> NotificationRolePreferences => Set<NotificationRolePreference>();
+    public DbSet<TaskNotificationLog> TaskNotificationLogs => Set<TaskNotificationLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

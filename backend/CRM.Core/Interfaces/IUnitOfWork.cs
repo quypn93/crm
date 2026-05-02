@@ -28,6 +28,10 @@ public interface IUnitOfWork : IDisposable
     IRepository<ProductionDaysOption> ProductionDaysOptions { get; }
     IRepository<DepositTransaction> DepositTransactions { get; }
 
+    INotificationRepository Notifications { get; }
+    INotificationRolePreferenceRepository NotificationRolePreferences { get; }
+    ITaskNotificationLogRepository TaskNotificationLogs { get; }
+
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();

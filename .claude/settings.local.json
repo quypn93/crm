@@ -5,7 +5,9 @@
       "Bash(sqlcmd:*)",
       "Bash(taskkill:*)",
       "Bash(cmd.exe /c \"taskkill /PID 33908 /F\")",
-      "Bash(curl.exe -s -o /dev/null -w \"POST /api/deposits/sepay-webhook → %{http_code}\\\\n\" -X POST \"http://localhost:5222/api/deposits/sepay-webhook\" -H \"Content-Type: application/json\" -d \"{\\\\\"id\\\\\":999,\\\\\"gateway\\\\\":\\\\\"Techcombank\\\\\",\\\\\"transferType\\\\\":\\\\\"in\\\\\",\\\\\"transferAmount\\\\\":500000,\\\\\"content\\\\\":\\\\\"test\\\\\",\\\\\"referenceCode\\\\\":\\\\\"FT123\\\\\",\\\\\"transactionDate\\\\\":\\\\\"2026-04-15 10:00:00\\\\\"}\")"
+      "Bash(curl.exe -s -o /dev/null -w \"POST /api/deposits/sepay-webhook → %{http_code}\\\\n\" -X POST \"http://localhost:5222/api/deposits/sepay-webhook\" -H \"Content-Type: application/json\" -d \"{\\\\\"id\\\\\":999,\\\\\"gateway\\\\\":\\\\\"Techcombank\\\\\",\\\\\"transferType\\\\\":\\\\\"in\\\\\",\\\\\"transferAmount\\\\\":500000,\\\\\"content\\\\\":\\\\\"test\\\\\",\\\\\"referenceCode\\\\\":\\\\\"FT123\\\\\",\\\\\"transactionDate\\\\\":\\\\\"2026-04-15 10:00:00\\\\\"}\")",
+      "PowerShell(Get-Process | Where-Object { $_.ProcessName -eq \"CRM.API\" } | Select-Object Id, ProcessName, MainWindowTitle, Path)",
+      "PowerShell(Get-Process -Id 59912 -ErrorAction SilentlyContinue)"
     ]
   }
 }

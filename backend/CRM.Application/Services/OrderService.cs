@@ -173,6 +173,9 @@ public class OrderService : IOrderService
         await _unitOfWork.Orders.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
+        // Khớp mã cọc tiền sale gõ → cộng vào PaidAmount, link DepositTransaction.
+        await ApplyDepositToOrderAsync(order);
+
         // Sinh QR ngay khi tạo đơn để có thể in và dán vào ảnh template
         order.QrCodeToken = _qrCodeService.GenerateToken(order.Id);
         order.QrCodeImageBase64 = await _qrCodeService.GenerateQrCodeBase64Async(order.Id, order.OrderNumber);
@@ -265,6 +268,10 @@ public class OrderService : IOrderService
         order.TaxAmount = afterDiscount * order.TaxPercent / 100;
         order.TotalAmount = afterDiscount + order.TaxAmount;
 
+        await _unitOfWork.SaveChangesAsync();
+
+        // Khớp lại mã cọc tiền (nếu sale đổi mã hoặc xoá mã ở edit mode).
+        await ApplyDepositToOrderAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         return await GetByIdAsync(order.Id) ?? throw new InvalidOperationException("Không thể cập nhật đơn hàng.");
@@ -472,6 +479,66 @@ public class OrderService : IOrderService
         var afterDiscount = order.SubTotal - order.DiscountAmount;
         order.TaxAmount = afterDiscount * order.TaxPercent / 100;
         order.TotalAmount = afterDiscount + order.TaxAmount;
+    }
+
+    /// <summary>
+    /// Khi sale điền "Mã cọc tiền" vào đơn: tra DepositTransaction theo Code (case-insensitive),
+    /// cộng số tiền cọc vào order.PaidAmount, đồng thời link MatchedOrderId hai chiều.
+    /// Nếu xoá mã / đổi sang mã khác → trả lại deposit cũ và clear PaidAmount tương ứng.
+    /// Bỏ qua deposit đã match cho order khác (tránh sale dùng trùng mã).
+    /// </summary>
+    private async Task ApplyDepositToOrderAsync(Order order)
+    {
+        // Trả deposit cũ (nếu có) khi mã hiện tại không còn trỏ về deposit đó nữa.
+        var previous = await _unitOfWork.DepositTransactions.FirstOrDefaultAsync(d => d.MatchedOrderId == order.Id);
+        if (previous != null)
+        {
+            var stillCurrent = !string.IsNullOrWhiteSpace(order.DepositCode)
+                && string.Equals(previous.Code.Trim(), order.DepositCode!.Trim(), StringComparison.OrdinalIgnoreCase);
+            if (!stillCurrent)
+            {
+                previous.MatchedOrderId = null;
+                _unitOfWork.DepositTransactions.Update(previous);
+                order.PaidAmount = Math.Max(0, order.PaidAmount - previous.Amount);
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(order.DepositCode))
+        {
+            RecomputePaymentStatus(order);
+            return;
+        }
+
+        var code = order.DepositCode.Trim();
+        var deposit = await _unitOfWork.DepositTransactions.FirstOrDefaultAsync(
+            d => d.Code.ToLower() == code.ToLower());
+
+        // Mã không tồn tại hoặc đã match cho đơn khác → để nguyên, không cộng tiền.
+        if (deposit == null || (deposit.MatchedOrderId.HasValue && deposit.MatchedOrderId != order.Id))
+        {
+            RecomputePaymentStatus(order);
+            return;
+        }
+
+        // Mới khớp lần đầu (chưa link) → cộng tiền + link.
+        if (deposit.MatchedOrderId != order.Id)
+        {
+            deposit.MatchedOrderId = order.Id;
+            _unitOfWork.DepositTransactions.Update(deposit);
+            order.PaidAmount += deposit.Amount;
+        }
+
+        RecomputePaymentStatus(order);
+    }
+
+    private static void RecomputePaymentStatus(Order order)
+    {
+        if (order.PaidAmount >= order.TotalAmount && order.TotalAmount > 0)
+            order.PaymentStatus = PaymentStatus.Paid;
+        else if (order.PaidAmount > 0)
+            order.PaymentStatus = PaymentStatus.PartialPaid;
+        else
+            order.PaymentStatus = PaymentStatus.Pending;
     }
 
     private static void ValidateStatusTransition(OrderStatus current, OrderStatus next)

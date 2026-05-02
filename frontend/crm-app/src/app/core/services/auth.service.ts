@@ -4,6 +4,8 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ApiService } from './api.service';
 import { StorageService } from './storage.service';
 import { User, LoginRequest, RegisterRequest, AuthResponse, RefreshTokenRequest, ChangePasswordRequest } from '../models';
+import { NotificationRealtimeService } from './notification-realtime.service';
+import { NotificationService } from './notification.service';
 
 // Role constants matching backend
 export const RoleNames = {
@@ -56,7 +58,9 @@ export class AuthService {
   constructor(
     private api: ApiService,
     private storage: StorageService,
-    private router: Router
+    private router: Router,
+    private realtime: NotificationRealtimeService,
+    private notifications: NotificationService
   ) {
     this.loadCurrentUser();
   }
@@ -68,6 +72,9 @@ export class AuthService {
     if (token && user) {
       this.currentUserSubject.next(user);
       this.isAuthenticatedSubject.next(true);
+      // Restore session → kết nối realtime + load unread count.
+      this.realtime.connect().catch(err => console.warn('Realtime connect failed:', err));
+      this.notifications.getUnreadCount().subscribe({ error: () => {} });
     }
   }
 
@@ -116,9 +123,15 @@ export class AuthService {
     this.storage.setUser(response.user);
     this.currentUserSubject.next(response.user);
     this.isAuthenticatedSubject.next(true);
+
+    // Kết nối realtime + load unread count sau khi login thành công.
+    this.realtime.connect().catch(err => console.warn('Realtime connect failed:', err));
+    this.notifications.getUnreadCount().subscribe({ error: () => {} });
   }
 
   private clearAuth(): void {
+    this.realtime.disconnect().catch(() => {});
+    this.notifications.reset();
     this.storage.clear();
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);
