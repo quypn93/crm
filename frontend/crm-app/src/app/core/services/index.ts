@@ -4,3 +4,5 @@ export * from './storage.service';
 export * from './toast.service';
 export * from './notification.service';
 export * from './notification-realtime.service';
+export * from './chat.service';
+export * from './chat-realtime.service';

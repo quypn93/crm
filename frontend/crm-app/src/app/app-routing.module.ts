@@ -65,6 +65,10 @@ const routes: Routes = [
       {
         path: 'notifications',
         loadChildren: () => import('./features/notifications/notifications.module').then(m => m.NotificationsModule)
+      },
+      {
+        path: 'chat',
+        loadChildren: () => import('./features/chat/chat.module').then(m => m.ChatModule)
       }
     ]
   },

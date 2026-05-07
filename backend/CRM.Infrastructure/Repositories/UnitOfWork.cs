@@ -34,6 +34,9 @@ public class UnitOfWork : IUnitOfWork
     private INotificationRepository? _notifications;
     private INotificationRolePreferenceRepository? _notificationRolePreferences;
     private ITaskNotificationLogRepository? _taskNotificationLogs;
+    private IConversationRepository? _conversations;
+    private IConversationParticipantRepository? _conversationParticipants;
+    private IChatMessageRepository? _chatMessages;
 
     public UnitOfWork(CrmDbContext context)
     {
@@ -63,6 +66,9 @@ public class UnitOfWork : IUnitOfWork
     public INotificationRepository Notifications => _notifications ??= new NotificationRepository(_context);
     public INotificationRolePreferenceRepository NotificationRolePreferences => _notificationRolePreferences ??= new NotificationRolePreferenceRepository(_context);
     public ITaskNotificationLogRepository TaskNotificationLogs => _taskNotificationLogs ??= new TaskNotificationLogRepository(_context);
+    public IConversationRepository Conversations => _conversations ??= new ConversationRepository(_context);
+    public IConversationParticipantRepository ConversationParticipants => _conversationParticipants ??= new ConversationParticipantRepository(_context);
+    public IChatMessageRepository ChatMessages => _chatMessages ??= new ChatMessageRepository(_context);
 
     public async Task<int> SaveChangesAsync()
     {

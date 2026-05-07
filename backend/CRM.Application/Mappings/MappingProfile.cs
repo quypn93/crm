@@ -1,5 +1,6 @@
 using AutoMapper;
 using CRM.Application.DTOs.Auth;
+using CRM.Application.DTOs.Chat;
 using CRM.Application.DTOs.Customer;
 using CRM.Application.DTOs.Deal;
 using CRM.Application.DTOs.Design;
@@ -147,5 +148,16 @@ public class MappingProfile : Profile
 
         // Notification mappings
         CreateMap<Notification, NotificationDto>();
+
+        // Chat mappings
+        CreateMap<ConversationParticipant, ConversationParticipantDto>()
+            .ForMember(d => d.UserId, opt => opt.MapFrom(s => s.UserId))
+            .ForMember(d => d.FullName, opt => opt.MapFrom(s => s.User != null ? $"{s.User.FirstName} {s.User.LastName}" : string.Empty))
+            .ForMember(d => d.AvatarUrl, opt => opt.MapFrom(s => s.User != null ? s.User.AvatarUrl : null))
+            .ForMember(d => d.Email, opt => opt.MapFrom(s => s.User != null ? s.User.Email : null));
+
+        CreateMap<ChatMessage, ChatMessageDto>()
+            .ForMember(d => d.SenderName, opt => opt.MapFrom(s => s.SenderUser != null ? $"{s.SenderUser.FirstName} {s.SenderUser.LastName}" : string.Empty))
+            .ForMember(d => d.SenderAvatarUrl, opt => opt.MapFrom(s => s.SenderUser != null ? s.SenderUser.AvatarUrl : null));
     }
 }

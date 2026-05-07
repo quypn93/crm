@@ -40,6 +40,10 @@ public class CrmDbContext : DbContext
     public DbSet<NotificationRolePreference> NotificationRolePreferences => Set<NotificationRolePreference>();
     public DbSet<TaskNotificationLog> TaskNotificationLogs => Set<TaskNotificationLog>();
 
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<ConversationParticipant> ConversationParticipants => Set<ConversationParticipant>();
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

@@ -32,6 +32,10 @@ public interface IUnitOfWork : IDisposable
     INotificationRolePreferenceRepository NotificationRolePreferences { get; }
     ITaskNotificationLogRepository TaskNotificationLogs { get; }
 
+    IConversationRepository Conversations { get; }
+    IConversationParticipantRepository ConversationParticipants { get; }
+    IChatMessageRepository ChatMessages { get; }
+
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();

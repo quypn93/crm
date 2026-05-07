@@ -1,0 +1,125 @@
+<div class="chat-layout">
+  <aside class="chat-sidebar">
+    <div class="chat-sidebar__header">
+      <h2>Tin nhắn nội bộ</h2>
+      <div class="chat-sidebar__actions">
+        <button type="button" class="btn btn-icon" (click)="openNewDirect()" title="Trò chuyện mới">
+          <span>＋</span>
+        </button>
+        <button type="button" class="btn btn-primary btn-sm" (click)="openNewGroup()">
+          Nhóm mới
+        </button>
+      </div>
+    </div>
+
+    <div class="chat-sidebar__search">
+      <input type="text" [(ngModel)]="searchTerm" placeholder="Tìm cuộc trò chuyện…" />
+    </div>
+
+    <div class="chat-sidebar__list">
+      <div *ngIf="loadingConversations" class="empty">Đang tải…</div>
+      <div *ngIf="!loadingConversations && filteredConversations.length === 0" class="empty">
+        Chưa có cuộc trò chuyện nào.
+      </div>
+
+      <button
+        *ngFor="let conv of filteredConversations"
+        type="button"
+        class="conversation-item"
+        [class.active]="activeConversation?.id === conv.id"
+        [class.unread]="conv.unreadCount > 0"
+        (click)="openConversation(conv)"
+      >
+        <div class="avatar"
+             [class.avatar--group]="conv.type === ConversationType.Group">
+          {{ conversationAvatarText(conv) }}
+        </div>
+        <div class="conversation-info">
+          <div class="conversation-line">
+            <span class="conversation-name">{{ conv.displayName }}</span>
+            <span class="conversation-time">{{ formatListTime(conv.lastMessageAt) }}</span>
+          </div>
+          <div class="conversation-line conversation-line--small">
+            <span class="conversation-preview">{{ conv.lastMessagePreview || 'Chưa có tin nhắn' }}</span>
+            <span *ngIf="conv.unreadCount > 0" class="badge">{{ conv.unreadCount }}</span>
+          </div>
+        </div>
+      </button>
+    </div>
+  </aside>
+
+  <section class="chat-main">
+    <ng-container *ngIf="activeConversation; else emptyState">
+      <header class="chat-header">
+        <div class="avatar"
+             [class.avatar--group]="activeConversation.type === ConversationType.Group">
+          {{ conversationAvatarText(activeConversation) }}
+        </div>
+        <div class="chat-header__info">
+          <div class="chat-header__title">{{ activeConversation.displayName }}</div>
+          <div class="chat-header__sub">{{ groupHeaderInfo(activeConversation) }}</div>
+        </div>
+        <div class="chat-header__actions">
+          <button type="button" class="btn btn-link" (click)="leaveConversation()">
+            Rời cuộc trò chuyện
+          </button>
+        </div>
+      </header>
+
+      <div class="chat-messages" #messageList>
+        <div *ngIf="loadingMessages" class="empty">Đang tải tin nhắn…</div>
+        <div *ngIf="!loadingMessages && messages.length === 0" class="empty">
+          Bắt đầu cuộc trò chuyện bằng cách gửi một tin nhắn.
+        </div>
+
+        <div
+          *ngFor="let msg of messages"
+          class="message-row"
+          [class.message-row--mine]="isMyMessage(msg)"
+        >
+          <div class="message-bubble">
+            <div *ngIf="!isMyMessage(msg) && activeConversation.type === ConversationType.Group"
+                 class="message-sender">
+              {{ msg.senderName }}
+            </div>
+            <div class="message-content">{{ msg.content }}</div>
+            <div class="message-time">{{ formatTime(msg.createdAt) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="chat-composer">
+        <textarea
+          [(ngModel)]="messageDraft"
+          (keydown)="onMessageKeydown($event)"
+          placeholder="Nhập tin nhắn… (Enter để gửi, Shift+Enter xuống dòng)"
+          rows="2"
+          [disabled]="sending"
+        ></textarea>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="sendMessage()"
+          [disabled]="sending || !messageDraft.trim()"
+        >
+          Gửi
+        </button>
+      </footer>
+    </ng-container>
+
+    <ng-template #emptyState>
+      <div class="chat-empty-state">
+        <div class="chat-empty-state__icon">💬</div>
+        <h3>Chọn một cuộc trò chuyện</h3>
+        <p>Hoặc bắt đầu một cuộc trò chuyện mới để nhắn tin với đồng nghiệp.</p>
+      </div>
+    </ng-template>
+  </section>
+</div>
+
+<app-new-conversation-dialog
+  *ngIf="showNewDialog"
+  [mode]="newDialogMode"
+  (cancel)="closeNewDialog()"
+  (created)="onConversationCreated($event)"
+></app-new-conversation-dialog>
