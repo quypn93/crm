@@ -1,0 +1,49 @@
+<div class="dialog-backdrop" (click)="onCancel()"></div>
+
+<div class="dialog">
+  <header class="dialog__header">
+    <h3>{{ mode === 'direct' ? 'Bắt đầu trò chuyện' : 'Tạo nhóm chat' }}</h3>
+    <button type="button" class="dialog__close" (click)="onCancel()">×</button>
+  </header>
+
+  <div class="dialog__body">
+    <div *ngIf="mode === 'group'" class="form-row">
+      <label>Tên nhóm</label>
+      <input type="text" [(ngModel)]="groupName" placeholder="Ví dụ: Đội thiết kế" maxlength="200" />
+    </div>
+
+    <div class="form-row">
+      <label>{{ mode === 'direct' ? 'Chọn người trò chuyện' : 'Thêm thành viên' }}</label>
+      <input type="text" [(ngModel)]="searchTerm" placeholder="Tìm theo tên hoặc email…" />
+    </div>
+
+    <div class="user-list">
+      <div *ngIf="loading" class="empty">Đang tải…</div>
+      <div *ngIf="!loading && filteredUsers.length === 0" class="empty">
+        Không có người dùng phù hợp.
+      </div>
+
+      <button
+        *ngFor="let u of filteredUsers"
+        type="button"
+        class="user-row"
+        [class.selected]="isSelected(u)"
+        (click)="toggleUser(u)"
+      >
+        <span class="user-avatar">{{ u.fullName.charAt(0).toUpperCase() }}</span>
+        <span class="user-info">
+          <span class="user-name">{{ u.fullName }}</span>
+          <span class="user-email">{{ u.email }}</span>
+        </span>
+        <span *ngIf="isSelected(u)" class="check">✓</span>
+      </button>
+    </div>
+  </div>
+
+  <footer class="dialog__footer">
+    <button type="button" class="btn btn-secondary" (click)="onCancel()">Huỷ</button>
+    <button type="button" class="btn btn-primary" [disabled]="!canSubmit" (click)="submit()">
+      {{ submitting ? 'Đang tạo…' : (mode === 'direct' ? 'Bắt đầu' : 'Tạo nhóm') }}
+    </button>
+  </footer>
+</div>

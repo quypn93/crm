@@ -6,6 +6,8 @@ import { StorageService } from './storage.service';
 import { User, LoginRequest, RegisterRequest, AuthResponse, RefreshTokenRequest, ChangePasswordRequest } from '../models';
 import { NotificationRealtimeService } from './notification-realtime.service';
 import { NotificationService } from './notification.service';
+import { ChatRealtimeService } from './chat-realtime.service';
+import { ChatService } from './chat.service';
 
 // Role constants matching backend
 export const RoleNames = {
@@ -60,7 +62,9 @@ export class AuthService {
     private storage: StorageService,
     private router: Router,
     private realtime: NotificationRealtimeService,
-    private notifications: NotificationService
+    private notifications: NotificationService,
+    private chatRealtime: ChatRealtimeService,
+    private chat: ChatService
   ) {
     this.loadCurrentUser();
   }
@@ -72,9 +76,11 @@ export class AuthService {
     if (token && user) {
       this.currentUserSubject.next(user);
       this.isAuthenticatedSubject.next(true);
-      // Restore session → kết nối realtime + load unread count.
+      // Restore session → kết nối realtime + load unread count cho cả notification & chat.
       this.realtime.connect().catch(err => console.warn('Realtime connect failed:', err));
+      this.chatRealtime.connect().catch(err => console.warn('Chat realtime connect failed:', err));
       this.notifications.getUnreadCount().subscribe({ error: () => {} });
+      this.chat.getUnreadCount().subscribe({ error: () => {} });
     }
   }
 
@@ -126,12 +132,16 @@ export class AuthService {
 
     // Kết nối realtime + load unread count sau khi login thành công.
     this.realtime.connect().catch(err => console.warn('Realtime connect failed:', err));
+    this.chatRealtime.connect().catch(err => console.warn('Chat realtime connect failed:', err));
     this.notifications.getUnreadCount().subscribe({ error: () => {} });
+    this.chat.getUnreadCount().subscribe({ error: () => {} });
   }
 
   private clearAuth(): void {
     this.realtime.disconnect().catch(() => {});
+    this.chatRealtime.disconnect().catch(() => {});
     this.notifications.reset();
+    this.chat.reset();
     this.storage.clear();
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);

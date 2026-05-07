@@ -244,6 +244,10 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INotificationPreferenceService, NotificationPreferenceService>();
 builder.Services.AddScoped<INotificationDispatcher, NotificationDispatcher>();
 
+// Chat (internal messaging)
+builder.Services.AddScoped<IChatRealtimeNotifier, SignalRChatNotifier>();
+builder.Services.AddScoped<IChatService, ChatService>();
+
 // Background jobs
 builder.Services.AddScoped<ITaskReminderJob, TaskReminderJob>();
 builder.Services.AddScoped<INotificationCleanupJob, NotificationCleanupJob>();
@@ -294,6 +298,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
+app.MapHub<ChatHub>("/hubs/chat");
 
 // Apply migrations + seed idempotent data ở mọi environment.
 // Seeder có check AnyAsync nên không duplicate nếu chạy lại.

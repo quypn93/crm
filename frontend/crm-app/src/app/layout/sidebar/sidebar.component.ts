@@ -21,6 +21,7 @@ export class SidebarComponent implements OnInit {
 
   private allMenuItems: MenuItem[] = [
     { label: 'Tổng quan', icon: 'dashboard', route: '/dashboard' },
+    { label: 'Tin nhắn', icon: 'bell', route: '/chat', exact: false },
     { label: 'Khách hàng', icon: 'users', route: '/customers', roles: RoleGroups.SalesRoles },
     { label: 'Giao dịch', icon: 'briefcase', route: '/deals', roles: RoleGroups.SalesRoles },
     { label: 'Đơn hàng', icon: 'orders', route: '/orders', roles: RoleGroups.OrderRoles },

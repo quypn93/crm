@@ -4,3 +4,4 @@ export * from './deal.model';
 export * from './task.model';
 export * from './api-response.model';
 export * from './notification.model';
+export * from './chat.model';
