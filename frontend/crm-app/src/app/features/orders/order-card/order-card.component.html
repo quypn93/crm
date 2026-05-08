@@ -12,10 +12,10 @@
     <!-- ═══ HEADER ═══ -->
     <div class="hdr">
       <div class="hdr-left">
-        <img src="/assets/logo.png" class="hdr-logo" alt="4Mùa">
+        <img [src]="branding.logoPath" class="hdr-logo" [alt]="branding.logoAlt">
         <div class="hdr-brand">
-          <div>ĐỒNG PHỤC</div>
-          <div>BỐN MÙA</div>
+          <div>{{ branding.headerLine1 }}</div>
+          <div>{{ branding.headerLine2 }}</div>
         </div>
       </div>
       <div class="hdr-mid">

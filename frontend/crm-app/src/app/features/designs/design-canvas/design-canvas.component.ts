@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, Input, Output, EventEmitter, AfterViewInit } from '@angular/core';
 import { fabric } from 'fabric';
 import { DesignService, ShirtComponent, ColorFabric, ComponentType, ComponentTypeNames } from '../../../core/services/design.service';
+import { environment } from '../../../../environments/environment';
 
 export interface SelectedComponents {
   [key: string]: string; // ComponentType key -> imageUrl
@@ -39,6 +40,7 @@ export class DesignCanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   zoomLevel = 1;
   canvasWidth = 800;
   canvasHeight = 600;
+  private branding = environment.branding;
 
   constructor(private designService: DesignService) {}
 
@@ -309,10 +311,10 @@ export class DesignCanvasComponent implements OnInit, AfterViewInit, OnDestroy {
         ctx.setLineDash([]);
         ctx.fillStyle = '#333333';
         ctx.font = 'bold 16px Arial';
-        ctx.fillText('DONG PHUC BON MUA', 80, this.canvasHeight + 100);
+        ctx.fillText(this.branding.canvasCompanyName, 80, this.canvasHeight + 100);
         ctx.font = '14px Arial';
-        ctx.fillText('So 33 Ngo 102 - Khuat Duy Tien, Nhan Chinh, Thanh Xuan, Ha Noi', 80, this.canvasHeight + 130);
-        ctx.fillText('Hotline: 0969.228.488 | Website: www.dongphucbonmua.com', 80, this.canvasHeight + 155);
+        ctx.fillText(this.branding.address, 80, this.canvasHeight + 130);
+        ctx.fillText(`Hotline: ${this.branding.hotline} | Website: ${this.branding.website}`, 80, this.canvasHeight + 155);
 
         // Draw note
         ctx.fillStyle = '#b71f39';

@@ -27,6 +27,7 @@ export class QrScanLandingComponent implements OnInit {
   confirmingStepId: string | null = null;
   confirmNote = '';
   isAuthenticated = false;
+  branding = environment.branding;
 
   constructor(
     private route: ActivatedRoute,

@@ -13,6 +13,7 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
   @ViewChild('cardRef') cardRef!: ElementRef<HTMLElement>;
   isRendering = false;
   qrDataUrl = '';
+  branding = environment.branding;
   private viewReady = false;
 
   ngAfterViewInit(): void { this.viewReady = true; if (this.order) this.generateQr(); }

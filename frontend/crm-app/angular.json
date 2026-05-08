@@ -56,6 +56,27 @@
               ],
               "outputHashing": "all"
             },
+            "crmsolution": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.crmsolution.ts"
+                }
+              ],
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "20kb",
+                  "maximumError": "50kb"
+                }
+              ],
+              "outputHashing": "all"
+            },
             "development": {
               "buildOptimizer": false,
               "optimization": false,
@@ -72,6 +93,9 @@
           "configurations": {
             "production": {
               "browserTarget": "crm-app:build:production"
+            },
+            "crmsolution": {
+              "browserTarget": "crm-app:build:crmsolution"
             },
             "development": {
               "browserTarget": "crm-app:build:development"

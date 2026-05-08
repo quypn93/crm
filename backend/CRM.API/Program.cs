@@ -27,18 +27,22 @@ Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "www
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+// Branding — đọc một lần để dùng cho Swagger; cũng register IOptions để inject vào services.
+builder.Services.Configure<BrandingOptions>(builder.Configuration.GetSection("Branding"));
+var branding = builder.Configuration.GetSection("Branding").Get<BrandingOptions>() ?? new BrandingOptions();
+
 // Configure Swagger with JWT support
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "CRM API - Đồng Phục Bốn Mùa",
+        Title = branding.ApiTitle,
         Version = "v1",
-        Description = "API cho hệ thống quản lý khách hàng và đơn hàng đồng phục",
+        Description = branding.ApiDescription,
         Contact = new OpenApiContact
         {
-            Name = "Đồng Phục Bốn Mùa",
-            Email = "dongphucbonmua@gmail.com"
+            Name = branding.ApiContactName,
+            Email = branding.ApiContactEmail
         }
     });
 

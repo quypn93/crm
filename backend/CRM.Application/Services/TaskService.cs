@@ -6,6 +6,7 @@ using CRM.Core.Entities;
 using CRM.Core.Enums;
 using CRM.Core.Interfaces;
 using CRM.Application.Interfaces;
+using Microsoft.Extensions.Options;
 using TaskStatusEnum = CRM.Core.Enums.TaskStatus;
 
 namespace CRM.Application.Services;
@@ -15,12 +16,18 @@ public class TaskService : ITaskService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly INotificationDispatcher _dispatcher;
+    private readonly BrandingOptions _branding;
 
-    public TaskService(IUnitOfWork unitOfWork, IMapper mapper, INotificationDispatcher dispatcher)
+    public TaskService(
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        INotificationDispatcher dispatcher,
+        IOptions<BrandingOptions> branding)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _dispatcher = dispatcher;
+        _branding = branding.Value;
     }
 
     public async Task<TaskDto?> GetByIdAsync(Guid id)
@@ -311,7 +318,7 @@ public class TaskService : ITaskService
             throw new InvalidOperationException("Bạn không có quyền giao việc cho người này.");
     }
 
-    private static NotificationEvent BuildAssignedEvent(TaskItem task, User? actor)
+    private NotificationEvent BuildAssignedEvent(TaskItem task, User? actor)
     {
         var dueText = task.DueDate.HasValue
             ? $" (hạn {task.DueDate.Value.ToLocalTime():dd/MM/yyyy HH:mm})"
@@ -340,7 +347,7 @@ public class TaskService : ITaskService
         };
     }
 
-    private static NotificationEvent BuildReassignedEvent(TaskItem task, Guid oldAssigneeId, User? actor)
+    private NotificationEvent BuildReassignedEvent(TaskItem task, Guid oldAssigneeId, User? actor)
     {
         var actorName = actor?.FullName ?? "Hệ thống";
         return new NotificationEvent
@@ -356,7 +363,7 @@ public class TaskService : ITaskService
         };
     }
 
-    private static NotificationEvent BuildCompletedEvent(TaskItem task, User? actor)
+    private NotificationEvent BuildCompletedEvent(TaskItem task, User? actor)
     {
         var actorName = actor?.FullName ?? "Người được giao";
         return new NotificationEvent
@@ -372,7 +379,7 @@ public class TaskService : ITaskService
         };
     }
 
-    private static string BuildEmailHtml(string heading, string bodyHtml, string relativeLink, string ctaText)
+    private string BuildEmailHtml(string heading, string bodyHtml, string relativeLink, string ctaText)
     {
         // Body link sẽ được resolve ở email layer khi cần FrontendBaseUrl. Hiện tại chỉ là placeholder.
         return $@"<!DOCTYPE html>
@@ -385,7 +392,7 @@ public class TaskService : ITaskService
     <a href=""{relativeLink}"" style=""display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;"">{ctaText}</a>
   </p>
   <hr style=""margin-top:32px;border:none;border-top:1px solid #e5e7eb;"">
-  <p style=""color: #6b7280; font-size: 12px;"">CRM Đồng Phục Bốn Mùa — vui lòng không trả lời email này.</p>
+  <p style=""color: #6b7280; font-size: 12px;"">{_branding.EmailFooter}</p>
 </body>
 </html>";
     }

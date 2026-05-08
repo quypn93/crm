@@ -3,6 +3,7 @@ using CRM.Core.Entities;
 using CRM.Core.Enums;
 using CRM.Core.Interfaces;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace CRM.Application.Services;
 
@@ -13,15 +14,18 @@ public class TaskReminderJob : ITaskReminderJob
     private readonly IUnitOfWork _unitOfWork;
     private readonly INotificationDispatcher _dispatcher;
     private readonly ILogger<TaskReminderJob> _logger;
+    private readonly BrandingOptions _branding;
 
     public TaskReminderJob(
         IUnitOfWork unitOfWork,
         INotificationDispatcher dispatcher,
-        ILogger<TaskReminderJob> logger)
+        ILogger<TaskReminderJob> logger,
+        IOptions<BrandingOptions> branding)
     {
         _unitOfWork = unitOfWork;
         _dispatcher = dispatcher;
         _logger = logger;
+        _branding = branding.Value;
     }
 
     public async Task RunAsync(CancellationToken ct = default)
@@ -81,7 +85,7 @@ public class TaskReminderJob : ITaskReminderJob
         await _dispatcher.DispatchManyAsync(events, ct);
     }
 
-    private static NotificationEvent BuildDueSoonEvent(TaskItem task)
+    private NotificationEvent BuildDueSoonEvent(TaskItem task)
     {
         var dueLocal = task.DueDate!.Value.ToLocalTime();
         return new NotificationEvent
@@ -105,7 +109,7 @@ public class TaskReminderJob : ITaskReminderJob
         };
     }
 
-    private static NotificationEvent BuildOverdueEvent(TaskItem task)
+    private NotificationEvent BuildOverdueEvent(TaskItem task)
     {
         var dueLocal = task.DueDate!.Value.ToLocalTime();
         return new NotificationEvent
@@ -129,7 +133,7 @@ public class TaskReminderJob : ITaskReminderJob
         };
     }
 
-    private static string BuildEmailHtml(string heading, string bodyHtml, string relativeLink, string ctaText)
+    private string BuildEmailHtml(string heading, string bodyHtml, string relativeLink, string ctaText)
     {
         return $@"<!DOCTYPE html>
 <html lang=""vi"">
@@ -141,7 +145,7 @@ public class TaskReminderJob : ITaskReminderJob
     <a href=""{relativeLink}"" style=""display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;"">{ctaText}</a>
   </p>
   <hr style=""margin-top:32px;border:none;border-top:1px solid #e5e7eb;"">
-  <p style=""color: #6b7280; font-size: 12px;"">CRM Đồng Phục Bốn Mùa — vui lòng không trả lời email này.</p>
+  <p style=""color: #6b7280; font-size: 12px;"">{_branding.EmailFooter}</p>
 </body>
 </html>";
     }
