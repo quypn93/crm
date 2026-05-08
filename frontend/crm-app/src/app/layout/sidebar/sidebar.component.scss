@@ -8,7 +8,7 @@
   color: #fff;
   display: flex;
   flex-direction: column;
-  transition: width var(--transition-slow);
+  transition: width var(--transition-slow), transform var(--transition-slow);
   z-index: 200;
   box-shadow: 1px 0 0 rgba(255, 255, 255, 0.04), 4px 0 24px -8px rgba(15, 23, 42, 0.25);
 
@@ -167,6 +167,17 @@
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);
+    width: var(--sidebar-width);
+
+    &.collapsed {
+      width: var(--sidebar-width);
+
+      .sidebar-header { padding: 22px 24px; justify-content: flex-start; }
+      .nav-item { justify-content: flex-start; padding: 10px 14px; }
+      .nav-label,
+      .nav-badge,
+      .company-info { display: initial; }
+    }
 
     &.open { transform: translateX(0); }
   }

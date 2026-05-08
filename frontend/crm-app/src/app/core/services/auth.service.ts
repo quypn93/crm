@@ -66,22 +66,27 @@ export class AuthService {
     private chatRealtime: ChatRealtimeService,
     private chat: ChatService
   ) {
-    this.loadCurrentUser();
+    // Set state đồng bộ ở constructor; HTTP side-effects deferred sang microtask sau
+    // để tránh circular DI với AuthInterceptor (interceptor cũng inject AuthService).
+    this.restoreSessionState();
+    setTimeout(() => this.kickoffSessionSideEffects(), 0);
   }
 
-  private loadCurrentUser(): void {
+  private restoreSessionState(): void {
     const token = this.storage.getToken();
     const user = this.storage.getUser<User>();
-
     if (token && user) {
       this.currentUserSubject.next(user);
       this.isAuthenticatedSubject.next(true);
-      // Restore session → kết nối realtime + load unread count cho cả notification & chat.
-      this.realtime.connect().catch(err => console.warn('Realtime connect failed:', err));
-      this.chatRealtime.connect().catch(err => console.warn('Chat realtime connect failed:', err));
-      this.notifications.getUnreadCount().subscribe({ error: () => {} });
-      this.chat.getUnreadCount().subscribe({ error: () => {} });
     }
+  }
+
+  private kickoffSessionSideEffects(): void {
+    if (!this.isAuthenticatedSubject.value) return;
+    this.realtime.connect().catch(err => console.warn('Realtime connect failed:', err));
+    this.chatRealtime.connect().catch(err => console.warn('Chat realtime connect failed:', err));
+    this.notifications.getUnreadCount().subscribe({ error: () => {} });
+    this.chat.getUnreadCount().subscribe({ error: () => {} });
   }
 
   login(credentials: LoginRequest): Observable<AuthResponse> {

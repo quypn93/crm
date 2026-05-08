@@ -1,0 +1,339 @@
+<div class="chat-widget" [class.chat-widget--open]="isOpen" [class.chat-widget--minimized]="isMinimized">
+
+  <!-- Launcher button: chỉ hiện khi widget chưa mở -->
+  <button
+    *ngIf="!isOpen || isMinimized"
+    type="button"
+    class="chat-widget__launcher"
+    (click)="toggleOpen()"
+    [attr.aria-label]="'Mở tin nhắn' + (totalUnread > 0 ? ' (' + totalUnread + ' chưa đọc)' : '')"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+    <span *ngIf="totalUnread > 0" class="chat-widget__badge">{{ totalUnread > 99 ? '99+' : totalUnread }}</span>
+  </button>
+
+  <!-- Panel chính -->
+  <section *ngIf="isOpen && !isMinimized" class="chat-widget__panel" role="dialog" aria-label="Tin nhắn nội bộ">
+
+    <!-- LIST VIEW -->
+    <ng-container *ngIf="view === 'list'">
+      <header class="chat-widget__header">
+        <div class="chat-widget__header-title">
+          <span>Tin nhắn</span>
+          <span *ngIf="totalUnread > 0" class="chat-widget__header-badge">{{ totalUnread }}</span>
+        </div>
+        <div class="chat-widget__header-actions">
+          <button type="button" class="icon-btn" (click)="minimize()" title="Thu nhỏ" aria-label="Thu nhỏ">−</button>
+          <button type="button" class="icon-btn" (click)="closeWidget()" title="Đóng" aria-label="Đóng">×</button>
+        </div>
+      </header>
+
+      <div class="chat-widget__quick-actions">
+        <button type="button" class="quick-action-btn" (click)="openNewGroup()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          Tạo nhóm chat
+        </button>
+      </div>
+
+      <nav class="chat-widget__tabs" role="tablist">
+        <button type="button" role="tab" class="tab-btn"
+                [class.tab-btn--active]="tab === 'conversations'"
+                (click)="setTab('conversations')">
+          Trò chuyện
+        </button>
+        <button type="button" role="tab" class="tab-btn"
+                [class.tab-btn--active]="tab === 'people'"
+                (click)="setTab('people')">
+          Thành viên
+          <span *ngIf="onlineCount > 0" class="tab-btn__dot">{{ onlineCount }} online</span>
+        </button>
+      </nav>
+
+      <div class="chat-widget__search">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          [placeholder]="tab === 'conversations' ? 'Tìm cuộc trò chuyện…' : 'Tìm thành viên…'"
+        />
+      </div>
+
+      <div class="chat-widget__list">
+        <!-- Conversations tab -->
+        <ng-container *ngIf="tab === 'conversations'">
+          <div *ngIf="loadingList" class="empty">Đang tải…</div>
+          <div *ngIf="!loadingList && filteredConversations.length === 0" class="empty">
+            Chưa có cuộc trò chuyện. Mở tab "Thành viên" để bắt đầu.
+          </div>
+
+          <button
+            *ngFor="let conv of filteredConversations"
+            type="button"
+            class="row"
+            [class.row--unread]="conv.unreadCount > 0"
+            (click)="openConversation(conv)"
+          >
+            <div class="avatar"
+                 [class.avatar--group]="conv.type === ConversationType.Group">
+              {{ conversationAvatarText(conv) }}
+              <span *ngIf="conv.type === ConversationType.Direct && isConversationOnline(conv)"
+                    class="presence-dot"></span>
+            </div>
+            <div class="row__info">
+              <div class="row__line">
+                <span class="row__name">{{ conv.displayName }}</span>
+                <span class="row__time">{{ formatListTime(conv.lastMessageAt) }}</span>
+              </div>
+              <div class="row__line row__line--small">
+                <span class="row__preview">{{ conv.lastMessagePreview || 'Chưa có tin nhắn' }}</span>
+                <span *ngIf="conv.unreadCount > 0" class="row__badge">{{ conv.unreadCount }}</span>
+              </div>
+            </div>
+          </button>
+        </ng-container>
+
+        <!-- People tab -->
+        <ng-container *ngIf="tab === 'people'">
+          <div *ngIf="loadingUsers && chatUsers.length === 0" class="empty">Đang tải thành viên…</div>
+          <div *ngIf="usersError" class="empty empty--error">
+            {{ usersError }}
+            <div><button type="button" class="retry-btn" (click)="refreshUsersClick()">Thử lại</button></div>
+          </div>
+          <div *ngIf="!loadingUsers && !usersError && chatUsers.length === 0" class="empty">
+            Chưa có thành viên nào trong hệ thống.
+          </div>
+          <div *ngIf="chatUsers.length > 0 && filteredUsers.length === 0" class="empty">
+            Không có ai khớp với "{{ searchTerm }}".
+          </div>
+
+          <button
+            *ngFor="let u of filteredUsers"
+            type="button"
+            class="row"
+            (click)="startDirect(u)"
+          >
+            <div class="avatar">
+              {{ u.fullName.charAt(0).toUpperCase() }}
+              <span *ngIf="onlineUsers.has(u.id)" class="presence-dot"></span>
+            </div>
+            <div class="row__info">
+              <div class="row__line">
+                <span class="row__name">{{ u.fullName }}</span>
+                <span *ngIf="onlineUsers.has(u.id)" class="row__online">●</span>
+              </div>
+              <div class="row__line row__line--small">
+                <span class="row__preview">
+                  {{ onlineUsers.has(u.id) ? 'Đang hoạt động' : u.email }}
+                </span>
+              </div>
+            </div>
+          </button>
+        </ng-container>
+      </div>
+    </ng-container>
+
+    <!-- NEW GROUP VIEW -->
+    <ng-container *ngIf="view === 'new-group'">
+      <header class="chat-widget__header chat-widget__header--thread">
+        <button type="button" class="icon-btn" (click)="backToList()" title="Quay lại" aria-label="Quay lại">‹</button>
+        <div class="chat-widget__header-info">
+          <div class="chat-widget__header-name">Tạo nhóm chat</div>
+          <div class="chat-widget__header-sub">{{ groupSelected.size }} thành viên đã chọn</div>
+        </div>
+        <div class="chat-widget__header-actions">
+          <button type="button" class="icon-btn" (click)="minimize()" title="Thu nhỏ" aria-label="Thu nhỏ">−</button>
+          <button type="button" class="icon-btn" (click)="closeWidget()" title="Đóng" aria-label="Đóng">×</button>
+        </div>
+      </header>
+
+      <div class="chat-widget__group-form">
+        <input
+          type="text"
+          [(ngModel)]="groupName"
+          placeholder="Tên nhóm…"
+          maxlength="200"
+          class="group-name-input"
+        />
+        <input
+          type="text"
+          [(ngModel)]="groupSearch"
+          placeholder="Tìm thành viên để thêm…"
+          class="group-search-input"
+        />
+      </div>
+
+      <div class="chat-widget__list">
+        <div *ngIf="loadingUsers && chatUsers.length === 0" class="empty">Đang tải thành viên…</div>
+        <div *ngIf="!loadingUsers && chatUsers.length === 0" class="empty">Chưa có thành viên nào.</div>
+        <div *ngIf="chatUsers.length > 0 && filteredGroupUsers.length === 0" class="empty">
+          Không có ai khớp với "{{ groupSearch }}".
+        </div>
+
+        <button
+          *ngFor="let u of filteredGroupUsers"
+          type="button"
+          class="row row--checkable"
+          [class.row--selected]="isGroupSelected(u.id)"
+          (click)="toggleGroupMember(u.id)"
+        >
+          <div class="avatar">
+            {{ u.fullName.charAt(0).toUpperCase() }}
+            <span *ngIf="onlineUsers.has(u.id)" class="presence-dot"></span>
+          </div>
+          <div class="row__info">
+            <div class="row__line">
+              <span class="row__name">{{ u.fullName }}</span>
+            </div>
+            <div class="row__line row__line--small">
+              <span class="row__preview">
+                {{ onlineUsers.has(u.id) ? 'Đang hoạt động' : u.email }}
+              </span>
+            </div>
+          </div>
+          <span class="row__check" [class.row__check--on]="isGroupSelected(u.id)">
+            <span *ngIf="isGroupSelected(u.id)">✓</span>
+          </span>
+        </button>
+      </div>
+
+      <footer class="chat-widget__group-footer">
+        <button type="button" class="btn-secondary" (click)="backToList()" [disabled]="creatingGroup">Huỷ</button>
+        <button type="button" class="btn-primary" (click)="createGroup()" [disabled]="!canCreateGroup">
+          {{ creatingGroup ? 'Đang tạo…' : 'Tạo nhóm' }}
+        </button>
+      </footer>
+    </ng-container>
+
+    <!-- THREAD VIEW -->
+    <ng-container *ngIf="view === 'thread' && activeConversation">
+      <header class="chat-widget__header chat-widget__header--thread">
+        <button type="button" class="icon-btn" (click)="backToList()" title="Quay lại" aria-label="Quay lại">‹</button>
+        <div
+          class="chat-widget__header-clickable"
+          [class.chat-widget__header-clickable--group]="activeConversation.type === ConversationType.Group"
+          (click)="activeConversation.type === ConversationType.Group && openMembers()"
+          [attr.role]="activeConversation.type === ConversationType.Group ? 'button' : null"
+          [attr.title]="activeConversation.type === ConversationType.Group ? 'Xem thành viên nhóm' : null"
+        >
+          <div class="avatar avatar--sm"
+               [class.avatar--group]="activeConversation.type === ConversationType.Group">
+            {{ conversationAvatarText(activeConversation) }}
+            <span *ngIf="activeConversation.type === ConversationType.Direct && isConversationOnline(activeConversation)"
+                  class="presence-dot"></span>
+          </div>
+          <div class="chat-widget__header-info">
+            <div class="chat-widget__header-name">{{ activeConversation.displayName }}</div>
+            <div class="chat-widget__header-sub">
+              {{ threadHeaderSub(activeConversation) }}
+              <span *ngIf="activeConversation.type === ConversationType.Group" class="chat-widget__header-sub-arrow">›</span>
+            </div>
+          </div>
+        </div>
+        <div class="chat-widget__header-actions">
+          <button type="button" class="icon-btn" (click)="minimize()" title="Thu nhỏ" aria-label="Thu nhỏ">−</button>
+          <button type="button" class="icon-btn" (click)="closeWidget()" title="Đóng" aria-label="Đóng">×</button>
+        </div>
+      </header>
+
+      <div class="chat-widget__messages" #messageList>
+        <div *ngIf="loadingMessages" class="empty">Đang tải tin nhắn…</div>
+        <div *ngIf="!loadingMessages && messages.length === 0" class="empty">
+          Hãy gửi tin nhắn đầu tiên.
+        </div>
+
+        <div
+          *ngFor="let msg of messages"
+          class="msg-row"
+          [class.msg-row--mine]="isMyMessage(msg)"
+        >
+          <div class="msg-bubble">
+            <div *ngIf="!isMyMessage(msg) && activeConversation.type === ConversationType.Group"
+                 class="msg-sender">
+              {{ msg.senderName }}
+            </div>
+            <div class="msg-content">{{ msg.content }}</div>
+            <div class="msg-time">{{ formatTime(msg.createdAt) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="chat-widget__composer">
+        <textarea
+          [(ngModel)]="messageDraft"
+          (keydown)="onMessageKeydown($event)"
+          placeholder="Nhập tin nhắn… (Enter gửi, Shift+Enter xuống dòng)"
+          rows="1"
+          [disabled]="sending"
+        ></textarea>
+        <button
+          type="button"
+          class="send-btn"
+          (click)="sendMessage()"
+          [disabled]="sending || !messageDraft.trim()"
+          aria-label="Gửi"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </footer>
+    </ng-container>
+
+    <!-- MEMBERS VIEW (chỉ cho group) -->
+    <ng-container *ngIf="view === 'members' && activeConversation && activeConversation.type === ConversationType.Group">
+      <header class="chat-widget__header chat-widget__header--thread">
+        <button type="button" class="icon-btn" (click)="backToThread()" title="Quay lại" aria-label="Quay lại">‹</button>
+        <div class="chat-widget__header-info">
+          <div class="chat-widget__header-name">{{ activeConversation.displayName }}</div>
+          <div class="chat-widget__header-sub">{{ activeConversation.participants.length }} thành viên</div>
+        </div>
+        <div class="chat-widget__header-actions">
+          <button type="button" class="icon-btn" (click)="minimize()" title="Thu nhỏ" aria-label="Thu nhỏ">−</button>
+          <button type="button" class="icon-btn" (click)="closeWidget()" title="Đóng" aria-label="Đóng">×</button>
+        </div>
+      </header>
+
+      <div class="chat-widget__list">
+        <div
+          *ngFor="let p of activeConversation.participants"
+          class="row row--static"
+        >
+          <div class="avatar">
+            {{ (p.fullName || '?').charAt(0).toUpperCase() }}
+            <span *ngIf="isParticipantOnline(p.userId)" class="presence-dot"></span>
+          </div>
+          <div class="row__info">
+            <div class="row__line">
+              <span class="row__name">
+                {{ p.fullName }}
+                <span *ngIf="isCurrentUserParticipant(p.userId)" class="row__tag">Bạn</span>
+                <span *ngIf="p.isAdmin" class="row__tag row__tag--admin">Admin</span>
+              </span>
+              <span *ngIf="isParticipantOnline(p.userId)" class="row__online">●</span>
+            </div>
+            <div class="row__line row__line--small">
+              <span class="row__preview">
+                {{ isParticipantOnline(p.userId) ? 'Đang hoạt động' : (p.email || '') }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="chat-widget__group-footer">
+        <button type="button" class="btn-secondary" (click)="backToThread()">Đóng</button>
+        <button type="button" class="btn-danger" (click)="leaveGroup()">Rời nhóm</button>
+      </footer>
+    </ng-container>
+  </section>
+</div>

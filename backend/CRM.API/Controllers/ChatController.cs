@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using CRM.API.Hubs;
 using CRM.Application.DTOs.Chat;
 using CRM.Application.DTOs.Common;
 using CRM.Application.Interfaces;
@@ -161,6 +162,26 @@ public class ChatController : ControllerBase
         var userId = GetCurrentUserId();
         var total = await _chatService.GetTotalUnreadAsync(userId);
         return Ok(ApiResponse<int>.Ok(total));
+    }
+
+    [HttpGet("users")]
+    public async Task<ActionResult<ApiResponse<List<ChatUserDto>>>> GetChatUsers()
+    {
+        var userId = GetCurrentUserId();
+        var users = await _chatService.GetChatUsersAsync(userId);
+        // Overlay presence từ ChatHub static tracker — service layer không có quyền truy cập SignalR.
+        var online = ChatHub.GetOnlineUserIds().ToHashSet();
+        foreach (var u in users)
+        {
+            u.IsOnline = online.Contains(u.Id);
+        }
+        return Ok(ApiResponse<List<ChatUserDto>>.Ok(users));
+    }
+
+    [HttpGet("online-users")]
+    public ActionResult<ApiResponse<List<Guid>>> GetOnlineUserIds()
+    {
+        return Ok(ApiResponse<List<Guid>>.Ok(ChatHub.GetOnlineUserIds().ToList()));
     }
 
     private Guid GetCurrentUserId()

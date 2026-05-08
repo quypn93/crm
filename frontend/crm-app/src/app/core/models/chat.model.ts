@@ -65,3 +65,17 @@ export interface AddParticipantsDto {
 export interface RenameGroupDto {
   name: string;
 }
+
+export interface ChatUser {
+  id: string;
+  fullName: string;
+  email: string;
+  avatarUrl?: string;
+  primaryRole?: string;
+  isOnline: boolean;
+}
+
+export interface ChatPresenceEvent {
+  userId: string;
+  isOnline: boolean;
+}

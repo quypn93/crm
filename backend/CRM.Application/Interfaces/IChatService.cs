@@ -26,4 +26,7 @@ public interface IChatService
     Task<int> MarkReadAsync(Guid conversationId, Guid currentUserId);
 
     Task<int> GetTotalUnreadAsync(Guid userId);
+
+    /// <summary>Lấy danh sách user khả dụng cho chat (active, khác current user). IsOnline luôn = false ở layer này — controller sẽ overlay presence.</summary>
+    Task<List<ChatUserDto>> GetChatUsersAsync(Guid currentUserId);
 }

@@ -28,6 +28,23 @@
   .content-area { padding: 24px; }
 }
 
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  z-index: 199;
+  animation: fade-in var(--transition-fast) ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (min-width: 769px) {
+  .sidebar-backdrop { display: none; }
+}
+
 @media (max-width: 768px) {
   .main-content,
   .sidebar-collapsed .main-content { margin-left: 0; }

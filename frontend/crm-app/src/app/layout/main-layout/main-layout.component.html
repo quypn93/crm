@@ -1,5 +1,7 @@
-<div class="app-container" [class.sidebar-collapsed]="isSidebarCollapsed">
-  <app-sidebar [isCollapsed]="isSidebarCollapsed"></app-sidebar>
+<div class="app-container" [class.sidebar-collapsed]="isSidebarCollapsed" [class.mobile-sidebar-open]="isMobileSidebarOpen">
+  <app-sidebar [isCollapsed]="isSidebarCollapsed" [isOpen]="isMobileSidebarOpen"></app-sidebar>
+
+  <div class="sidebar-backdrop" *ngIf="isMobileSidebarOpen" (click)="closeMobileSidebar()"></div>
 
   <div class="main-content">
     <app-header (toggleSidebar)="toggleSidebar()"></app-header>
@@ -10,3 +12,4 @@
   </div>
 </div>
 <app-toast-container></app-toast-container>
+<app-chat-widget></app-chat-widget>

@@ -3,7 +3,7 @@ import { HubConnection, HubConnectionBuilder, HubConnectionState, LogLevel } fro
 import { environment } from '../../../environments/environment';
 import { StorageService } from './storage.service';
 import { ChatService } from './chat.service';
-import { ChatMessage, Conversation } from '../models/chat.model';
+import { ChatMessage, ChatPresenceEvent, Conversation } from '../models/chat.model';
 
 @Injectable({ providedIn: 'root' })
 export class ChatRealtimeService {
@@ -36,6 +36,9 @@ export class ChatRealtimeService {
     this.hub.on('chatMessage', (msg: ChatMessage) => this.chat.pushIncomingMessage(msg));
     this.hub.on('chatConversation', (conv: Conversation) => this.chat.upsertConversation(conv));
     this.hub.on('chatUnreadCount', (count: number) => this.chat.setTotalUnread(count));
+    this.hub.on('chatPresence', (evt: ChatPresenceEvent) =>
+      this.chat.applyPresence(evt.userId, evt.isOnline)
+    );
 
     try {
       await this.hub.start();

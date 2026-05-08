@@ -392,6 +392,24 @@ public class ChatService : IChatService
         return _unitOfWork.ChatMessages.CountTotalUnreadAsync(userId);
     }
 
+    public async Task<List<ChatUserDto>> GetChatUsersAsync(Guid currentUserId)
+    {
+        var users = await _unitOfWork.Users.GetAllWithRolesAsync();
+        return users
+            .Where(u => u.IsActive && u.Id != currentUserId)
+            .OrderBy(u => u.FirstName).ThenBy(u => u.LastName)
+            .Select(u => new ChatUserDto
+            {
+                Id = u.Id,
+                FullName = $"{u.FirstName} {u.LastName}".Trim(),
+                Email = u.Email,
+                AvatarUrl = u.AvatarUrl,
+                PrimaryRole = u.UserRoles?.Select(ur => ur.Role?.Name).FirstOrDefault(name => !string.IsNullOrEmpty(name)),
+                IsOnline = false
+            })
+            .ToList();
+    }
+
     private async Task<ConversationDto> BuildDtoAsync(Conversation conv, Guid currentUserId)
     {
         var dto = new ConversationDto

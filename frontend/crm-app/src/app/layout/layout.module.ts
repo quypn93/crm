@@ -1,11 +1,13 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 import { MainLayoutComponent } from './main-layout/main-layout.component';
 import { HeaderComponent } from './header/header.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { NotificationBellComponent } from './notification-bell/notification-bell.component';
+import { ChatWidgetComponent } from './chat-widget/chat-widget.component';
 import { SharedModule } from '../shared/shared.module';
 
 @NgModule({
@@ -13,10 +15,12 @@ import { SharedModule } from '../shared/shared.module';
     MainLayoutComponent,
     HeaderComponent,
     SidebarComponent,
-    NotificationBellComponent
+    NotificationBellComponent,
+    ChatWidgetComponent
   ],
   imports: [
     CommonModule,
+    FormsModule,
     RouterModule,
     SharedModule
   ],
@@ -24,7 +28,8 @@ import { SharedModule } from '../shared/shared.module';
     MainLayoutComponent,
     HeaderComponent,
     SidebarComponent,
-    NotificationBellComponent
+    NotificationBellComponent,
+    ChatWidgetComponent
   ]
 })
 export class LayoutModule { }

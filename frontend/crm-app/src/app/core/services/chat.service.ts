@@ -5,6 +5,7 @@ import {
   AddParticipantsDto,
   ChatMessage,
   ChatMessagePage,
+  ChatUser,
   Conversation,
   CreateDirectConversationDto,
   CreateGroupConversationDto,
@@ -25,7 +26,40 @@ export class ChatService {
   private incomingMessageSubject = new BehaviorSubject<ChatMessage | null>(null);
   incomingMessage$ = this.incomingMessageSubject.asObservable();
 
+  /** userId -> isOnline. BehaviorSubject để widget bind dễ. */
+  private onlineUsersSubject = new BehaviorSubject<Set<string>>(new Set());
+  onlineUsers$ = this.onlineUsersSubject.asObservable();
+
+  /** Danh sách user khả dụng cho chat (đã loại current user). Cache cho widget. */
+  private chatUsersSubject = new BehaviorSubject<ChatUser[]>([]);
+  chatUsers$ = this.chatUsersSubject.asObservable();
+
   constructor(private api: ApiService) {}
+
+  loadChatUsers(): Observable<ChatUser[]> {
+    return this.api.get<ChatUser[]>('chat/users').pipe(
+      tap(users => {
+        const online = new Set<string>(users.filter(u => u.isOnline).map(u => u.id));
+        this.onlineUsersSubject.next(online);
+        this.chatUsersSubject.next(users);
+      })
+    );
+  }
+
+  applyPresence(userId: string, isOnline: boolean): void {
+    const current = new Set(this.onlineUsersSubject.value);
+    if (isOnline) current.add(userId); else current.delete(userId);
+    this.onlineUsersSubject.next(current);
+
+    const users = this.chatUsersSubject.value.map(u =>
+      u.id === userId ? { ...u, isOnline } : u
+    );
+    this.chatUsersSubject.next(users);
+  }
+
+  isUserOnline(userId: string): boolean {
+    return this.onlineUsersSubject.value.has(userId);
+  }
 
   loadConversations(): Observable<Conversation[]> {
     return this.api.get<Conversation[]>('chat/conversations').pipe(
@@ -132,5 +166,7 @@ export class ChatService {
     this.conversationsSubject.next([]);
     this.totalUnreadSubject.next(0);
     this.incomingMessageSubject.next(null);
+    this.onlineUsersSubject.next(new Set());
+    this.chatUsersSubject.next([]);
   }
 }

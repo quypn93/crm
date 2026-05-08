@@ -1,4 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs/operators';
+
+const MOBILE_BREAKPOINT = 768;
 
 @Component({
   selector: 'app-main-layout',
@@ -7,8 +11,32 @@ import { Component } from '@angular/core';
 })
 export class MainLayoutComponent {
   isSidebarCollapsed = false;
+  isMobileSidebarOpen = false;
+
+  constructor(private router: Router) {
+    this.router.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe(() => {
+        this.isMobileSidebarOpen = false;
+      });
+  }
 
   toggleSidebar(): void {
-    this.isSidebarCollapsed = !this.isSidebarCollapsed;
+    if (window.innerWidth <= MOBILE_BREAKPOINT) {
+      this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
+    } else {
+      this.isSidebarCollapsed = !this.isSidebarCollapsed;
+    }
+  }
+
+  closeMobileSidebar(): void {
+    this.isMobileSidebarOpen = false;
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    if (window.innerWidth > MOBILE_BREAKPOINT && this.isMobileSidebarOpen) {
+      this.isMobileSidebarOpen = false;
+    }
   }
 }
