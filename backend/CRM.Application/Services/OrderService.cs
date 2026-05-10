@@ -550,8 +550,8 @@ public class OrderService : IOrderService
             { OrderStatus.Confirmed, new[] { OrderStatus.InProduction, OrderStatus.Cancelled } },
             { OrderStatus.InProduction, new[] { OrderStatus.QualityCheck, OrderStatus.Cancelled } },
             { OrderStatus.QualityCheck, new[] { OrderStatus.ReadyToShip, OrderStatus.InProduction } },
-            { OrderStatus.ReadyToShip, new[] { OrderStatus.Shipping } },
-            { OrderStatus.Shipping, new[] { OrderStatus.Delivered } },
+            { OrderStatus.ReadyToShip, new[] { OrderStatus.Shipping, OrderStatus.Completed } },
+            { OrderStatus.Shipping, new[] { OrderStatus.Delivered, OrderStatus.Completed } },
             { OrderStatus.Delivered, new[] { OrderStatus.Completed } },
             { OrderStatus.Completed, Array.Empty<OrderStatus>() },
             { OrderStatus.Cancelled, Array.Empty<OrderStatus>() }
