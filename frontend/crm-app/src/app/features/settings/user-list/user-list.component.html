@@ -49,12 +49,12 @@
       <thead>
         <tr>
           <th>Người dùng</th>
-          <th>Email</th>
-          <th>Số điện thoại</th>
+          <th class="col-email">Email</th>
+          <th class="col-phone">Số điện thoại</th>
           <th>Vai trò</th>
           <th>Trạng thái</th>
-          <th>Ngày tạo</th>
-          <th>Đăng nhập lần cuối</th>
+          <th class="col-created">Ngày tạo</th>
+          <th class="col-last-login">Đăng nhập lần cuối</th>
           <th class="actions-col">Thao tác</th>
         </tr>
       </thead>
@@ -68,8 +68,8 @@
               </div>
             </div>
           </td>
-          <td>{{ user.email }}</td>
-          <td>{{ user.phoneNumber || '-' }}</td>
+          <td class="col-email">{{ user.email }}</td>
+          <td class="col-phone">{{ user.phoneNumber || '-' }}</td>
           <td>
             <div class="roles-list">
               <span
@@ -86,8 +86,8 @@
               {{ user.isActive ? 'Hoạt động' : 'Vô hiệu hóa' }}
             </span>
           </td>
-          <td>{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
-          <td>{{ user.lastLoginAt ? (user.lastLoginAt | date:'dd/MM/yyyy HH:mm') : 'Chưa đăng nhập' }}</td>
+          <td class="col-created">{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
+          <td class="col-last-login">{{ user.lastLoginAt ? (user.lastLoginAt | date:'dd/MM/yyyy HH:mm') : 'Chưa đăng nhập' }}</td>
           <td class="actions-col">
             <div class="action-buttons">
               <button class="btn-icon" title="Chỉnh sửa" (click)="editUser(user.id)">

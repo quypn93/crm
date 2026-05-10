@@ -14,17 +14,16 @@
 
   <!-- Stats -->
   <div class="stats-row" *ngIf="!isLoading && !errorMessage">
-    <div class="stat-card">
+    <div class="stat-card total">
       <div class="stat-value">{{ orders.length }}</div>
       <div class="stat-label">Tổng đơn</div>
     </div>
-    <div class="stat-card active">
-      <div class="stat-value">{{ inProgress.length }}</div>
-      <div class="stat-label">Đang sản xuất</div>
-    </div>
-    <div class="stat-card done">
-      <div class="stat-value">{{ completed.length }}</div>
-      <div class="stat-label">Hoàn thành</div>
+    <div class="stat-card stage-stat" *ngFor="let col of kanbanColumns">
+      <div class="stat-value">{{ col.orders.length }}</div>
+      <div class="stat-label">
+        <span class="stage-order">{{ col.stageOrder }}</span>
+        <span class="stage-text">{{ col.stageName }}</span>
+      </div>
     </div>
   </div>
 
