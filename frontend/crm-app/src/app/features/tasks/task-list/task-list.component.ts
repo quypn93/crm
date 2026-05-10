@@ -29,7 +29,7 @@ export class TaskListComponent implements OnInit {
   totalItems = 0;
   totalPages = 0;
   activeTab: TaskTab = 'assigned-to-me';
-  viewMode: ViewMode = 'list';
+  viewMode: ViewMode = 'board';
 
   boardColumns: BoardColumn[] = [
     { status: TaskStatus.Pending,    label: 'Chờ xử lý',     tasks: [] },

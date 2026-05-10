@@ -48,6 +48,27 @@ export class ProductionDashboardComponent implements OnInit {
     return order.steps.find(s => !s.isCompleted) ?? null;
   }
 
+  // ── Kanban: nhóm đơn theo khâu hiện tại ────────────────────────────
+  get kanbanColumns(): { stageOrder: number; stageName: string; orders: OrderProductionProgress[] }[] {
+    const stages = new Map<number, string>();
+    for (const order of this.orders) {
+      for (const step of order.steps) {
+        if (!stages.has(step.stageOrder)) stages.set(step.stageOrder, step.stageName);
+      }
+    }
+    const columns = Array.from(stages.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([stageOrder, stageName]) => ({ stageOrder, stageName, orders: [] as OrderProductionProgress[] }));
+
+    for (const order of this.inProgress) {
+      const next = this.nextStep(order);
+      if (!next) continue;
+      const col = columns.find(c => c.stageOrder === next.stageOrder);
+      if (col) col.orders.push(order);
+    }
+    return columns;
+  }
+
   openCompleteModal(order: OrderProductionProgress, step: OrderProductionStep): void {
     this.completing = { order, step };
     this.completeNotes = '';

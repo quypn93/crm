@@ -45,53 +45,39 @@
     <p>Không có đơn hàng nào đang sản xuất.</p>
   </div>
 
-  <!-- In-progress orders -->
+  <!-- In-progress orders (Kanban) -->
   <div *ngIf="!isLoading && !errorMessage && inProgress.length > 0">
     <h2 class="section-title">Đang sản xuất ({{ inProgress.length }})</h2>
-    <div class="order-grid">
-      <div class="order-card" *ngFor="let order of inProgress">
-
-        <div class="card-header">
-          <span class="order-number">{{ order.orderNumber }}</span>
-          <span class="stage-badge">{{ order.currentStageName || 'Chờ xử lý' }}</span>
+    <div class="kanban-board">
+      <div class="kanban-column" *ngFor="let col of kanbanColumns">
+        <div class="kanban-column-header">
+          <span class="col-order">{{ col.stageOrder }}</span>
+          <span class="col-name">{{ col.stageName }}</span>
+          <span class="col-count">{{ col.orders.length }}</span>
         </div>
-        <div class="customer-name" *ngIf="order.customerName">{{ order.customerName }}</div>
-
-        <!-- Progress bar -->
-        <div class="progress-wrap">
-          <div class="progress-track">
-            <div class="progress-fill" [style.width.%]="order.progressPercent"></div>
-          </div>
-          <span class="progress-text">{{ order.completedSteps }}/{{ order.totalSteps }} khâu</span>
-        </div>
-
-        <!-- Steps list -->
-        <div class="steps-list">
-          <div class="step-item" *ngFor="let step of order.steps" [class.done]="step.isCompleted">
-            <span class="step-dot" [class.done]="step.isCompleted">
-              {{ step.isCompleted ? '✓' : step.stageOrder }}
-            </span>
-            <div class="step-info">
-              <span class="step-name">{{ step.stageName }}</span>
-              <span class="step-by" *ngIf="step.isCompleted && step.completedByUserName">
-                {{ step.completedByUserName }}
-                <span *ngIf="step.completedAt"> · {{ step.completedAt | date:'dd/MM HH:mm' }}</span>
-              </span>
+        <div class="kanban-column-body">
+          <div class="kanban-card" *ngFor="let order of col.orders">
+            <div class="kc-header">
+              <span class="order-number">{{ order.orderNumber }}</span>
+              <span class="kc-progress-text">{{ order.completedSteps }}/{{ order.totalSteps }}</span>
+            </div>
+            <div class="customer-name" *ngIf="order.customerName">{{ order.customerName }}</div>
+            <div class="progress-track">
+              <div class="progress-fill" [style.width.%]="order.progressPercent"></div>
+            </div>
+            <div class="kc-footer">
+              <a [routerLink]="['/orders', order.orderId]" class="btn-link">Xem →</a>
+              <button
+                *ngIf="canComplete()"
+                class="btn-complete-sm"
+                (click)="openCompleteModal(order, nextStep(order)!)"
+                title="Hoàn thành khâu {{ col.stageName }}">
+                ✓ Hoàn thành
+              </button>
             </div>
           </div>
+          <div class="kanban-empty" *ngIf="col.orders.length === 0">Trống</div>
         </div>
-
-        <!-- Actions -->
-        <div class="card-footer">
-          <a [routerLink]="['/orders', order.orderId]" class="btn-link">Xem đơn →</a>
-          <button
-            *ngIf="canComplete() && nextStep(order)"
-            class="btn-complete"
-            (click)="openCompleteModal(order, nextStep(order)!)">
-            ✓ Hoàn thành: {{ nextStep(order)?.stageName }}
-          </button>
-        </div>
-
       </div>
     </div>
   </div>
