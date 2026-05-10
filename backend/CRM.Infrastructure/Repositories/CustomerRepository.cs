@@ -122,4 +122,12 @@ public class CustomerRepository : Repository<Customer>, ICustomerRepository
             .Where(c => c.IsActive && !string.IsNullOrEmpty(c.Industry))
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<Customer>> GetAllWithOrdersAsync()
+    {
+        return await _dbSet
+            .Include(c => c.Orders)
+            .Where(c => c.IsActive)
+            .ToListAsync();
+    }
 }

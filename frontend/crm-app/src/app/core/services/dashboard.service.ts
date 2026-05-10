@@ -16,6 +16,7 @@ export interface DashboardStats {
   ordersInProgress: number;
   inProgressOrdersValue: number;
   newOrdersThisMonth: number;
+  ordersInProduction: number;
 }
 
 export interface RecentOrder {

@@ -20,4 +20,5 @@ public interface ICustomerRepository : IRepository<Customer>
     Task<IEnumerable<Customer>> GetByAssignedUserAsync(Guid userId);
     Task<int> GetCustomerCountByIndustryAsync(string industry);
     Task<IEnumerable<Customer>> GetAllWithDealsAsync();
+    Task<IEnumerable<Customer>> GetAllWithOrdersAsync();
 }

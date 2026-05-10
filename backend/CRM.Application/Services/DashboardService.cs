@@ -60,6 +60,8 @@ public class DashboardService : IDashboardService
         var ordersInProgress = await _unitOfWork.Orders.CountAsync(
             o => inProgressStatuses.Contains(o.Status));
 
+        var ordersInProduction = await _unitOfWork.Orders.GetOrderCountByStatusAsync(OrderStatus.InProduction);
+
         decimal inProgressValue = 0;
         foreach (var status in inProgressStatuses)
         {
@@ -86,61 +88,129 @@ public class DashboardService : IDashboardService
             NewCustomersThisMonth = newCustomersThisMonth,
             OrdersInProgress = ordersInProgress,
             InProgressOrdersValue = inProgressValue,
-            NewOrdersThisMonth = newOrdersThisMonth
+            NewOrdersThisMonth = newOrdersThisMonth,
+            OrdersInProduction = ordersInProduction
         };
     }
 
     public async Task<IEnumerable<RevenueReportDto>> GetRevenueReportAsync(ReportFilterDto filter)
     {
-        var deals = await _unitOfWork.Deals.GetWonDealsAsync(filter.DateFrom, filter.DateTo);
+        var revenueStatuses = new[] { OrderStatus.Delivered, OrderStatus.Completed };
+        var orders = await _unitOfWork.Orders.FindAsync(o =>
+            revenueStatuses.Contains(o.Status) &&
+            (!filter.DateFrom.HasValue || o.OrderDate >= filter.DateFrom.Value) &&
+            (!filter.DateTo.HasValue || o.OrderDate <= filter.DateTo.Value));
 
-        if (!deals.Any()) return Enumerable.Empty<RevenueReportDto>();
+        if (!orders.Any()) return Enumerable.Empty<RevenueReportDto>();
 
         var grouped = filter.Period?.ToLower() switch
         {
-            "daily" => deals.GroupBy(d => d.ActualCloseDate!.Value.Date.ToString("yyyy-MM-dd")),
-            "weekly" => deals.GroupBy(d => $"{d.ActualCloseDate!.Value.Year}-W{GetWeekOfYear(d.ActualCloseDate.Value)}"),
-            "yearly" => deals.GroupBy(d => d.ActualCloseDate!.Value.Year.ToString()),
-            _ => deals.GroupBy(d => d.ActualCloseDate!.Value.ToString("yyyy-MM")) // monthly default
+            "daily" => orders.GroupBy(o => new
+            {
+                Period = o.OrderDate.Date.ToString("yyyy-MM-dd"),
+                Month = o.OrderDate.Date.ToString("yyyy-MM-dd"),
+                o.OrderDate.Year
+            }),
+            "weekly" => orders.GroupBy(o => new
+            {
+                Period = $"{o.OrderDate.Year}-W{GetWeekOfYear(o.OrderDate)}",
+                Month = $"W{GetWeekOfYear(o.OrderDate)}",
+                o.OrderDate.Year
+            }),
+            "yearly" => orders.GroupBy(o => new
+            {
+                Period = o.OrderDate.Year.ToString(),
+                Month = o.OrderDate.Year.ToString(),
+                o.OrderDate.Year
+            }),
+            _ => orders.GroupBy(o => new
+            {
+                Period = o.OrderDate.ToString("yyyy-MM"),
+                Month = o.OrderDate.Month.ToString("D2"),
+                o.OrderDate.Year
+            })
         };
 
         return grouped.Select(g => new RevenueReportDto
         {
-            Period = g.Key,
-            Revenue = g.Sum(d => d.Value),
-            DealsCount = g.Count()
+            Period = g.Key.Period,
+            Month = g.Key.Month,
+            Year = g.Key.Year,
+            Revenue = g.Sum(o => o.TotalAmount),
+            DealsCount = g.Count(),
+            DealCount = g.Count()
         }).OrderBy(r => r.Period);
     }
 
     public async Task<IEnumerable<DealsByStageReportDto>> GetDealsByStageReportAsync()
     {
-        var stagesWithDeals = await _unitOfWork.Deals.GetAllStagesWithDealsAsync();
-
-        return stagesWithDeals.Select(s => new DealsByStageReportDto
+        var workflowStages = new[]
         {
-            StageName = s.Stage.Name,
-            StageColor = s.Stage.Color ?? "#6366F1",
-            Count = s.Deals.Count(),
-            TotalValue = s.Deals.Sum(d => d.Value)
-        });
+            (Status: OrderStatus.Draft,        Name: "Nháp",                Color: "#94A3B8"),
+            (Status: OrderStatus.Confirmed,    Name: "Đã xác nhận",         Color: "#6366F1"),
+            (Status: OrderStatus.InProduction, Name: "Đang sản xuất",       Color: "#F59E0B"),
+            (Status: OrderStatus.QualityCheck, Name: "Kiểm tra chất lượng", Color: "#8B5CF6"),
+            (Status: OrderStatus.ReadyToShip,  Name: "Sẵn sàng giao",       Color: "#06B6D4"),
+            (Status: OrderStatus.Shipping,     Name: "Đang giao hàng",      Color: "#0EA5E9"),
+            (Status: OrderStatus.Delivered,    Name: "Đã giao",             Color: "#10B981"),
+            (Status: OrderStatus.Completed,    Name: "Hoàn thành",          Color: "#22C55E"),
+            (Status: OrderStatus.Cancelled,    Name: "Đã hủy",              Color: "#EF4444")
+        };
+
+        var rows = new List<DealsByStageReportDto>();
+        foreach (var s in workflowStages)
+        {
+            var count = await _unitOfWork.Orders.GetOrderCountByStatusAsync(s.Status);
+            var totalValue = await _unitOfWork.Orders.GetTotalAmountByStatusAsync(s.Status);
+            rows.Add(new DealsByStageReportDto
+            {
+                StageName = s.Name,
+                StageColor = s.Color,
+                Count = count,
+                TotalValue = totalValue
+            });
+        }
+
+        var totalCount = rows.Sum(r => r.Count);
+        if (totalCount > 0)
+        {
+            foreach (var r in rows)
+            {
+                r.Percentage = Math.Round((decimal)r.Count / totalCount * 100, 2);
+            }
+        }
+
+        return rows;
     }
 
     public async Task<IEnumerable<CustomersByIndustryReportDto>> GetCustomersByIndustryReportAsync()
     {
-        var customers = await _unitOfWork.Customers.GetAllWithDealsAsync();
-        var wonStage = await _unitOfWork.Deals.GetWonStageAsync();
+        var customers = await _unitOfWork.Customers.GetAllWithOrdersAsync();
+        var revenueStatuses = new[] { OrderStatus.Delivered, OrderStatus.Completed };
 
-        return customers
-            .GroupBy(c => c.Industry ?? CustomerIndustries.Other)
+        var grouped = customers
+            .GroupBy(c => string.IsNullOrWhiteSpace(c.Industry) ? CustomerIndustries.Other : c.Industry!)
             .Select(g => new CustomersByIndustryReportDto
             {
                 Industry = g.Key,
                 Count = g.Count(),
-                TotalRevenue = wonStage != null
-                    ? g.SelectMany(c => c.Deals).Where(d => d.StageId == wonStage.Id).Sum(d => d.Value)
-                    : 0
+                TotalRevenue = g.SelectMany(c => c.Orders)
+                    .Where(o => revenueStatuses.Contains(o.Status))
+                    .Sum(o => o.TotalAmount)
             })
-            .OrderByDescending(r => r.Count);
+            .OrderByDescending(r => r.Count)
+            .ToList();
+
+        var totalCount = grouped.Sum(r => r.Count);
+        if (totalCount > 0)
+        {
+            foreach (var r in grouped)
+            {
+                r.Percentage = Math.Round((decimal)r.Count / totalCount * 100, 2);
+            }
+        }
+
+        return grouped;
     }
 
     public async Task<IEnumerable<SalesPerformanceDto>> GetSalesPerformanceAsync(ReportFilterDto filter)

@@ -16,13 +16,17 @@ public class DashboardStatsDto
     public int OrdersInProgress { get; set; }
     public decimal InProgressOrdersValue { get; set; }
     public int NewOrdersThisMonth { get; set; }
+    public int OrdersInProduction { get; set; }
 }
 
 public class RevenueReportDto
 {
     public string Period { get; set; } = string.Empty;
+    public string Month { get; set; } = string.Empty;
+    public int Year { get; set; }
     public decimal Revenue { get; set; }
     public int DealsCount { get; set; }
+    public int DealCount { get; set; }
 }
 
 public class DealsByStageReportDto
@@ -31,6 +35,7 @@ public class DealsByStageReportDto
     public string StageColor { get; set; } = string.Empty;
     public int Count { get; set; }
     public decimal TotalValue { get; set; }
+    public decimal Percentage { get; set; }
 }
 
 public class CustomersByIndustryReportDto
@@ -38,6 +43,7 @@ public class CustomersByIndustryReportDto
     public string Industry { get; set; } = string.Empty;
     public int Count { get; set; }
     public decimal TotalRevenue { get; set; }
+    public decimal Percentage { get; set; }
 }
 
 public class TaskCompletionReportDto
