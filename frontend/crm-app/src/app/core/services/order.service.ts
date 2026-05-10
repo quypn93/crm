@@ -142,8 +142,8 @@ export class OrderService {
       [OrderStatus.Confirmed]: [OrderStatus.InProduction, OrderStatus.Cancelled],
       [OrderStatus.InProduction]: [OrderStatus.QualityCheck, OrderStatus.Cancelled],
       [OrderStatus.QualityCheck]: [OrderStatus.ReadyToShip, OrderStatus.InProduction],
-      [OrderStatus.ReadyToShip]: [OrderStatus.Shipping],
-      [OrderStatus.Shipping]: [OrderStatus.Delivered],
+      [OrderStatus.ReadyToShip]: [OrderStatus.Shipping, OrderStatus.Completed],
+      [OrderStatus.Shipping]: [OrderStatus.Delivered, OrderStatus.Completed],
       [OrderStatus.Delivered]: [OrderStatus.Completed],
       [OrderStatus.Completed]: [],
       [OrderStatus.Cancelled]: []

@@ -106,12 +106,12 @@ export class OrderFormComponent implements OnInit {
       assignedToUserId: [''],
       designerUserId: [''],
       designId: [''],
-      deliveryMethod: [''],
-      shippingContactName: [''],
-      shippingPhone: [''],
-      shippingAddress: [''],
-      shippingProvinceCode: [''],
-      shippingWardCode: [''],
+      deliveryMethod: ['', Validators.required],
+      shippingContactName: ['', Validators.required],
+      shippingPhone: ['', Validators.required],
+      shippingAddress: ['', Validators.required],
+      shippingProvinceCode: ['', Validators.required],
+      shippingWardCode: ['', Validators.required],
       shippingNotes: [''],
       discountPercent: [0, [Validators.min(0), Validators.max(100)]],
       taxPercent: [0, [Validators.min(0), Validators.max(100)]],
@@ -121,13 +121,13 @@ export class OrderFormComponent implements OnInit {
       internalNotes: [''],
       customerNotes: [''],
       productInfo: this.fb.group({
-        collectionId: [''],
-        materialId: [''],
-        mainColorId: [''],
+        collectionId: ['', Validators.required],
+        materialId: ['', Validators.required],
+        mainColorId: ['', Validators.required],
         accentColorId: [''],
-        formId: [''],
-        specificationId: [''],
-        unitPrice: [0, [Validators.min(0)]],
+        formId: ['', Validators.required],
+        specificationId: ['', Validators.required],
+        unitPrice: [0, [Validators.required, Validators.min(1)]],
         itemDiscountPercent: [0, [Validators.min(0), Validators.max(100)]],
       }),
       items: this.fb.array([])
@@ -476,7 +476,15 @@ export class OrderFormComponent implements OnInit {
   formatDate(date: Date): string { return date.toISOString().split('T')[0]; }
 
   onSubmit(): void {
-    if (this.orderForm.invalid) { this.orderForm.markAllAsTouched(); return; }
+    if (this.orderForm.invalid) {
+      this.orderForm.markAllAsTouched();
+      this.errorMessage = 'Vui lòng kiểm tra lại các trường bắt buộc.';
+      return;
+    }
+    if (this.getTotalQtyInput() < 1) {
+      this.errorMessage = 'Tổng số lượng sản phẩm phải ít nhất là 1.';
+      return;
+    }
     this.isLoading = true;
     this.errorMessage = '';
 

@@ -129,7 +129,7 @@
 
           <!-- Chất liệu -->
           <div class="form-group">
-            <label>Chất liệu</label>
+            <label>Chất liệu <span class="required">*</span></label>
             <select formControlName="materialId">
               <option value="">-- Chọn chất liệu --</option>
               <option *ngFor="let m of filteredMaterials" [value]="m.id">{{ m.name }}</option>
@@ -138,7 +138,7 @@
 
           <!-- Màu sắc chính -->
           <div class="form-group">
-            <label>Màu sắc chính</label>
+            <label>Màu sắc chính <span class="required">*</span></label>
             <select formControlName="mainColorId">
               <option value="">-- Chọn màu --</option>
               <option *ngFor="let c of filteredColors" [value]="c.id">{{ c.name }}</option>
@@ -156,7 +156,7 @@
 
           <!-- Form dáng -->
           <div class="form-group">
-            <label>Form</label>
+            <label>Form <span class="required">*</span></label>
             <select formControlName="formId">
               <option value="">-- Chọn form --</option>
               <option *ngFor="let f of filteredForms" [value]="f.id">{{ f.name }}</option>
@@ -165,7 +165,7 @@
 
           <!-- Quy cách -->
           <div class="form-group">
-            <label>Quy cách</label>
+            <label>Quy cách <span class="required">*</span></label>
             <select formControlName="specificationId">
               <option value="">-- Chọn quy cách --</option>
               <option *ngFor="let s of filteredSpecs" [value]="s.id">{{ s.name }}</option>
@@ -173,8 +173,8 @@
           </div>
 
           <div class="form-group">
-            <label>Đơn giá (VNĐ)</label>
-            <input type="number" formControlName="unitPrice" min="0" placeholder="0">
+            <label>Đơn giá (VNĐ) <span class="required">*</span></label>
+            <input type="number" formControlName="unitPrice" min="1" placeholder="0">
           </div>
 
           <div class="form-group">
@@ -185,7 +185,7 @@
 
         <!-- Size grid -->
         <div class="size-grid-section">
-          <div class="size-grid-label">Số lượng theo size</div>
+          <div class="size-grid-label">Số lượng theo size <span class="required">*</span></div>
           <div class="size-grid">
             <div class="size-col" *ngFor="let s of SIZE_LIST">
               <div class="size-name">{{ s }}</div>
@@ -198,6 +198,9 @@
               <div class="size-name">TỔNG</div>
               <div class="size-total">{{ getTotalQtyInput() }}</div>
             </div>
+          </div>
+          <div class="error-text" *ngIf="getTotalQtyInput() < 1">
+            Tổng số lượng sản phẩm phải ít nhất là 1.
           </div>
         </div>
       </div>
@@ -220,12 +223,15 @@
         <h2 class="section-title">Thông tin giao hàng</h2>
 
         <div class="delivery-method-group">
-          <label class="group-label">Hình thức giao hàng</label>
+          <label class="group-label">Hình thức giao hàng <span class="required">*</span></label>
           <div class="radio-row">
             <label class="radio-item" *ngFor="let opt of deliveryMethodOptions">
               <input type="radio" formControlName="deliveryMethod" [value]="opt.value">
               <span>{{ opt.label }}</span>
             </label>
+          </div>
+          <div class="error-text" *ngIf="f['deliveryMethod'].invalid && f['deliveryMethod'].touched">
+            Vui lòng chọn hình thức giao hàng.
           </div>
           <ng-container *ngIf="orderForm.get('deliveryMethod')?.value === DeliveryMethod.GHTK">
             <div class="hint" *ngIf="ghtkConfigured === true">
@@ -240,22 +246,31 @@
 
         <div class="form-grid">
           <div class="form-group">
-            <label>Người nhận</label>
+            <label>Người nhận <span class="required">*</span></label>
             <input type="text" formControlName="shippingContactName" placeholder="Tên người nhận">
+            <div class="error-text" *ngIf="f['shippingContactName'].invalid && f['shippingContactName'].touched">
+              Vui lòng nhập tên người nhận.
+            </div>
           </div>
           <div class="form-group">
-            <label>Số điện thoại</label>
+            <label>Số điện thoại <span class="required">*</span></label>
             <input type="text" formControlName="shippingPhone" placeholder="Số điện thoại">
+            <div class="error-text" *ngIf="f['shippingPhone'].invalid && f['shippingPhone'].touched">
+              Vui lòng nhập số điện thoại.
+            </div>
           </div>
           <div class="form-group">
-            <label>Tỉnh/Thành phố</label>
+            <label>Tỉnh/Thành phố <span class="required">*</span></label>
             <select formControlName="shippingProvinceCode">
               <option value="">-- Chọn tỉnh/thành --</option>
               <option *ngFor="let p of provinces" [value]="p.code">{{ p.fullName }}</option>
             </select>
+            <div class="error-text" *ngIf="f['shippingProvinceCode'].invalid && f['shippingProvinceCode'].touched">
+              Vui lòng chọn tỉnh/thành phố.
+            </div>
           </div>
           <div class="form-group">
-            <label>Phường/Xã</label>
+            <label>Phường/Xã <span class="required">*</span></label>
             <select formControlName="shippingWardCode"
                     [attr.disabled]="!orderForm.get('shippingProvinceCode')?.value ? true : null">
               <option value="">-- Chọn phường/xã --</option>
@@ -265,10 +280,16 @@
             <div class="hint" *ngIf="!isLoadingWards && !wards.length && orderForm.get('shippingProvinceCode')?.value">
               Chưa có dữ liệu xã/phường cho tỉnh này.
             </div>
+            <div class="error-text" *ngIf="f['shippingWardCode'].invalid && f['shippingWardCode'].touched">
+              Vui lòng chọn phường/xã.
+            </div>
           </div>
           <div class="form-group full-width">
-            <label>Địa chỉ chi tiết</label>
+            <label>Địa chỉ chi tiết <span class="required">*</span></label>
             <input type="text" formControlName="shippingAddress" placeholder="Số nhà, đường, thôn/xóm...">
+            <div class="error-text" *ngIf="f['shippingAddress'].invalid && f['shippingAddress'].touched">
+              Vui lòng nhập địa chỉ chi tiết.
+            </div>
           </div>
           <div class="form-group full-width">
             <label>Ghi chú giao hàng</label>

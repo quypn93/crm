@@ -26,9 +26,11 @@ public static class OrderStatusTransitionValidator
 
         // ReadyToShip transitions
         { (OrderStatus.ReadyToShip, OrderStatus.Shipping), new[] { RoleNames.Admin, RoleNames.DeliveryManager } },
+        { (OrderStatus.ReadyToShip, OrderStatus.Completed), new[] { RoleNames.Admin, RoleNames.SalesManager, RoleNames.SalesRep } },
 
         // Shipping transitions
         { (OrderStatus.Shipping, OrderStatus.Delivered), new[] { RoleNames.Admin, RoleNames.DeliveryManager } },
+        { (OrderStatus.Shipping, OrderStatus.Completed), new[] { RoleNames.Admin, RoleNames.SalesManager, RoleNames.SalesRep } },
 
         // Delivered transitions
         { (OrderStatus.Delivered, OrderStatus.Completed), new[] { RoleNames.Admin, RoleNames.SalesManager, RoleNames.SalesRep } },
