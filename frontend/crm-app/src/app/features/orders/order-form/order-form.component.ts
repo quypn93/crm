@@ -46,6 +46,7 @@ export class OrderFormComponent implements OnInit {
 
   users: UserListItem[] = [];
   designers: UserListItem[] = [];
+  shippers: UserListItem[] = [];
   availableDesigns: Design[] = [];
   customerSearchText = '';
   showCustomerDropdown = false;
@@ -105,6 +106,7 @@ export class OrderFormComponent implements OnInit {
       depositCode: [''],
       assignedToUserId: [''],
       designerUserId: [''],
+      shipperUserId: [''],
       designId: [''],
       deliveryMethod: ['', Validators.required],
       shippingContactName: ['', Validators.required],
@@ -157,6 +159,7 @@ export class OrderFormComponent implements OnInit {
       productionDaysOptions: this.settingsService.getProductionDaysOptions(),
       users: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true }),
       designers: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true, role: 'Designer' }),
+      shippers: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true, role: 'DeliveryStaff' }),
       provinces: this.locationService.getProvinces(),
       availableDesigns: this.designService.getAvailableDesigns(),
       deposits: this.settingsService.getDeposits()
@@ -171,6 +174,7 @@ export class OrderFormComponent implements OnInit {
         this.productionDaysOptions = (res.productionDaysOptions || []).filter(o => o.isActive);
         this.users = res.users?.items || [];
         this.designers = res.designers?.items || [];
+        this.shippers = res.shippers?.items || [];
         this.provinces = res.provinces || [];
         this.availableDesigns = res.availableDesigns || [];
         this.deposits = res.deposits || [];
@@ -197,6 +201,17 @@ export class OrderFormComponent implements OnInit {
     this.orderForm.get('shippingProvinceCode')?.valueChanges.subscribe((code: string) => this.onProvinceChange(code));
     this.orderForm.get('designId')?.valueChanges.subscribe((id: string) => this.onDesignChange(id));
     this.orderForm.get('depositCode')?.valueChanges.subscribe((code: string) => this.onDepositCodeChange(code));
+    // Đổi sang Vehicle/GHTK → clear NV giao hàng (chỉ áp dụng cho hình thức "Nhà giao").
+    this.orderForm.get('deliveryMethod')?.valueChanges.subscribe((v: any) => {
+      if (Number(v) !== DeliveryMethod.InHouse) {
+        this.orderForm.get('shipperUserId')?.setValue('', { emitEvent: false });
+      }
+    });
+  }
+
+  isInHouseDelivery(): boolean {
+    const v = this.orderForm.get('deliveryMethod')?.value;
+    return Number(v) === DeliveryMethod.InHouse;
   }
 
   /**
@@ -379,6 +394,7 @@ export class OrderFormComponent implements OnInit {
           depositCode: order.depositCode || '',
           assignedToUserId: order.assignedToUserId || '',
           designerUserId: order.designerUserId || '',
+          shipperUserId: order.shipperUserId || '',
           designId: order.designId || '',
           deliveryMethod: order.deliveryMethod ?? '',
           shippingContactName: order.shippingContactName || '',
@@ -501,6 +517,8 @@ export class OrderFormComponent implements OnInit {
       depositCode: f.depositCode || undefined,
       assignedToUserId: f.assignedToUserId || undefined,
       designerUserId: f.designerUserId || undefined,
+      // Chỉ gửi shipper khi hình thức = Nhà giao; Vehicle/GHTK luôn null phía backend.
+      shipperUserId: this.isInHouseDelivery() ? (f.shipperUserId || undefined) : undefined,
       designId: f.designId || undefined,
       deliveryMethod: f.deliveryMethod === '' || f.deliveryMethod === null || f.deliveryMethod === undefined
         ? undefined

@@ -120,6 +120,10 @@
             <span class="label">Hình thức giao</span>
             <span class="value">{{ order.deliveryMethodName || '-' }}</span>
           </div>
+          <div class="info-item" *ngIf="order.deliveryMethod === DeliveryMethod.InHouse">
+            <span class="label">NV giao hàng</span>
+            <span class="value">{{ order.shipperUserName || 'Chưa giao' }}</span>
+          </div>
 
           <!-- GHTK tracking — chỉ hiện khi đơn chọn GHTK -->
           <div class="info-item full-width ghtk-panel" *ngIf="isGhtkOrder()">

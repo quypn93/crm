@@ -43,6 +43,15 @@ public class OrdersController : ControllerBase
         if (isDesignerOnly)
             filter.DesignerUserId = GetCurrentUserId();
 
+        // NV giao hàng (DeliveryStaff thuần) chỉ xem đơn được giao cho mình.
+        // DeliveryManager + Admin có thể xem toàn bộ.
+        var isDeliveryStaffOnly = userRoles.Contains(RoleNames.DeliveryStaff)
+            && !userRoles.Contains(RoleNames.Admin)
+            && !userRoles.Contains(RoleNames.DeliveryManager);
+
+        if (isDeliveryStaffOnly)
+            filter.ShipperUserId = GetCurrentUserId();
+
         var result = await _orderService.GetPagedAsync(filter);
         return Ok(ApiResponse<PaginatedResult<OrderDto>>.Ok(result));
     }
@@ -72,6 +81,14 @@ public class OrdersController : ControllerBase
             && !userRoles.Contains(RoleNames.DesignManager);
 
         if (isDesignerOnly && order.DesignerUserId != currentUserId)
+            return Forbid();
+
+        // NV giao hàng (DeliveryStaff thuần) chỉ xem được đơn mình đảm nhận.
+        var isDeliveryStaffOnly = userRoles.Contains(RoleNames.DeliveryStaff)
+            && !userRoles.Contains(RoleNames.Admin)
+            && !userRoles.Contains(RoleNames.DeliveryManager);
+
+        if (isDeliveryStaffOnly && order.ShipperUserId != currentUserId)
             return Forbid();
 
         return Ok(ApiResponse<OrderDto>.Ok(order));

@@ -51,6 +51,7 @@ public class OrderService : IOrderService
             filter.AssignedTo,
             filter.CreatedBy,
             filter.DesignerUserId,
+            filter.ShipperUserId,
             filter.Status,
             filter.PaymentStatus,
             filter.OrderDateFrom,
@@ -157,6 +158,8 @@ public class OrderService : IOrderService
             CreatedByUserId = userId,
             AssignedToUserId = dto.AssignedToUserId ?? userId,
             DesignerUserId = resolvedDesignerUserId,
+            // Shipper chỉ giữ nếu hình thức giao là InHouse — các method khác giao bên ngoài (Vehicle/GHTK) không cần.
+            ShipperUserId = dto.DeliveryMethod == DeliveryMethod.InHouse ? dto.ShipperUserId : null,
             DesignId = dto.DesignId
         };
 
@@ -229,6 +232,8 @@ public class OrderService : IOrderService
         order.InternalNotes = dto.InternalNotes;
         order.StyleNotes = dto.StyleNotes;
         order.AssignedToUserId = dto.AssignedToUserId;
+        // Đổi sang Vehicle/GHTK → clear shipper (kế hoạch giao đã thay đổi).
+        order.ShipperUserId = dto.DeliveryMethod == DeliveryMethod.InHouse ? dto.ShipperUserId : null;
 
         // Nếu chọn design có sẵn → gán designer = người làm ra design.
         if (dto.DesignId.HasValue)

@@ -77,13 +77,13 @@ namespace CRM.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ConversationId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -1084,6 +1084,9 @@ namespace CRM.Infrastructure.Migrations
                     b.Property<DateTime?>("ReturnDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("ShipperUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("ShippingAddress")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -1168,6 +1171,8 @@ namespace CRM.Infrastructure.Migrations
                     b.HasIndex("PaymentStatus");
 
                     b.HasIndex("ProductionDaysOptionId");
+
+                    b.HasIndex("ShipperUserId");
 
                     b.HasIndex("Status");
 
@@ -1936,36 +1941,6 @@ namespace CRM.Infrastructure.Migrations
                     b.Navigation("SenderUser");
                 });
 
-            modelBuilder.Entity("CRM.Core.Entities.Conversation", b =>
-                {
-                    b.HasOne("CRM.Core.Entities.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByUser");
-                });
-
-            modelBuilder.Entity("CRM.Core.Entities.ConversationParticipant", b =>
-                {
-                    b.HasOne("CRM.Core.Entities.Conversation", "Conversation")
-                        .WithMany("Participants")
-                        .HasForeignKey("ConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("CRM.Core.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Conversation");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("CRM.Core.Entities.CollectionColor", b =>
                 {
                     b.HasOne("CRM.Core.Entities.Collection", "Collection")
@@ -2040,6 +2015,36 @@ namespace CRM.Infrastructure.Migrations
                     b.Navigation("Collection");
 
                     b.Navigation("ProductSpecification");
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.Conversation", b =>
+                {
+                    b.HasOne("CRM.Core.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.ConversationParticipant", b =>
+                {
+                    b.HasOne("CRM.Core.Entities.Conversation", "Conversation")
+                        .WithMany("Participants")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CRM.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("CRM.Core.Entities.Customer", b =>
@@ -2201,11 +2206,17 @@ namespace CRM.Infrastructure.Migrations
 
                     b.HasOne("CRM.Core.Entities.User", "DesignerUser")
                         .WithMany()
-                        .HasForeignKey("DesignerUserId");
+                        .HasForeignKey("DesignerUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("CRM.Core.Entities.ProductionDaysOption", "ProductionDaysOption")
                         .WithMany()
                         .HasForeignKey("ProductionDaysOptionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("CRM.Core.Entities.User", "ShipperUser")
+                        .WithMany()
+                        .HasForeignKey("ShipperUserId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("AssignedToUser");
@@ -2221,6 +2232,8 @@ namespace CRM.Infrastructure.Migrations
                     b.Navigation("DesignerUser");
 
                     b.Navigation("ProductionDaysOption");
+
+                    b.Navigation("ShipperUser");
                 });
 
             modelBuilder.Entity("CRM.Core.Entities.OrderItem", b =>

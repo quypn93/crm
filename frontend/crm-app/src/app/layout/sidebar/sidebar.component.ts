@@ -41,7 +41,7 @@ export class SidebarComponent implements OnInit {
     { label: 'Thời gian SX', icon: 'check-circle', route: '/settings/production-days', roles: [RoleNames.Admin], exact: true },
     { label: 'Lịch sử cộng tiền', icon: 'chart', route: '/settings/deposits', roles: RoleGroups.SalesRoles, exact: true },
     { label: 'Người dùng', icon: 'user-manage', route: '/settings/users', roles: [RoleNames.Admin], exact: false },
-    { label: 'Vai trò', icon: 'shield', route: '/settings/roles', roles: [RoleNames.Admin], exact: true },
+    { label: 'Vai trò', icon: 'shield', route: '/settings/roles', roles: [RoleNames.Admin], exact: false },
     { label: 'Cấu hình thông báo', icon: 'bell', route: '/notifications/admin/preferences', roles: [RoleNames.Admin], exact: true },
     { label: 'Cài đặt', icon: 'settings', route: '/settings', roles: [RoleNames.Admin], exact: true }
   ];

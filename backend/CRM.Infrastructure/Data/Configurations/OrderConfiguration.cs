@@ -92,6 +92,21 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasForeignKey(o => o.AssignedToUserId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // DesignerUser & ShipperUser — không có inverse navigation trên User
+        // (User chỉ có CreatedOrders + AssignedOrders). Khai báo tường minh để EF
+        // không nhầm các ICollection<Order> đã có với 2 FK còn lại.
+        builder.HasOne(o => o.DesignerUser)
+            .WithMany()
+            .HasForeignKey(o => o.DesignerUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(o => o.ShipperUser)
+            .WithMany()
+            .HasForeignKey(o => o.ShipperUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasIndex(o => o.ShipperUserId);
+
         builder.HasOne(o => o.ProductionDaysOption)
             .WithMany()
             .HasForeignKey(o => o.ProductionDaysOptionId)

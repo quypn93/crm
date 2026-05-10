@@ -171,6 +171,8 @@ export interface Order {
   qrCodeImageBase64?: string;
   designerUserId?: string;
   designerUserName?: string;
+  shipperUserId?: string;
+  shipperUserName?: string;
 }
 
 export interface CreateOrderItemRequest {
@@ -219,6 +221,7 @@ export interface CreateOrderRequest {
   depositCode?: string;
   assignedToUserId?: string;
   designerUserId?: string;
+  shipperUserId?: string;
   designId?: string;
   items: CreateOrderItemRequest[];
 }

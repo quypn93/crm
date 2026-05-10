@@ -20,6 +20,7 @@ public class OrderRepository : Repository<Order>, IOrderRepository
             .Include(o => o.CreatedByUser)
             .Include(o => o.AssignedToUser)
             .Include(o => o.DesignerUser)
+            .Include(o => o.ShipperUser)
             .Include(o => o.ProductionDaysOption)
             .Include(o => o.Design)
             .Include(o => o.Items)
@@ -57,6 +58,7 @@ public class OrderRepository : Repository<Order>, IOrderRepository
         Guid? assignedTo,
         Guid? createdBy,
         Guid? designerUserId,
+        Guid? shipperUserId,
         OrderStatus? status,
         PaymentStatus? paymentStatus,
         DateTime? orderDateFrom,
@@ -72,6 +74,7 @@ public class OrderRepository : Repository<Order>, IOrderRepository
             .Include(o => o.Customer)
             .Include(o => o.Deal)
             .Include(o => o.AssignedToUser)
+            .Include(o => o.ShipperUser)
             .Include(o => o.Items)
             .AsQueryable();
 
@@ -99,6 +102,9 @@ public class OrderRepository : Repository<Order>, IOrderRepository
 
         if (designerUserId.HasValue)
             query = query.Where(o => o.DesignerUserId == designerUserId.Value);
+
+        if (shipperUserId.HasValue)
+            query = query.Where(o => o.ShipperUserId == shipperUserId.Value);
 
         if (status.HasValue)
             query = query.Where(o => o.Status == status.Value);

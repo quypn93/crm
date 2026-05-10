@@ -82,6 +82,8 @@ public class Order : BaseEntity
     public Guid CreatedByUserId { get; set; }
     public Guid? AssignedToUserId { get; set; }
     public Guid? DesignerUserId { get; set; }
+    // NV giao hàng — chỉ áp dụng khi DeliveryMethod = InHouse (nhà giao tự đi).
+    public Guid? ShipperUserId { get; set; }
 
     // Navigation properties
     public virtual Customer Customer { get; set; } = null!;
@@ -89,6 +91,7 @@ public class Order : BaseEntity
     public virtual User CreatedByUser { get; set; } = null!;
     public virtual User? AssignedToUser { get; set; }
     public virtual User? DesignerUser { get; set; }
+    public virtual User? ShipperUser { get; set; }
     public virtual ProductionDaysOption? ProductionDaysOption { get; set; }
     public virtual Design? Design { get; set; }
     public virtual ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();

@@ -79,6 +79,8 @@ public class OrderDto
     public string? CreatedByUserName { get; set; }
     public Guid? AssignedToUserId { get; set; }
     public string? AssignedToUserName { get; set; }
+    public Guid? ShipperUserId { get; set; }
+    public string? ShipperUserName { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -180,6 +182,7 @@ public class CreateOrderDto
     public string? StyleNotes { get; set; }
     public Guid? AssignedToUserId { get; set; }
     public Guid? DesignerUserId { get; set; }
+    public Guid? ShipperUserId { get; set; }
     public Guid? DesignId { get; set; }
     public List<CreateOrderItemDto> Items { get; set; } = new();
 }
@@ -229,6 +232,7 @@ public class OrderFilterDto
     public Guid? AssignedTo { get; set; }
     public Guid? CreatedBy { get; set; }
     public Guid? DesignerUserId { get; set; }
+    public Guid? ShipperUserId { get; set; }
     public OrderStatus? Status { get; set; }
     public PaymentStatus? PaymentStatus { get; set; }
     public DateTime? OrderDateFrom { get; set; }

@@ -16,6 +16,7 @@ public interface IOrderRepository : IRepository<Order>
         Guid? assignedTo,
         Guid? createdBy,
         Guid? designerUserId,
+        Guid? shipperUserId,
         OrderStatus? status,
         PaymentStatus? paymentStatus,
         DateTime? orderDateFrom,

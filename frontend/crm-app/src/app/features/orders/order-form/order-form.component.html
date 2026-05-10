@@ -244,6 +244,18 @@
           </ng-container>
         </div>
 
+        <!-- NV giao hàng — chỉ hiện khi chọn "Nhà giao" -->
+        <div class="form-grid" *ngIf="isInHouseDelivery()">
+          <div class="form-group">
+            <label>NV giao hàng</label>
+            <select formControlName="shipperUserId">
+              <option value="">-- Chưa giao NV --</option>
+              <option *ngFor="let s of shippers" [value]="s.id">{{ s.firstName }} {{ s.lastName }}</option>
+            </select>
+            <div class="hint">NV được chọn sẽ thấy đơn này trong danh sách đơn của họ.</div>
+          </div>
+        </div>
+
         <div class="form-grid">
           <div class="form-group">
             <label>Người nhận <span class="required">*</span></label>

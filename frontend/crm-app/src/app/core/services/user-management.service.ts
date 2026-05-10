@@ -124,12 +124,19 @@ export class UserManagementService {
       'SalesRep':          'Nhân viên kinh doanh',
       'ProductionManager': 'Quản lý sản xuất',
       'ProductionStaff':   'Nhân viên sản xuất',
+      'CuttingStaff':      'Nhân viên cắt vải',
+      'SewingStaff':       'Nhân viên may',
+      'PrintingStaff':     'Nhân viên in/thêu',
+      'FinishingStaff':    'Nhân viên hoàn thiện',
+      'PackagingStaff':    'Nhân viên đóng gói',
       'QualityManager':    'Quản lý chất lượng',
       'QualityControl':    'Nhân viên kiểm tra chất lượng',
       'DeliveryManager':   'Quản lý giao hàng',
       'DeliveryStaff':     'Nhân viên giao hàng',
       'DesignManager':     'Trưởng phòng thiết kế',
-      'Designer':          'Nhân viên thiết kế'
+      'Designer':          'Nhân viên thiết kế',
+      'ContentManager':    'Trưởng phòng content',
+      'ContentStaff':      'Nhân viên content'
     };
     return labels[roleName] || roleName;
   }
@@ -141,12 +148,19 @@ export class UserManagementService {
       'SalesRep':          'role-sales',
       'ProductionManager': 'role-production',
       'ProductionStaff':   'role-production',
+      'CuttingStaff':      'role-production',
+      'SewingStaff':       'role-production',
+      'PrintingStaff':     'role-production',
+      'FinishingStaff':    'role-production',
+      'PackagingStaff':    'role-production',
       'QualityManager':    'role-quality',
       'QualityControl':    'role-quality',
       'DeliveryManager':   'role-delivery',
       'DeliveryStaff':     'role-delivery',
       'DesignManager':     'role-design',
-      'Designer':          'role-design'
+      'Designer':          'role-design',
+      'ContentManager':    'role-content',
+      'ContentStaff':      'role-content'
     };
     return classes[roleName] || 'role-default';
   }

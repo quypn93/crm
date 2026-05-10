@@ -236,6 +236,18 @@
     border-color: #e9d5ff;
   }
 
+  &.role-design {
+    background: #fce7f3;
+    color: #be185d;
+    border-color: #fbcfe8;
+  }
+
+  &.role-content {
+    background: #ccfbf1;
+    color: #0f766e;
+    border-color: #99f6e4;
+  }
+
   &.role-default {
     background: var(--gray-100);
     color: var(--gray-700);
