@@ -1,15 +1,34 @@
 # Server Access — CRM Production
 
-## Thông tin server (Vultr)
+CRM đang deploy trên 2 server (cùng codebase, khác brand + DB).
+
+| Brand          | IP              | Domain                  | DB                   |
+| -------------- | --------------- | ----------------------- | -------------------- |
+| xanhuniform    | `64.176.83.102` | crm.xanhuniform.com     | `crm_dongphucbonmua` |
+| crmsolution    | `45.76.186.97`  | crmsolution.net         | `crm_crmsolution`    |
+
+Khi apply migration trên prod, **luôn truyền tên DB tường minh** vào `psql -d <db>` — không dựa vào regex parse `appsettings.Production.json` (đã từng silent-fallback sang DB `postgres` khi regex match rỗng, làm migration apply nhầm DB).
+
+## Server 1 — xanhuniform (Vultr)
 - **Label**: `xanhuniform-crm`
 - **IP**: `64.176.83.102`
 - **Region**: Singapore
 - **Domain**: https://crm.xanhuniform.com
 - **OS**: Ubuntu 22.04 x64
 - **vCPU/RAM/Storage**: 1 vCPU / 2 GB RAM / 55 GB SSD
+- **DB**: `crm_dongphucbonmua` (Postgres, user `crmuser`)
 - **SSH user**: `linuxuser`
 - **Auth**: password (xem mật khẩu ở trang Vultr → Overview → Password) hoặc SSH key đã add cho `linuxuser`
 - **GitHub Actions**: dùng secret `SSH_USER` + `SSH_PRIVATE_KEY` (cùng `linuxuser` này).
+
+## Server 2 — crmsolution (Vultr)
+- **IP**: `45.76.186.97`
+- **Domain**: https://crmsolution.net (+ www)
+- **OS**: Ubuntu 22.04, .NET 9 runtime, Postgres
+- **DB**: `crm_crmsolution` (user `crmuser`)
+- **SSH user**: `linuxuser` (sudo NOPASSWD:ALL)
+- **Systemd unit**: `crm-api` (port 5000, giống xanhuniform)
+- **Build configuration**: Frontend `ng build --configuration crmsolution`; backend dùng `appsettings.Production.crmsolution.json`
 
 ## Kết nối SSH
 

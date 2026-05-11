@@ -291,8 +291,21 @@ public class OrderService : IOrderService
         // Validate status transition
         ValidateStatusTransition(order.Status, dto.Status);
 
+        // Chỉ cho phép Hoàn thành khi khách đã thanh toán đủ — không cho chốt đơn còn nợ.
+        if (dto.Status == OrderStatus.Completed && order.PaidAmount < order.TotalAmount)
+        {
+            var remaining = order.TotalAmount - order.PaidAmount;
+            throw new InvalidOperationException(
+                $"Không thể hoàn thành đơn hàng khi còn nợ {remaining:N0} {order.Currency}. " +
+                "Vui lòng cập nhật thanh toán đủ trước khi chuyển sang Hoàn thành.");
+        }
+
         var previousStatus = order.Status;
         order.Status = dto.Status;
+
+        // Hoàn thành đơn → đồng bộ trạng thái thanh toán là Paid (đã thoả mãn điều kiện đủ tiền ở trên).
+        if (dto.Status == OrderStatus.Completed)
+            order.PaymentStatus = PaymentStatus.Paid;
 
         // Khi chuyển sang InProduction: sinh QR và khởi tạo các bước sản xuất
         if (dto.Status == OrderStatus.InProduction && previousStatus != OrderStatus.InProduction)
