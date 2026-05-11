@@ -32,7 +32,7 @@
           </svg>
         </div>
         <div class="kpi-body">
-          <span class="kpi-label">Tổng giao dịch</span>
+          <span class="kpi-label">Tổng đơn hàng</span>
           <span class="kpi-value">{{ totalDeals }}</span>
         </div>
       </div>
@@ -59,7 +59,7 @@
           </svg>
         </div>
         <div class="kpi-body">
-          <span class="kpi-label">Giá trị TB / giao dịch</span>
+          <span class="kpi-label">Giá trị TB / đơn hàng</span>
           <span class="kpi-value">{{ formatCurrency(avgDealValue) }}</span>
         </div>
       </div>
@@ -68,8 +68,8 @@
     <!-- Deals by Stage -->
     <div class="report-card">
       <div class="card-header">
-        <h3>Giao dịch theo giai đoạn</h3>
-        <span class="card-meta" *ngIf="totalDeals > 0">{{ totalDeals }} giao dịch · {{ formatCurrency(totalDealValue) }}</span>
+        <h3>Đơn hàng theo giai đoạn</h3>
+        <span class="card-meta" *ngIf="totalDeals > 0">{{ totalDeals }} đơn hàng · {{ formatCurrency(totalDealValue) }}</span>
       </div>
 
       <div class="card-body two-col" *ngIf="dealsByStage.length; else dealsEmpty">
@@ -77,7 +77,7 @@
           <div class="donut" [style.background]="dealsDonutBackground()">
             <div class="donut-hole">
               <span class="donut-value">{{ totalDeals }}</span>
-              <span class="donut-label">Giao dịch</span>
+              <span class="donut-label">Đơn hàng</span>
             </div>
           </div>
         </div>
@@ -113,7 +113,7 @@
       </div>
       <ng-template #dealsEmpty>
         <div class="empty-state">
-          <p>Chưa có dữ liệu giao dịch</p>
+          <p>Chưa có dữ liệu đơn hàng</p>
         </div>
       </ng-template>
     </div>
