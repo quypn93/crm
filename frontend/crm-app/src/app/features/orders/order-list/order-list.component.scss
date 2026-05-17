@@ -94,7 +94,8 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   position: relative;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .loading-overlay {
@@ -121,6 +122,7 @@
 
 .data-table {
   width: 100%;
+  min-width: 920px;
   border-collapse: collapse;
   font-size: 14px;
 
@@ -128,6 +130,7 @@
     padding: 14px 18px;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
   }
 
   thead th {
@@ -384,5 +387,42 @@
       color: var(--primary-color);
       background: var(--primary-50);
     }
+  }
+}
+
+@media (max-width: 768px) {
+  .table-container {
+    border-radius: var(--radius);
+    box-shadow: inset -12px 0 12px -12px rgba(15, 23, 42, 0.18);
+  }
+
+  .data-table {
+    font-size: 13px;
+
+    th, td {
+      padding: 10px 12px;
+    }
+
+    thead th {
+      font-size: 10px;
+    }
+  }
+
+  .order-number .order-code { font-size: 13px; }
+  .order-number .order-items-count,
+  .customer-info .deal-title { font-size: 11px; }
+
+  .status-badge {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .amount { font-size: 12.5px; }
+
+  .actions-col { width: auto; }
+
+  .action-buttons {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
   }
 }
