@@ -28,8 +28,15 @@
       (click)="setTab('created-by-me')">
       Việc tôi đã giao
     </button>
+    <button
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab === 'daily-task'"
+      (click)="setTab('daily-task')">
+      Daily Task
+    </button>
 
-    <div class="view-toggle">
+    <div class="view-toggle" *ngIf="activeTab !== 'daily-task'">
       <button
         type="button"
         class="view-btn"
@@ -75,8 +82,8 @@
     <button class="btn btn-secondary" (click)="onSearch()">Tìm kiếm</button>
   </div>
 
-  <!-- Board view: kanban kéo thả -->
-  <div class="board-container" *ngIf="viewMode === 'board'" cdkDropListGroup>
+  <!-- Board view: kanban kéo thả (theo trạng thái) -->
+  <div class="board-container" *ngIf="viewMode === 'board' && activeTab !== 'daily-task'" cdkDropListGroup>
     <div class="loading-overlay" *ngIf="isLoading">
       <div class="spinner"></div>
     </div>
@@ -113,6 +120,52 @@
           <div class="board-card-people" *ngIf="task.assignedToUserName || task.createdByUserName">
             <span *ngIf="activeTab === 'assigned-to-me' && task.createdByUserName">Từ: {{ task.createdByUserName }}</span>
             <span *ngIf="activeTab === 'created-by-me' && task.assignedToUserName">Cho: {{ task.assignedToUserName }}</span>
+          </div>
+        </div>
+        <div class="board-empty" *ngIf="col.tasks.length === 0">Trống</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily Task board: nhóm theo hạn (Hôm nay / Tuần này / Tháng này / Sắp diễn ra / Đã hoãn) -->
+  <div class="board-container daily-board" *ngIf="activeTab === 'daily-task'" cdkDropListGroup>
+    <div class="loading-overlay" *ngIf="isLoading">
+      <div class="spinner"></div>
+    </div>
+
+    <div
+      class="board-column"
+      *ngFor="let col of dailyColumns"
+      [attr.data-daily]="col.key">
+      <div class="board-column-header">
+        <span class="board-column-title">{{ col.label }}</span>
+        <span class="board-column-count">{{ col.tasks.length }}</span>
+      </div>
+      <div
+        class="board-column-body"
+        cdkDropList
+        [id]="'daily-' + col.key"
+        [cdkDropListData]="col.tasks"
+        [cdkDropListConnectedTo]="dailyListIds"
+        [cdkDropListDisabled]="isDailyDropDisabled(col)"
+        (cdkDropListDropped)="onDailyCardDrop($event, col)">
+        <div
+          class="board-card"
+          *ngFor="let task of col.tasks"
+          cdkDrag
+          [cdkDragDisabled]="!canMoveCard(task) || col.key === 'overdue'"
+          [class.overdue]="col.key === 'overdue'"
+          [class.completed-card]="isTaskCompleted(task)"
+          (click)="editTask(task)">
+          <div class="board-card-title" [class.completed]="isTaskCompleted(task)">{{ task.title }}</div>
+          <div class="board-card-meta">
+            <span class="priority-badge" [class]="getPriorityClass(task.priority)">{{ getPriorityLabel(task.priority) }}</span>
+            <span class="board-card-date" *ngIf="task.dueDate" [class.overdue-text]="col.key === 'overdue'">
+              {{ task.dueDate | date:'dd/MM' }}
+            </span>
+          </div>
+          <div class="board-card-people" *ngIf="task.createdByUserName">
+            <span>Từ: {{ task.createdByUserName }}</span>
           </div>
         </div>
         <div class="board-empty" *ngIf="col.tasks.length === 0">Trống</div>

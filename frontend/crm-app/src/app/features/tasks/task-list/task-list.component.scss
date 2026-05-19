@@ -545,6 +545,12 @@
   &[data-status="2"] { --col-accent: #10b981; }
   &[data-status="3"] { --col-accent: #ef4444; }
 
+  &[data-daily="overdue"]  { --col-accent: #10b981; }
+  &[data-daily="today"]    { --col-accent: #ec4899; }
+  &[data-daily="week"]     { --col-accent: #06b6d4; }
+  &[data-daily="month"]    { --col-accent: #f97316; }
+  &[data-daily="upcoming"] { --col-accent: #eab308; }
+
   .board-column-header {
     display: flex;
     align-items: center;
@@ -610,6 +616,15 @@
     margin-top: 4px;
   }
 }
+
+.daily-board .board-column[data-daily="overdue"] .board-card {
+  cursor: default;
+  opacity: 0.85;
+
+  &:hover { transform: none; }
+}
+
+.board-card.completed-card .board-card-title { text-decoration: line-through; color: var(--text-muted); }
 
 .board-card {
   position: relative;

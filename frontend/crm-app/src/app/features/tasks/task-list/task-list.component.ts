@@ -1,14 +1,22 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CdkDragDrop, transferArrayItem } from '@angular/cdk/drag-drop';
-import { TaskService, Task, TaskSearchParams, TaskStatus, TaskPriority } from '../../../core/services/task.service';
+import { TaskService, Task, TaskSearchParams, TaskStatus, TaskPriority, UpdateTaskDto } from '../../../core/services/task.service';
 import { AuthService } from '../../../core/services/auth.service';
 
-type TaskTab = 'assigned-to-me' | 'created-by-me';
+type TaskTab = 'assigned-to-me' | 'created-by-me' | 'daily-task';
 type ViewMode = 'list' | 'board';
+
+type DailyBucket = 'overdue' | 'today' | 'week' | 'month' | 'upcoming';
 
 interface BoardColumn {
   status: TaskStatus;
+  label: string;
+  tasks: Task[];
+}
+
+interface DailyColumn {
+  key: DailyBucket;
   label: string;
   tasks: Task[];
 }
@@ -39,6 +47,15 @@ export class TaskListComponent implements OnInit {
   ];
   boardListIds = this.boardColumns.map(c => `col-${c.status}`);
 
+  dailyColumns: DailyColumn[] = [
+    { key: 'overdue',  label: 'Đã hoãn',     tasks: [] },
+    { key: 'today',    label: 'Hôm nay',     tasks: [] },
+    { key: 'week',     label: 'Tuần này',    tasks: [] },
+    { key: 'month',    label: 'Tháng này',   tasks: [] },
+    { key: 'upcoming', label: 'Sắp diễn ra', tasks: [] }
+  ];
+  dailyListIds = this.dailyColumns.map(c => `daily-${c.key}`);
+
   // Expose enums to template
   TaskStatus = TaskStatus;
   TaskPriority = TaskPriority;
@@ -60,11 +77,15 @@ export class TaskListComponent implements OnInit {
     if (this.activeTab === tab) return;
     this.activeTab = tab;
     this.currentPage = 1;
+    if (tab === 'daily-task') {
+      this.viewMode = 'board';
+    }
     this.loadTasks();
   }
 
   setViewMode(mode: ViewMode): void {
     if (this.viewMode === mode) return;
+    if (this.activeTab === 'daily-task' && mode === 'list') return;
     this.viewMode = mode;
     this.currentPage = 1;
     this.loadTasks();
@@ -80,7 +101,7 @@ export class TaskListComponent implements OnInit {
       priority: this.selectedPriority ?? undefined,
       page: this.viewMode === 'board' ? 1 : this.currentPage,
       pageSize: this.viewMode === 'board' ? 500 : this.pageSize,
-      assignedTo: this.activeTab === 'assigned-to-me' ? userId : undefined,
+      assignedTo: (this.activeTab === 'assigned-to-me' || this.activeTab === 'daily-task') ? userId : undefined,
       createdBy: this.activeTab === 'created-by-me' ? userId : undefined
     };
 
@@ -102,9 +123,72 @@ export class TaskListComponent implements OnInit {
 
   private distributeBoard(): void {
     this.boardColumns.forEach(col => col.tasks = []);
+    this.dailyColumns.forEach(col => col.tasks = []);
+
+    if (this.activeTab === 'daily-task') {
+      for (const t of this.tasks) {
+        const bucket = this.bucketOf(t);
+        const col = this.dailyColumns.find(c => c.key === bucket);
+        if (col) col.tasks.push(t);
+      }
+      return;
+    }
+
     for (const t of this.tasks) {
       const col = this.boardColumns.find(c => c.status === t.status);
       if (col) col.tasks.push(t);
+    }
+  }
+
+  private bucketOf(task: Task): DailyBucket {
+    if (task.status === TaskStatus.Cancelled) return 'overdue';
+    if (!task.dueDate) return 'upcoming';
+
+    const due = this.startOfDay(new Date(task.dueDate));
+    const today = this.startOfDay(new Date());
+
+    if (task.status !== TaskStatus.Completed && due.getTime() < today.getTime()) {
+      return 'overdue';
+    }
+    if (due.getTime() === today.getTime()) return 'today';
+
+    const endOfWeek = this.endOfWeek(today);
+    if (due.getTime() <= endOfWeek.getTime()) return 'week';
+
+    const endOfMonth = this.endOfMonth(today);
+    if (due.getTime() <= endOfMonth.getTime()) return 'month';
+
+    return 'upcoming';
+  }
+
+  private startOfDay(d: Date): Date {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  private endOfWeek(today: Date): Date {
+    // Tuần kết thúc Chủ nhật (ISO: thứ 2 đầu tuần → CN cuối tuần).
+    const day = today.getDay(); // 0=CN, 1=T2...
+    const daysToSunday = day === 0 ? 0 : 7 - day;
+    const end = new Date(today);
+    end.setDate(today.getDate() + daysToSunday);
+    return this.startOfDay(end);
+  }
+
+  private endOfMonth(today: Date): Date {
+    return new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  }
+
+  private targetDateFor(bucket: DailyBucket): Date | null {
+    const today = this.startOfDay(new Date());
+    switch (bucket) {
+      case 'today':    return today;
+      case 'week':     return this.endOfWeek(today);
+      case 'month':    return this.endOfMonth(today);
+      case 'upcoming': {
+        const d = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+        return d;
+      }
+      case 'overdue':  return null; // Không cho phép kéo vào — đây là trạng thái dẫn xuất.
     }
   }
 
@@ -135,6 +219,45 @@ export class TaskListComponent implements OnInit {
     const userId = this.authService.getCurrentUser()?.id;
     if (!userId) return false;
     return this.authService.isAdmin() || task.createdByUserId === userId || task.assignedToUserId === userId;
+  }
+
+  onDailyCardDrop(event: CdkDragDrop<Task[]>, target: DailyColumn): void {
+    if (event.previousContainer === event.container) return;
+    if (target.key === 'overdue') return; // Không cho thả vào cột "Đã hoãn".
+
+    const task = event.previousContainer.data[event.previousIndex];
+    if (!this.canMoveCard(task)) return;
+
+    const newDate = this.targetDateFor(target.key);
+    if (!newDate) return;
+
+    transferArrayItem(event.previousContainer.data, event.container.data, event.previousIndex, event.currentIndex);
+    const previousDueDate = task.dueDate;
+    task.dueDate = newDate.toISOString();
+
+    const payload: UpdateTaskDto = {
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      priority: task.priority,
+      dueDate: task.dueDate,
+      reminderDate: task.reminderDate,
+      customerId: task.customerId,
+      dealId: task.dealId,
+      assignedToUserId: task.assignedToUserId,
+      status: task.status
+    };
+
+    this.taskService.updateTask(task.id, payload).subscribe({
+      error: () => {
+        task.dueDate = previousDueDate;
+        this.distributeBoard();
+      }
+    });
+  }
+
+  isDailyDropDisabled(col: DailyColumn): boolean {
+    return col.key === 'overdue';
   }
 
   onSearch(): void {
