@@ -209,14 +209,17 @@
 
 .rich-editor {
   width: 100%;
+  max-width: 100%;
   min-height: 150px;
   padding: 12px;
   border: 1px solid var(--border-color);
   border-radius: 0 0 var(--radius) var(--radius);
+  box-sizing: border-box;
   background: var(--bg-primary);
   color: var(--text-primary);
   font-size: 14px;
   line-height: 1.5;
+  overflow-x: hidden;
   overflow-wrap: anywhere;
   transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
 
@@ -237,13 +240,20 @@
     background: var(--gray-50);
   }
 
+  * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
   img {
     display: block;
-    max-width: 100%;
-    height: auto;
+    width: auto !important;
+    max-width: 100% !important;
+    height: auto !important;
     margin: 10px 0;
     border-radius: var(--radius);
     border: 1px solid var(--border-color);
+    object-fit: contain;
   }
 
   a {

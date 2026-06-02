@@ -139,14 +139,14 @@ public class TasksController : ControllerBase
     {
         if (file == null || file.Length == 0)
         {
-            return BadRequest(ApiResponse<TaskImageUploadDto>.Fail("Khong co file."));
+            return BadRequest(ApiResponse<TaskImageUploadDto>.Fail("Không có file."));
         }
 
-        var allowed = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+        var allowed = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif" };
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!allowed.Contains(ext))
         {
-            return BadRequest(ApiResponse<TaskImageUploadDto>.Fail("Dinh dang anh khong ho tro."));
+            return BadRequest(ApiResponse<TaskImageUploadDto>.Fail("Định dạng ảnh không hỗ trợ. Vui lòng chọn JPG, PNG, GIF, WebP hoặc AVIF."));
         }
 
         var uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "tasks");
@@ -163,7 +163,7 @@ public class TasksController : ControllerBase
         return Ok(ApiResponse<TaskImageUploadDto>.Ok(new TaskImageUploadDto
         {
             Url = $"/uploads/tasks/{fileName}"
-        }, "Upload thanh cong."));
+        }, "Upload thành công."));
     }
 
     [HttpGet("overdue")]

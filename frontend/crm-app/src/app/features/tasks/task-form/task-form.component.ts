@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+﻿import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TaskService, TaskPriority, TaskStatus, AssignableUser } from '../../../core/services/task.service';
@@ -111,13 +111,13 @@ export class TaskFormComponent implements OnInit {
         this.isLoading = false;
       },
       error: () => {
-        this.errorMessage = 'Không thể tải thông tin công việc';
+        this.errorMessage = 'KhÃ´ng thá»ƒ táº£i thÃ´ng tin cÃ´ng viá»‡c';
         this.isLoading = false;
       }
     });
   }
 
-  // Người tạo + Admin: full edit. Assignee: chỉ status. Khác: redirect.
+  // NgÆ°á»i táº¡o + Admin: full edit. Assignee: chá»‰ status. KhÃ¡c: redirect.
   private applyPermissions(task: { createdByUserId: string; assignedToUserId?: string }): void {
     const userId = this.authService.getCurrentUser()?.id;
     const isCreator = !!userId && task.createdByUserId === userId;
@@ -154,7 +154,7 @@ export class TaskFormComponent implements OnInit {
     this.errorMessage = '';
     this.syncDescriptionFromEditor();
 
-    // Assignee chỉ được update status
+    // Assignee chá»‰ Ä‘Æ°á»£c update status.
     if (this.isEditMode && this.taskId && !this.canEditFields && this.canEditStatus) {
       const status = this.taskForm.get('status')?.value;
       const workResult = this.taskForm.get('workResult')?.value;
@@ -162,7 +162,7 @@ export class TaskFormComponent implements OnInit {
         next: () => this.router.navigate(['/tasks']),
         error: (error) => {
           this.isLoading = false;
-          this.errorMessage = error.error?.message || 'Cập nhật trạng thái thất bại.';
+          this.errorMessage = error.error?.message || 'Cáº­p nháº­t tráº¡ng thÃ¡i tháº¥t báº¡i.';
         }
       });
       return;
@@ -179,22 +179,18 @@ export class TaskFormComponent implements OnInit {
 
     if (this.isEditMode && this.taskId) {
       this.taskService.updateTask(this.taskId, { ...formData, id: this.taskId }).subscribe({
-        next: () => {
-          this.router.navigate(['/tasks']);
-        },
+        next: () => this.router.navigate(['/tasks']),
         error: (error) => {
           this.isLoading = false;
-          this.errorMessage = error.error?.message || 'Cập nhật thất bại. Vui lòng thử lại.';
+          this.errorMessage = error.error?.message || 'Cáº­p nháº­t tháº¥t báº¡i. Vui lÃ²ng thá»­ láº¡i.';
         }
       });
     } else {
       this.taskService.createTask(formData).subscribe({
-        next: () => {
-          this.router.navigate(['/tasks']);
-        },
+        next: () => this.router.navigate(['/tasks']),
         error: (error) => {
           this.isLoading = false;
-          this.errorMessage = error.error?.message || 'Thêm công việc thất bại. Vui lòng thử lại.';
+          this.errorMessage = error.error?.message || 'ThÃªm cÃ´ng viá»‡c tháº¥t báº¡i. Vui lÃ²ng thá»­ láº¡i.';
         }
       });
     }
@@ -217,7 +213,7 @@ export class TaskFormComponent implements OnInit {
 
   promptForLink(): void {
     if (!this.canEditFields) return;
-    const url = window.prompt('Nhap link');
+    const url = window.prompt('Nh\u1EADp link');
     if (!url) return;
     this.descriptionEditor?.nativeElement.focus();
     document.execCommand('createLink', false, url);
@@ -237,16 +233,28 @@ export class TaskFormComponent implements OnInit {
     this.isUploadingDescriptionImage = true;
     this.taskService.uploadImage(file).subscribe({
       next: (url) => {
-        this.insertDescriptionHtml(`<img src="${url}" alt="Anh cong viec">`);
+        this.insertDescriptionHtml(`<img src="${url}" alt="\u1EA2nh c\u00F4ng vi\u1EC7c">`);
         this.isUploadingDescriptionImage = false;
         input.value = '';
       },
       error: (error) => {
         this.isUploadingDescriptionImage = false;
         input.value = '';
-        this.errorMessage = error.error?.message || 'Upload anh that bai.';
+        this.errorMessage = this.getApiErrorMessage(error, 'Upload \u1EA3nh th\u1EA5t b\u1EA1i.');
       }
     });
+  }
+
+  onDescriptionPaste(event: ClipboardEvent): void {
+    if (!this.canEditFields) return;
+
+    const html = event.clipboardData?.getData('text/html');
+    const text = event.clipboardData?.getData('text/plain');
+    if (!html && !text) return;
+
+    event.preventDefault();
+    const safeHtml = html ? this.sanitizeEditorHtml(html) : this.escapeHtml(text || '').replace(/\n/g, '<br>');
+    this.insertDescriptionHtml(safeHtml);
   }
 
   onDescriptionInput(): void {
@@ -280,11 +288,30 @@ export class TaskFormComponent implements OnInit {
       Array.from(el.attributes).forEach(attr => {
         const name = attr.name.toLowerCase();
         const value = attr.value.trim().toLowerCase();
-        if (name.startsWith('on') || value.startsWith('javascript:')) {
+        if (
+          name.startsWith('on')
+          || name === 'style'
+          || name === 'width'
+          || name === 'height'
+          || value.startsWith('javascript:')
+        ) {
           el.removeAttribute(attr.name);
         }
       });
     });
     return doc.body.innerHTML;
+  }
+
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  private getApiErrorMessage(error: any, fallback: string): string {
+    return error?.error?.message || error?.message || fallback;
   }
 }
