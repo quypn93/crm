@@ -10,6 +10,7 @@ using CRM.Infrastructure.Data;
 using CRM.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using CRM.Core.Entities;
@@ -298,7 +299,12 @@ if (app.Environment.IsDevelopment())
 // CORS phải nằm trước StaticFiles để ảnh /uploads có CORS headers
 // (cần cho crossorigin="anonymous" + html2canvas khi export ảnh đơn hàng).
 app.UseCors("AllowAngular");
-app.UseStaticFiles();
+var staticFileContentTypes = new FileExtensionContentTypeProvider();
+staticFileContentTypes.Mappings[".avif"] = "image/avif";
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = staticFileContentTypes
+});
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
