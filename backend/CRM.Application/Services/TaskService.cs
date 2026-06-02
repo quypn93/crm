@@ -216,6 +216,10 @@ public class TaskService : ITaskService
 
         var oldStatus = task.Status;
         task.Status = dto.Status;
+        if (dto.WorkResult != null)
+        {
+            task.WorkResult = dto.WorkResult;
+        }
 
         // If status changed to completed, set CompletedAt
         if (dto.Status == TaskStatusEnum.Completed)

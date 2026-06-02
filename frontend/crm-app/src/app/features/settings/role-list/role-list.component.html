@@ -21,7 +21,7 @@
     <div class="role-card" *ngFor="let role of roles" [class.built-in]="isBuiltIn(role.name)">
       <div class="role-card-header">
         <span class="role-badge" [ngClass]="getRoleBadgeClass(role.name)">
-          {{ getRoleLabel(role.name) }}
+          {{ getRoleDisplayName(role) }}
         </span>
         <span class="role-system-name">{{ role.name }}</span>
         <div class="card-actions">

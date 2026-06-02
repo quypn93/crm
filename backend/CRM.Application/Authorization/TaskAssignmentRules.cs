@@ -15,7 +15,8 @@ public static class TaskAssignmentRules
             RoleNames.QualityManager, RoleNames.QualityControl,
             RoleNames.DeliveryManager, RoleNames.DeliveryStaff,
             RoleNames.DesignManager, RoleNames.Designer,
-            RoleNames.ContentManager, RoleNames.ContentStaff
+            RoleNames.ContentManager, RoleNames.ContentStaff,
+            RoleNames.MarketingManager, RoleNames.MediaMarketing, RoleNames.DigitalAds, RoleNames.Media
         },
         [RoleNames.SalesManager] = new[] { RoleNames.SalesRep },
         [RoleNames.ProductionManager] = new[]
@@ -28,7 +29,13 @@ public static class TaskAssignmentRules
         [RoleNames.DeliveryManager] = new[] { RoleNames.DeliveryStaff },
         [RoleNames.DesignManager] = new[] { RoleNames.Designer },
         [RoleNames.ContentManager] = new[] { RoleNames.ContentStaff, RoleNames.Designer },
-        [RoleNames.ContentStaff] = new[] { RoleNames.Designer }
+        [RoleNames.MarketingManager] = new[]
+        {
+            RoleNames.ContentStaff, RoleNames.Designer, RoleNames.MediaMarketing, RoleNames.DigitalAds
+        },
+        [RoleNames.ContentStaff] = new[] { RoleNames.Designer, RoleNames.Media },
+        [RoleNames.DigitalAds] = new[] { RoleNames.ContentStaff, RoleNames.Designer, RoleNames.Media },
+        [RoleNames.MediaMarketing] = new[] { RoleNames.Designer }
     };
 
     public static HashSet<string> GetAssignableTargetRoles(IEnumerable<string> currentUserRoles)

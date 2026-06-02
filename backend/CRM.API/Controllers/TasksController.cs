@@ -134,6 +134,38 @@ public class TasksController : ControllerBase
         return Ok(ApiResponse<IEnumerable<AssignableUserDto>>.Ok(users));
     }
 
+    [HttpPost("upload-image")]
+    public async Task<ActionResult<ApiResponse<TaskImageUploadDto>>> UploadImage(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(ApiResponse<TaskImageUploadDto>.Fail("Khong co file."));
+        }
+
+        var allowed = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!allowed.Contains(ext))
+        {
+            return BadRequest(ApiResponse<TaskImageUploadDto>.Fail("Dinh dang anh khong ho tro."));
+        }
+
+        var uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "tasks");
+        Directory.CreateDirectory(uploadsRoot);
+
+        var fileName = $"{Guid.NewGuid():N}_{DateTime.UtcNow:yyyyMMddHHmmss}{ext}";
+        var fullPath = Path.Combine(uploadsRoot, fileName);
+
+        await using (var stream = System.IO.File.Create(fullPath))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        return Ok(ApiResponse<TaskImageUploadDto>.Ok(new TaskImageUploadDto
+        {
+            Url = $"/uploads/tasks/{fileName}"
+        }, "Upload thanh cong."));
+    }
+
     [HttpGet("overdue")]
     public async Task<ActionResult<ApiResponse<IEnumerable<TaskDto>>>> GetOverdue()
     {

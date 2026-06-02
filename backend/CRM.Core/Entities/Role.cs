@@ -44,6 +44,12 @@ public static class RoleNames
     public const string ContentManager = "ContentManager";
     public const string ContentStaff = "ContentStaff";
 
+    // Marketing
+    public const string MarketingManager = "MarketingManager";
+    public const string MediaMarketing = "MediaMarketing";
+    public const string DigitalAds = "DigitalAds";
+    public const string Media = "Media";
+
     // Role groups for authorization
     public static readonly string[] AllRoles = {
         Admin,
@@ -53,7 +59,8 @@ public static class RoleNames
         QualityManager, QualityControl,
         DeliveryManager, DeliveryStaff,
         DesignManager, Designer,
-        ContentManager, ContentStaff
+        ContentManager, ContentStaff,
+        MarketingManager, MediaMarketing, DigitalAds, Media
     };
     public static readonly string[] SalesRoles = { Admin, SalesManager, SalesRep };
     public static readonly string[] ManagerRoles = { Admin, SalesManager };
@@ -68,6 +75,9 @@ public static class RoleNames
     public static readonly string[] QualityRoles = { Admin, QualityManager, QualityControl };
     public static readonly string[] DeliveryRoles = { Admin, DeliveryManager, DeliveryStaff };
     public static readonly string[] DesignRoles = { Admin, DesignManager, Designer };
+    public static readonly string[] MarketingRoles = {
+        Admin, MarketingManager, ContentManager, ContentStaff, Designer, MediaMarketing, DigitalAds, Media
+    };
     public static readonly string[] OperationalRoles = {
         Admin, ProductionManager, ProductionStaff,
         CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff,

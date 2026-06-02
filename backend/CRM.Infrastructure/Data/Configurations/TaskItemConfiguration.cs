@@ -17,6 +17,9 @@ public class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
             .IsRequired()
             .HasMaxLength(255);
 
+        builder.Property(t => t.WorkResult)
+            .HasMaxLength(2048);
+
         builder.Property(t => t.Priority)
             .HasDefaultValue(TaskPriority.Medium)
             .HasSentinel(TaskPriority.Medium);

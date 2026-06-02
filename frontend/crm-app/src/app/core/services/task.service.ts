@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ApiService } from './api.service';
+import { map } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+import { ApiResponse, ApiService } from './api.service';
 
 export enum TaskStatus {
   Pending = 0,
@@ -19,6 +22,7 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
+  workResult?: string;
   status: TaskStatus;
   priority: TaskPriority;
   dueDate?: string;
@@ -67,6 +71,7 @@ export interface PagedResult<T> {
 export interface CreateTaskDto {
   title: string;
   description?: string;
+  workResult?: string;
   priority?: TaskPriority;
   dueDate?: string;
   reminderDate?: string;
@@ -84,7 +89,7 @@ export interface UpdateTaskDto extends CreateTaskDto {
   providedIn: 'root'
 })
 export class TaskService {
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private http: HttpClient) {}
 
   getTasks(params: TaskSearchParams): Observable<PagedResult<Task>> {
     return this.api.get<PagedResult<Task>>('tasks', this.api.buildParams(params));
@@ -114,8 +119,16 @@ export class TaskService {
     return this.api.put<Task>(`tasks/${id}`, task);
   }
 
-  updateTaskStatus(id: string, status: TaskStatus): Observable<Task> {
-    return this.api.put<Task>(`tasks/${id}/status`, { taskId: id, status });
+  updateTaskStatus(id: string, status: TaskStatus, workResult?: string): Observable<Task> {
+    return this.api.put<Task>(`tasks/${id}/status`, { taskId: id, status, workResult });
+  }
+
+  uploadImage(file: File): Observable<string> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http
+      .post<ApiResponse<{ url: string }>>(`${environment.apiUrl}/tasks/upload-image`, form)
+      .pipe(map(response => response.data.url));
   }
 
   deleteTask(id: string): Observable<void> {

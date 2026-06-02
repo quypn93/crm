@@ -17,6 +17,10 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   'ProductionManager': ['view_orders', 'manage_production', 'manage_designs'],
   'QualityControl':    ['view_orders', 'manage_quality'],
   'DeliveryManager':   ['view_orders', 'manage_delivery'],
+  'MarketingManager':   ['manage_tasks', 'manage_designs'],
+  'MediaMarketing':     ['manage_tasks', 'manage_designs'],
+  'DigitalAds':         ['manage_tasks', 'manage_designs'],
+  'Media':              ['manage_tasks', 'manage_designs']
 };
 
 const ALL_PERMISSIONS: PermissionItem[] = [
@@ -78,7 +82,10 @@ export class RoleFormComponent implements OnInit {
     this.userService.getRole(this.roleId).subscribe({
       next: (role) => {
         this.role = role;
-        this.roleForm.patchValue({ description: role.description || '' });
+        this.roleForm.patchValue({
+          name: role.name,
+          description: role.description || this.getRoleLabel(role.name)
+        });
         this.initPermissions(role.name);
         this.isLoading = false;
       },
@@ -110,12 +117,27 @@ export class RoleFormComponent implements OnInit {
     return this.userService.getRoleLabel(roleName);
   }
 
+  getRoleDisplayName(role: RoleItem): string {
+    return this.userService.getRoleDisplayName(role);
+  }
+
   getRoleBadgeClass(roleName: string): string {
     return this.userService.getRoleBadgeClass(roleName);
   }
 
   isBuiltIn(): boolean {
-    const builtIn = ['Admin', 'SalesManager', 'SalesRep', 'ProductionManager', 'QualityControl', 'DeliveryManager'];
+    const builtIn = [
+      'Admin',
+      'SalesManager',
+      'SalesRep',
+      'ProductionManager',
+      'QualityControl',
+      'DeliveryManager',
+      'MarketingManager',
+      'MediaMarketing',
+      'DigitalAds',
+      'Media'
+    ];
     return this.role ? builtIn.includes(this.role.name) : false;
   }
 
@@ -130,7 +152,7 @@ export class RoleFormComponent implements OnInit {
 
     if (this.isEditMode) {
       this.userService.updateRole(this.roleId, {
-        description: this.roleForm.value.description || undefined
+        description: this.roleForm.value.description?.trim() || undefined
       }).subscribe({
         next: () => this.router.navigate(['/settings/roles']),
         error: (err) => {
@@ -141,7 +163,7 @@ export class RoleFormComponent implements OnInit {
     } else {
       this.userService.createRole({
         name: this.roleForm.value.name.trim(),
-        description: this.roleForm.value.description || undefined
+        description: this.roleForm.value.description?.trim() || undefined
       }).subscribe({
         next: () => this.router.navigate(['/settings/roles']),
         error: (err) => {

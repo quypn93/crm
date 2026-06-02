@@ -137,8 +137,16 @@ export class UserManagementService {
       'Designer':          'Nhân viên thiết kế',
       'ContentManager':    'Trưởng phòng content',
       'ContentStaff':      'Nhân viên content'
+      ,'MarketingManager':  'Marketing manager',
+      'MediaMarketing':     'Media marketing',
+      'DigitalAds':         'Digital ads',
+      'Media':              'Media'
     };
     return labels[roleName] || roleName;
+  }
+
+  getRoleDisplayName(role: RoleItem): string {
+    return role.description?.trim() || this.getRoleLabel(role.name);
   }
 
   getRoleBadgeClass(roleName: string): string {
@@ -161,6 +169,10 @@ export class UserManagementService {
       'Designer':          'role-design',
       'ContentManager':    'role-content',
       'ContentStaff':      'role-content'
+      ,'MarketingManager':  'role-content',
+      'MediaMarketing':     'role-content',
+      'DigitalAds':         'role-content',
+      'Media':              'role-content'
     };
     return classes[roleName] || 'role-default';
   }

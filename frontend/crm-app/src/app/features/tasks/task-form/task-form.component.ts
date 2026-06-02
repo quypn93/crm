@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TaskService, TaskPriority, TaskStatus, AssignableUser } from '../../../core/services/task.service';
@@ -12,8 +12,12 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrls: ['./task-form.component.scss']
 })
 export class TaskFormComponent implements OnInit {
+  @ViewChild('descriptionEditor') descriptionEditor?: ElementRef<HTMLDivElement>;
+  @ViewChild('descriptionImageInput') descriptionImageInput?: ElementRef<HTMLInputElement>;
+
   taskForm: FormGroup;
   isLoading = false;
+  isUploadingDescriptionImage = false;
   isEditMode = false;
   taskId: string | null = null;
   errorMessage = '';
@@ -38,6 +42,7 @@ export class TaskFormComponent implements OnInit {
     this.taskForm = this.fb.group({
       title: ['', [Validators.required]],
       description: [''],
+      workResult: [''],
       status: [TaskStatus.Pending],
       priority: [TaskPriority.Medium, [Validators.required]],
       dueDate: [''],
@@ -93,6 +98,7 @@ export class TaskFormComponent implements OnInit {
         this.taskForm.patchValue({
           title: task.title,
           description: task.description,
+          workResult: task.workResult || '',
           status: task.status,
           priority: task.priority,
           dueDate: task.dueDate ? this.formatDate(new Date(task.dueDate)) : '',
@@ -100,6 +106,7 @@ export class TaskFormComponent implements OnInit {
           dealId: task.dealId || '',
           assignedToUserId: task.assignedToUserId || ''
         });
+        this.renderDescriptionEditor(task.description || '');
         this.applyPermissions(task);
         this.isLoading = false;
       },
@@ -129,6 +136,7 @@ export class TaskFormComponent implements OnInit {
       Object.keys(this.taskForm.controls).forEach(key => {
         if (key !== 'status') this.taskForm.get(key)?.disable();
       });
+      this.taskForm.get('workResult')?.enable();
     }
   }
 
@@ -144,11 +152,13 @@ export class TaskFormComponent implements OnInit {
 
     this.isLoading = true;
     this.errorMessage = '';
+    this.syncDescriptionFromEditor();
 
     // Assignee chỉ được update status
     if (this.isEditMode && this.taskId && !this.canEditFields && this.canEditStatus) {
       const status = this.taskForm.get('status')?.value;
-      this.taskService.updateTaskStatus(this.taskId, status).subscribe({
+      const workResult = this.taskForm.get('workResult')?.value;
+      this.taskService.updateTaskStatus(this.taskId, status, workResult).subscribe({
         next: () => this.router.navigate(['/tasks']),
         error: (error) => {
           this.isLoading = false;
@@ -158,12 +168,13 @@ export class TaskFormComponent implements OnInit {
       return;
     }
 
+    const rawValue = this.taskForm.getRawValue();
     const formData = {
-      ...this.taskForm.value,
-      dueDate: this.taskForm.value.dueDate || null,
-      customerId: this.taskForm.value.customerId || null,
-      dealId: this.taskForm.value.dealId || null,
-      assignedToUserId: this.taskForm.value.assignedToUserId || null
+      ...rawValue,
+      dueDate: rawValue.dueDate || null,
+      customerId: rawValue.customerId || null,
+      dealId: rawValue.dealId || null,
+      assignedToUserId: rawValue.assignedToUserId || null
     };
 
     if (this.isEditMode && this.taskId) {
@@ -195,5 +206,85 @@ export class TaskFormComponent implements OnInit {
 
   get f() {
     return this.taskForm.controls;
+  }
+
+  formatDescription(command: string): void {
+    if (!this.canEditFields) return;
+    this.descriptionEditor?.nativeElement.focus();
+    document.execCommand(command, false);
+    this.syncDescriptionFromEditor();
+  }
+
+  promptForLink(): void {
+    if (!this.canEditFields) return;
+    const url = window.prompt('Nhap link');
+    if (!url) return;
+    this.descriptionEditor?.nativeElement.focus();
+    document.execCommand('createLink', false, url);
+    this.syncDescriptionFromEditor();
+  }
+
+  openDescriptionImagePicker(): void {
+    if (!this.canEditFields || this.isUploadingDescriptionImage) return;
+    this.descriptionImageInput?.nativeElement.click();
+  }
+
+  onDescriptionImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.isUploadingDescriptionImage = true;
+    this.taskService.uploadImage(file).subscribe({
+      next: (url) => {
+        this.insertDescriptionHtml(`<img src="${url}" alt="Anh cong viec">`);
+        this.isUploadingDescriptionImage = false;
+        input.value = '';
+      },
+      error: (error) => {
+        this.isUploadingDescriptionImage = false;
+        input.value = '';
+        this.errorMessage = error.error?.message || 'Upload anh that bai.';
+      }
+    });
+  }
+
+  onDescriptionInput(): void {
+    this.syncDescriptionFromEditor();
+  }
+
+  private renderDescriptionEditor(html: string): void {
+    setTimeout(() => {
+      if (this.descriptionEditor) {
+        this.descriptionEditor.nativeElement.innerHTML = this.sanitizeEditorHtml(html);
+      }
+    });
+  }
+
+  private insertDescriptionHtml(html: string): void {
+    this.descriptionEditor?.nativeElement.focus();
+    document.execCommand('insertHTML', false, html);
+    this.syncDescriptionFromEditor();
+  }
+
+  private syncDescriptionFromEditor(): void {
+    if (!this.descriptionEditor) return;
+    const html = this.sanitizeEditorHtml(this.descriptionEditor.nativeElement.innerHTML);
+    this.taskForm.get('description')?.setValue(html);
+  }
+
+  private sanitizeEditorHtml(html: string): string {
+    const doc = new DOMParser().parseFromString(html || '', 'text/html');
+    doc.querySelectorAll('script, iframe, object, embed, style').forEach(el => el.remove());
+    doc.body.querySelectorAll('*').forEach(el => {
+      Array.from(el.attributes).forEach(attr => {
+        const name = attr.name.toLowerCase();
+        const value = attr.value.trim().toLowerCase();
+        if (name.startsWith('on') || value.startsWith('javascript:')) {
+          el.removeAttribute(attr.name);
+        }
+      });
+    });
+    return doc.body.innerHTML;
   }
 }

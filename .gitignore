@@ -46,6 +46,7 @@ backend/**/ScaffoldingReadMe.txt
 
 # Entity Framework Migrations
 backend/**/**/Migrations/*_*.Designer.cs
+!backend/CRM.Infrastructure/Migrations/20260602065112_AddTaskWorkResult.Designer.cs
 
 # Secrets
 backend/**/appsettings.Development.json

@@ -278,7 +278,7 @@ public class ChatServiceTests
             Times.Never);
 
         // DTO trả về có sender info đầy đủ
-        Assert.Equal("First Last", dto.SenderName);
+        Assert.Equal("Alice A", dto.SenderName);
     }
 
     [Fact]

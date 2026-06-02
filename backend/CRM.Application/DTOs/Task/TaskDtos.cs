@@ -8,6 +8,7 @@ public class TaskDto
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string? WorkResult { get; set; }
     public DateTime? DueDate { get; set; }
     public DateTime? ReminderDate { get; set; }
     public TaskPriority Priority { get; set; }
@@ -32,6 +33,7 @@ public class CreateTaskDto
 {
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string? WorkResult { get; set; }
     public DateTime? DueDate { get; set; }
     public DateTime? ReminderDate { get; set; }
     public TaskPriority Priority { get; set; } = TaskPriority.Medium;
@@ -50,6 +52,7 @@ public class UpdateTaskStatusDto
 {
     public Guid TaskId { get; set; }
     public TaskStatusEnum Status { get; set; }
+    public string? WorkResult { get; set; }
 }
 
 public class TaskFilterDto
@@ -76,6 +79,11 @@ public class AssignableUserDto
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string[] Roles { get; set; } = Array.Empty<string>();
+}
+
+public class TaskImageUploadDto
+{
+    public string Url { get; set; } = string.Empty;
 }
 
 public static class TaskPriorityNames

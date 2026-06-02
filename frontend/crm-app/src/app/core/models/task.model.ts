@@ -16,6 +16,7 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
+  workResult?: string;
   dueDate?: Date;
   reminderDate?: Date;
   priority: TaskPriority;
@@ -35,6 +36,7 @@ export interface Task {
 export interface CreateTaskRequest {
   title: string;
   description?: string;
+  workResult?: string;
   dueDate?: Date;
   reminderDate?: Date;
   priority: TaskPriority;

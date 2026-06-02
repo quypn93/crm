@@ -2,7 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { UserManagementService, RoleItem } from '../../../core/services/user-management.service';
 
-const BUILT_IN_ROLES = ['Admin', 'SalesManager', 'SalesRep', 'ProductionManager', 'QualityControl', 'DeliveryManager'];
+const BUILT_IN_ROLES = [
+  'Admin',
+  'SalesManager',
+  'SalesRep',
+  'ProductionManager',
+  'QualityControl',
+  'DeliveryManager',
+  'MarketingManager',
+  'MediaMarketing',
+  'DigitalAds',
+  'Media'
+];
 
 @Component({
   selector: 'app-role-list',
@@ -20,6 +31,10 @@ export class RoleListComponent implements OnInit {
     'ProductionManager': 'Quản lý quy trình sản xuất và tiến độ đơn hàng.',
     'QualityControl': 'Kiểm tra chất lượng sản phẩm trước khi giao hàng.',
     'DeliveryManager': 'Quản lý việc giao hàng và theo dõi trạng thái vận chuyển.'
+    ,'MarketingManager': 'Quan ly team marketing va phan cong cong viec noi dung, media, ads.',
+    'MediaMarketing': 'Phu trach media marketing va phoi hop voi thiet ke.',
+    'DigitalAds': 'Phu trach quang cao so va phoi hop voi content, design, media.',
+    'Media': 'Phu trach san xuat media.'
   };
 
   constructor(private userService: UserManagementService, private router: Router) {}
@@ -45,7 +60,7 @@ export class RoleListComponent implements OnInit {
   }
 
   deleteRole(role: RoleItem): void {
-    if (confirm(`Bạn có chắc muốn xóa vai trò "${this.getRoleLabel(role.name)}"? Hành động này không thể hoàn tác.`)) {
+    if (confirm(`Bạn có chắc muốn xóa vai trò "${this.getRoleDisplayName(role)}"? Hành động này không thể hoàn tác.`)) {
       this.userService.deleteRole(role.id).subscribe({
         next: () => this.loadRoles(),
         error: (err) => alert(err.error?.message || 'Xóa vai trò thất bại.')
@@ -61,11 +76,15 @@ export class RoleListComponent implements OnInit {
     return this.userService.getRoleLabel(roleName);
   }
 
+  getRoleDisplayName(role: RoleItem): string {
+    return this.userService.getRoleDisplayName(role);
+  }
+
   getRoleBadgeClass(roleName: string): string {
     return this.userService.getRoleBadgeClass(roleName);
   }
 
   getDescription(role: RoleItem): string {
-    return role.description || this.roleDescriptions[role.name] || 'Không có mô tả.';
+    return this.roleDescriptions[role.name] || 'Không có mô tả.';
   }
 }

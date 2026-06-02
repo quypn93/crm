@@ -3,6 +3,7 @@ using System;
 using CRM.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM.Infrastructure.Migrations
 {
     [DbContext(typeof(CrmDbContext))]
-    partial class CrmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260602065112_AddTaskWorkResult")]
+    partial class AddTaskWorkResult
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1650,34 +1653,6 @@ namespace CRM.Infrastructure.Migrations
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Trưởng phòng content",
                             Name = "ContentManager"
-                        },
-                        new
-                        {
-                            Id = new Guid("15151515-1515-1515-1515-151515151515"),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Marketing manager",
-                            Name = "MarketingManager"
-                        },
-                        new
-                        {
-                            Id = new Guid("16161616-1616-1616-1616-161616161616"),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Media marketing",
-                            Name = "MediaMarketing"
-                        },
-                        new
-                        {
-                            Id = new Guid("17171717-1717-1717-1717-171717171717"),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Digital ads",
-                            Name = "DigitalAds"
-                        },
-                        new
-                        {
-                            Id = new Guid("18181818-1818-1818-1818-181818181818"),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Media",
-                            Name = "Media"
                         });
                 });
 

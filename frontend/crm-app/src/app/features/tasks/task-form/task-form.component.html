@@ -1,4 +1,4 @@
-<div class="page-container">
+﻿<div class="page-container">
   <div class="page-header">
     <div class="header-left">
       <button class="btn-back" (click)="cancel()">
@@ -8,8 +8,8 @@
         </svg>
       </button>
       <div>
-        <h1>{{ isEditMode ? (canEditFields ? 'Chỉnh sửa công việc' : 'Cập nhật trạng thái') : 'Thêm công việc mới' }}</h1>
-        <p class="subtitle">{{ isEditMode ? (canEditFields ? 'Cập nhật thông tin công việc' : 'Bạn được giao việc này — chỉ có thể đổi trạng thái') : 'Nhập thông tin công việc mới' }}</p>
+        <h1>{{ isEditMode ? (canEditFields ? 'Chá»‰nh sá»­a cÃ´ng viá»‡c' : 'Cáº­p nháº­t tráº¡ng thÃ¡i') : 'ThÃªm cÃ´ng viá»‡c má»›i' }}</h1>
+        <p class="subtitle">{{ isEditMode ? (canEditFields ? 'Cáº­p nháº­t thÃ´ng tin cÃ´ng viá»‡c' : 'Báº¡n Ä‘Æ°á»£c giao viá»‡c nÃ y â€” chá»‰ cÃ³ thá»ƒ Ä‘á»•i tráº¡ng thÃ¡i') : 'Nháº­p thÃ´ng tin cÃ´ng viá»‡c má»›i' }}</p>
       </div>
     </div>
   </div>
@@ -21,89 +21,113 @@
 
     <form [formGroup]="taskForm" (ngSubmit)="onSubmit()">
       <div class="form-section">
-        <h3>Thông tin công việc</h3>
+        <h3>ThÃ´ng tin cÃ´ng viá»‡c</h3>
 
         <div class="form-group">
-          <label for="title">Tiêu đề <span class="required">*</span></label>
+          <label for="title">TiÃªu Ä‘á» <span class="required">*</span></label>
           <input
             type="text"
             id="title"
             formControlName="title"
-            placeholder="VD: Gọi điện xác nhận đơn hàng"
+            placeholder="VD: Gá»i Ä‘iá»‡n xÃ¡c nháº­n Ä‘Æ¡n hÃ ng"
             [class.error]="f['title'].touched && f['title'].invalid">
           <div class="error-message" *ngIf="f['title'].touched && f['title'].errors?.['required']">
-            Tiêu đề là bắt buộc
+            TiÃªu Ä‘á» lÃ  báº¯t buá»™c
           </div>
         </div>
 
         <div class="form-group full-width">
           <label for="description">Mô tả</label>
-          <textarea
+          <input type="hidden" formControlName="description">
+          <div class="editor-toolbar" *ngIf="canEditFields">
+            <button type="button" class="editor-btn" (click)="formatDescription('bold')" title="In đậm">B</button>
+            <button type="button" class="editor-btn" (click)="formatDescription('italic')" title="In nghiêng"><em>I</em></button>
+            <button type="button" class="editor-btn" (click)="formatDescription('insertUnorderedList')" title="Danh sách">•</button>
+            <button type="button" class="editor-btn" (click)="promptForLink()" title="Chèn link">Link</button>
+            <button type="button" class="editor-btn" (click)="openDescriptionImagePicker()" [disabled]="isUploadingDescriptionImage" title="Upload ảnh">
+              {{ isUploadingDescriptionImage ? '...' : 'Ảnh' }}
+            </button>
+            <input #descriptionImageInput type="file" accept="image/*" hidden (change)="onDescriptionImageSelected($event)">
+          </div>
+          <div
+            #descriptionEditor
             id="description"
-            formControlName="description"
-            rows="3"
-            placeholder="Mô tả chi tiết công việc..."></textarea>
+            class="rich-editor"
+            [class.readonly]="!canEditFields"
+            [attr.contenteditable]="canEditFields ? 'true' : 'false'"
+            data-placeholder="Mô tả chi tiết công việc..."
+            (input)="onDescriptionInput()"
+            (blur)="onDescriptionInput()"></div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="priority">Mức độ ưu tiên <span class="required">*</span></label>
+            <label for="priority">Má»©c Ä‘á»™ Æ°u tiÃªn <span class="required">*</span></label>
             <select id="priority" formControlName="priority">
               <option *ngFor="let option of priorityOptions" [ngValue]="option.value">{{ option.label }}</option>
             </select>
           </div>
 
           <div class="form-group" *ngIf="isEditMode">
-            <label for="status">Trạng thái</label>
+            <label for="status">Tráº¡ng thÃ¡i</label>
             <select id="status" formControlName="status">
               <option *ngFor="let option of statusOptions" [ngValue]="option.value">{{ option.label }}</option>
             </select>
           </div>
 
           <div class="form-group">
-            <label for="dueDate">Hạn chót</label>
+            <label for="dueDate">Háº¡n chÃ³t</label>
             <input
               type="date"
               id="dueDate"
               formControlName="dueDate">
           </div>
         </div>
+
+        <div class="form-group full-width" *ngIf="isEditMode">
+          <label for="workResult">KẾT QUẢ CÔNG VIỆC</label>
+          <textarea
+            id="workResult"
+            formControlName="workResult"
+            rows="3"
+            placeholder="Dán link hoàn thành hoặc ghi chú kết quả công việc..."></textarea>
+        </div>
       </div>
 
       <ng-container *ngIf="canEditFields">
         <div class="form-section">
-          <h3>Giao việc</h3>
+          <h3>Giao viá»‡c</h3>
 
           <div class="form-group">
             <label for="assignedToUserId">Giao cho</label>
             <select id="assignedToUserId" formControlName="assignedToUserId">
-              <option value="">-- Tự nhận việc --</option>
+              <option value="">-- Tá»± nháº­n viá»‡c --</option>
               <option *ngFor="let u of assignableUsers" [value]="u.id">
                 {{ u.fullName }} ({{ u.roles.join(', ') }})
               </option>
             </select>
             <small class="hint" *ngIf="assignableUsers.length === 0">
-              Bạn chưa có quyền giao việc cho ai. Công việc sẽ tự nhận về tài khoản hiện tại.
+              Báº¡n chÆ°a cÃ³ quyá»n giao viá»‡c cho ai. CÃ´ng viá»‡c sáº½ tá»± nháº­n vá» tÃ i khoáº£n hiá»‡n táº¡i.
             </small>
           </div>
         </div>
 
         <div class="form-section">
-          <h3>Liên kết</h3>
+          <h3>LiÃªn káº¿t</h3>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="customerId">Khách hàng</label>
+              <label for="customerId">KhÃ¡ch hÃ ng</label>
               <select id="customerId" formControlName="customerId">
-                <option value="">-- Chọn khách hàng --</option>
+                <option value="">-- Chá»n khÃ¡ch hÃ ng --</option>
                 <option *ngFor="let customer of customers" [value]="customer.id">{{ customer.name }}</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label for="dealId">Giao dịch</label>
+              <label for="dealId">Giao dá»‹ch</label>
               <select id="dealId" formControlName="dealId">
-                <option value="">-- Chọn giao dịch --</option>
+                <option value="">-- Chá»n giao dá»‹ch --</option>
                 <option *ngFor="let deal of deals" [value]="deal.id">{{ deal.title }}</option>
               </select>
             </div>
@@ -116,12 +140,13 @@
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn btn-secondary" (click)="cancel()">Hủy</button>
+        <button type="button" class="btn btn-secondary" (click)="cancel()">Há»§y</button>
         <button type="submit" class="btn btn-primary" [disabled]="isLoading">
-          <span *ngIf="!isLoading">{{ isEditMode ? (canEditFields ? 'Cập nhật' : 'Cập nhật trạng thái') : 'Thêm công việc' }}</span>
+          <span *ngIf="!isLoading">{{ isEditMode ? (canEditFields ? 'Cáº­p nháº­t' : 'Cáº­p nháº­t tráº¡ng thÃ¡i') : 'ThÃªm cÃ´ng viá»‡c' }}</span>
           <span *ngIf="isLoading" class="spinner-small"></span>
         </button>
       </div>
     </form>
   </div>
 </div>
+
