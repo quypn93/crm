@@ -85,6 +85,7 @@ public class MappingProfile : Profile
             .ForMember(d => d.DesignerUserName, opt => opt.MapFrom(s => s.DesignerUser != null ? $"{s.DesignerUser.FirstName} {s.DesignerUser.LastName}" : null))
             .ForMember(d => d.ShipperUserName, opt => opt.MapFrom(s => s.ShipperUser != null ? $"{s.ShipperUser.FirstName} {s.ShipperUser.LastName}" : null))
             .ForMember(d => d.ProductionDaysOptionName, opt => opt.MapFrom(s => s.ProductionDaysOption != null ? s.ProductionDaysOption.Name : null))
+            .ForMember(d => d.OrderTypeName, opt => opt.MapFrom(s => s.OrderType != null ? s.OrderType.Name : s.OrderTypeName))
             .ForMember(d => d.DesignName, opt => opt.MapFrom(s => s.Design != null ? s.Design.DesignName : null))
             .ForMember(d => d.DesignCompletedImageUrl, opt => opt.MapFrom(s => s.Design != null ? s.Design.CompletedImageUrl : null));
 
@@ -101,6 +102,7 @@ public class MappingProfile : Profile
         CreateMap<Material, CRM.Application.DTOs.Lookup.LookupItemDto>();
         CreateMap<ProductForm, CRM.Application.DTOs.Lookup.LookupItemDto>();
         CreateMap<ProductSpecification, CRM.Application.DTOs.Lookup.LookupItemDto>();
+        CreateMap<OrderType, CRM.Application.DTOs.Lookup.LookupItemDto>();
         CreateMap<ProductionDaysOption, CRM.Application.DTOs.Lookup.ProductionDaysOptionDto>();
         CreateMap<DepositTransaction, CRM.Application.DTOs.Lookup.DepositTransactionDto>();
 

@@ -23,6 +23,7 @@ const routes: Routes = [
   { path: 'production-days', component: ProductionDaysAdminComponent },
   { path: 'deposits', component: DepositsAdminComponent },
   { path: 'materials', component: LookupsAdminComponent, data: { resource: 'materials', title: 'Chất liệu' } },
+  { path: 'order-types', component: LookupsAdminComponent, data: { resource: 'order-types', title: 'Dạng đơn' } },
   { path: 'product-forms', component: LookupsAdminComponent, data: { resource: 'product-forms', title: 'Form áo' } },
   { path: 'product-specifications', component: LookupsAdminComponent, data: { resource: 'product-specifications', title: 'Quy cách' } }
 ];

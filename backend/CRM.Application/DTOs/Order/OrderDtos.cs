@@ -35,6 +35,10 @@ public class OrderDto
     // Deposit
     public string? DepositCode { get; set; }
 
+    // Order type
+    public Guid? OrderTypeId { get; set; }
+    public string? OrderTypeName { get; set; }
+
     // Designer upload
     public string? DesignImageUrl { get; set; }
 
@@ -73,10 +77,12 @@ public class OrderDto
 
     public string? Notes { get; set; }
     public string? InternalNotes { get; set; }
+    public string? CustomerNotes { get; set; }
     public string? StyleNotes { get; set; }
 
     public Guid CreatedByUserId { get; set; }
     public string? CreatedByUserName { get; set; }
+    public string? CreatedByManagerName { get; set; }
     public Guid? AssignedToUserId { get; set; }
     public string? AssignedToUserName { get; set; }
     public Guid? ShipperUserId { get; set; }
@@ -165,6 +171,7 @@ public class CreateOrderDto
     public DateTime? ReturnDate { get; set; }
     public Guid? ProductionDaysOptionId { get; set; }
     public string? DepositCode { get; set; }
+    public Guid? OrderTypeId { get; set; }
     public DeliveryMethod? DeliveryMethod { get; set; }
     public string? ShippingContactName { get; set; }
     public string? ShippingPhone { get; set; }
@@ -179,6 +186,7 @@ public class CreateOrderDto
     public decimal TaxPercent { get; set; } = 10;
     public string? Notes { get; set; }
     public string? InternalNotes { get; set; }
+    public string? CustomerNotes { get; set; }
     public string? StyleNotes { get; set; }
     public Guid? AssignedToUserId { get; set; }
     public Guid? DesignerUserId { get; set; }

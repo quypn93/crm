@@ -83,7 +83,7 @@ import { LookupItem } from '../../../core/models/lookup.model';
   `]
 })
 export class LookupsAdminComponent implements OnInit {
-  resource: 'materials' | 'product-forms' | 'product-specifications' = 'materials';
+  resource: 'materials' | 'product-forms' | 'product-specifications' | 'order-types' = 'materials';
   title = 'Chất liệu';
   items: LookupItem[] = [];
   showForm = false;

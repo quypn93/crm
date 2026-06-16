@@ -229,6 +229,7 @@ builder.Services.AddScoped<ICollectionService, CollectionService>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IProductFormService, ProductFormService>();
 builder.Services.AddScoped<IProductSpecificationService, ProductSpecificationService>();
+builder.Services.AddScoped<IOrderTypeService, OrderTypeService>();
 builder.Services.AddScoped<IProductionDaysOptionService, ProductionDaysOptionService>();
 builder.Services.AddScoped<IDepositTransactionService, DepositTransactionService>();
 builder.Services.AddScoped<ILocationService, LocationService>();

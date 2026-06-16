@@ -22,6 +22,7 @@ public class OrderRepository : Repository<Order>, IOrderRepository
             .Include(o => o.DesignerUser)
             .Include(o => o.ShipperUser)
             .Include(o => o.ProductionDaysOption)
+            .Include(o => o.OrderType)
             .Include(o => o.Design)
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.Id == id);
@@ -186,7 +187,7 @@ public class OrderRepository : Repository<Order>, IOrderRepository
     public async Task<string> GenerateOrderNumberAsync()
     {
         var today = DateTime.UtcNow;
-        var prefix = $"DH{today:yyMMdd}";
+        var prefix = $"XA-{today:yyMMdd}";
 
         var lastOrder = await _dbSet
             .Where(o => o.OrderNumber.StartsWith(prefix))

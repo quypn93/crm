@@ -35,6 +35,14 @@ public interface IProductSpecificationService
     Task DeleteAsync(Guid id);
 }
 
+public interface IOrderTypeService
+{
+    Task<IEnumerable<LookupItemDto>> GetAllAsync();
+    Task<LookupItemDto> CreateAsync(CreateLookupItemDto dto);
+    Task<LookupItemDto> UpdateAsync(UpdateLookupItemDto dto);
+    Task DeleteAsync(Guid id);
+}
+
 public interface IProductionDaysOptionService
 {
     Task<IEnumerable<ProductionDaysOptionDto>> GetAllAsync();

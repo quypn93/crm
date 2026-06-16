@@ -35,7 +35,7 @@ export class SettingsService {
   }
 
   // Generic lookup helpers
-  getLookups(resource: 'materials' | 'product-forms' | 'product-specifications'): Observable<LookupItem[]> {
+  getLookups(resource: 'materials' | 'product-forms' | 'product-specifications' | 'order-types'): Observable<LookupItem[]> {
     return this.unwrap(this.http.get<ApiResponse<LookupItem[]>>(`${this.base}/${resource}`));
   }
   createLookup(resource: string, dto: CreateLookupItem): Observable<LookupItem> {

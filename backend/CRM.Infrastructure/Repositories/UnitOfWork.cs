@@ -30,6 +30,7 @@ public class UnitOfWork : IUnitOfWork
     private IRepository<ProductForm>? _productForms;
     private IRepository<ProductSpecification>? _productSpecs;
     private IRepository<ProductionDaysOption>? _productionDaysOptions;
+    private IRepository<OrderType>? _orderTypes;
     private IRepository<DepositTransaction>? _depositTransactions;
     private INotificationRepository? _notifications;
     private INotificationRolePreferenceRepository? _notificationRolePreferences;
@@ -62,6 +63,7 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<ProductForm> ProductForms => _productForms ??= new Repository<ProductForm>(_context);
     public IRepository<ProductSpecification> ProductSpecifications => _productSpecs ??= new Repository<ProductSpecification>(_context);
     public IRepository<ProductionDaysOption> ProductionDaysOptions => _productionDaysOptions ??= new Repository<ProductionDaysOption>(_context);
+    public IRepository<OrderType> OrderTypes => _orderTypes ??= new Repository<OrderType>(_context);
     public IRepository<DepositTransaction> DepositTransactions => _depositTransactions ??= new Repository<DepositTransaction>(_context);
     public INotificationRepository Notifications => _notifications ??= new NotificationRepository(_context);
     public INotificationRolePreferenceRepository NotificationRolePreferences => _notificationRolePreferences ??= new NotificationRolePreferenceRepository(_context);

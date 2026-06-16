@@ -119,6 +119,13 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         builder.Property(o => o.DepositCode).HasMaxLength(100);
         builder.Property(o => o.DesignImageUrl).HasMaxLength(500);
+        builder.Property(o => o.CustomerNotes).HasMaxLength(1000);
+        builder.Property(o => o.OrderTypeName).HasMaxLength(100);
+
+        builder.HasOne(o => o.OrderType)
+            .WithMany()
+            .HasForeignKey(o => o.OrderTypeId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasIndex(o => o.CustomerId);
         builder.HasIndex(o => o.DealId);

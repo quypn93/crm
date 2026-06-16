@@ -114,6 +114,19 @@ public class ProductSpecificationsController : SimpleLookupControllerBase<IProdu
 }
 
 [ApiController]
+[Route("api/order-types")]
+[Authorize]
+public class OrderTypesController : SimpleLookupControllerBase<IOrderTypeService>
+{
+    private readonly IOrderTypeService _svc;
+    public OrderTypesController(IOrderTypeService svc) { _svc = svc; }
+    protected override Task<IEnumerable<LookupItemDto>> GetAllCore() => _svc.GetAllAsync();
+    protected override Task<LookupItemDto> CreateCore(CreateLookupItemDto dto) => _svc.CreateAsync(dto);
+    protected override Task<LookupItemDto> UpdateCore(UpdateLookupItemDto dto) => _svc.UpdateAsync(dto);
+    protected override Task DeleteCore(Guid id) => _svc.DeleteAsync(id);
+}
+
+[ApiController]
 [Route("api/production-days-options")]
 [Authorize]
 public class ProductionDaysOptionsController : ControllerBase

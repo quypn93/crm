@@ -435,6 +435,14 @@ public static class DataSeeder
             );
         }
 
+        if (!await context.OrderTypes.AnyAsync())
+        {
+            context.OrderTypes.AddRange(
+                new OrderType { Name = "Cắt may", Description = "Đơn sản xuất theo yêu cầu", IsActive = true },
+                new OrderType { Name = "Áo sẵn", Description = "Đơn dùng hàng có sẵn", IsActive = true }
+            );
+        }
+
         await context.SaveChangesAsync();
 
         // ── Collections + links (phụ thuộc vào các lookup trên) ───────

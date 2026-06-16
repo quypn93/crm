@@ -85,6 +85,17 @@
           </div>
 
           <div class="form-group">
+            <label>Dạng đơn <span class="required">*</span></label>
+            <select formControlName="orderTypeId">
+              <option value="">-- Chọn dạng đơn --</option>
+              <option *ngFor="let t of orderTypes" [value]="t.id">{{ t.name }}</option>
+            </select>
+            <div class="error-text" *ngIf="f['orderTypeId'].invalid && f['orderTypeId'].touched">
+              Vui lòng chọn dạng đơn.
+            </div>
+          </div>
+
+          <div class="form-group">
             <label>Ngày xong (sản xuất)</label>
             <input type="date" formControlName="completionDate">
             <div class="hint">Tự động tính từ ngày lên đơn + thời gian sản xuất.</div>
@@ -186,7 +197,54 @@
         <!-- Size grid -->
         <div class="size-grid-section">
           <div class="size-grid-label">Số lượng theo size <span class="required">*</span></div>
-          <div class="size-grid">
+          <div class="size-matrix">
+            <table>
+              <thead>
+                <tr>
+                  <th>SIZE</th>
+                  <th *ngFor="let s of ADULT_SIZES">{{ s }}</th>
+                  <th class="total-head">TỔNG</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let gender of SIZE_GENDERS">
+                  <th>{{ gender.label }}</th>
+                  <td *ngFor="let s of ADULT_SIZES">
+                    <input type="number"
+                           [value]="getSizeQtyInput(s, gender.key)"
+                           (input)="onSizeQtyChange(s, $event, gender.key)"
+                           min="0" placeholder="0">
+                  </td>
+                  <td class="total-cell" *ngIf="gender.key === 'NAM'" [attr.rowspan]="SIZE_GENDERS.length">
+                    {{ getTotalQtyInput() }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table class="child-size-input-table">
+              <thead>
+                <tr>
+                  <ng-container *ngFor="let gender of SIZE_GENDERS">
+                    <th *ngFor="let s of CHILD_SIZES">{{ s }} {{ gender.label }}</th>
+                  </ng-container>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <ng-container *ngFor="let gender of SIZE_GENDERS">
+                    <td *ngFor="let s of CHILD_SIZES">
+                      <input type="number"
+                             [value]="getSizeQtyInput(s, gender.key)"
+                             (input)="onSizeQtyChange(s, $event, gender.key)"
+                             min="0" placeholder="0">
+                    </td>
+                  </ng-container>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="size-grid legacy-size-grid">
             <div class="size-col" *ngFor="let s of SIZE_LIST">
               <div class="size-name">{{ s }}</div>
               <input type="number" class="size-qty-input"

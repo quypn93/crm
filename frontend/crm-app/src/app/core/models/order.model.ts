@@ -148,6 +148,7 @@ export interface Order {
   paymentStatusName?: string;
   paymentMethod?: string;
   paymentNotes?: string;
+  notes?: string;
   internalNotes?: string;
   customerNotes?: string;
   styleNotes?: string;
@@ -155,6 +156,8 @@ export interface Order {
   productionDaysOptionName?: string;
   productionDays?: number;
   depositCode?: string;
+  orderTypeId?: string;
+  orderTypeName?: string;
   designImageUrl?: string;
   designId?: string;
   designName?: string;
@@ -163,6 +166,7 @@ export interface Order {
   updatedAt?: Date;
   createdByUserId: string;
   createdByUserName?: string;
+  createdByManagerName?: string;
   assignedToUserId?: string;
   assignedToUserName?: string;
   items: OrderItem[];
@@ -219,6 +223,7 @@ export interface CreateOrderRequest {
   styleNotes?: string;
   productionDaysOptionId?: string;
   depositCode?: string;
+  orderTypeId?: string;
   assignedToUserId?: string;
   designerUserId?: string;
   shipperUserId?: string;

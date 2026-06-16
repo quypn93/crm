@@ -26,6 +26,7 @@ public interface IUnitOfWork : IDisposable
     IRepository<ProductForm> ProductForms { get; }
     IRepository<ProductSpecification> ProductSpecifications { get; }
     IRepository<ProductionDaysOption> ProductionDaysOptions { get; }
+    IRepository<OrderType> OrderTypes { get; }
     IRepository<DepositTransaction> DepositTransactions { get; }
 
     INotificationRepository Notifications { get; }

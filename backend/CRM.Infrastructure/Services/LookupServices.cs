@@ -171,6 +171,15 @@ public class ProductSpecificationService : SimpleLookupServiceBase<ProductSpecif
     protected override LookupItemDto ToDto(ProductSpecification e) => new() { Id = e.Id, Name = e.Name, Description = e.Description, IsActive = e.IsActive };
 }
 
+public class OrderTypeService : SimpleLookupServiceBase<OrderType>, IOrderTypeService
+{
+    public OrderTypeService(CrmDbContext db) : base(db) { }
+    protected override DbSet<OrderType> DbSet => _db.OrderTypes;
+    protected override void SetFields(OrderType e, string name, string? description, bool isActive)
+    { e.Name = name; e.Description = description; e.IsActive = isActive; }
+    protected override LookupItemDto ToDto(OrderType e) => new() { Id = e.Id, Name = e.Name, Description = e.Description, IsActive = e.IsActive };
+}
+
 public class ProductionDaysOptionService : IProductionDaysOptionService
 {
     private readonly CrmDbContext _db;

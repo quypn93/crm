@@ -35,6 +35,7 @@ export class OrderFormComponent implements OnInit {
   materials: LookupItem[] = [];
   shirtForms: LookupItem[] = [];
   styleSpecs: LookupItem[] = [];
+  orderTypes: LookupItem[] = [];
   collections: Collection[] = [];
   productionDaysOptions: ProductionDaysOption[] = [];
 
@@ -70,14 +71,27 @@ export class OrderFormComponent implements OnInit {
   // null = chưa biết (đang load), true = đã cấu hình token + kho, false = chưa cấu hình.
   ghtkConfigured: boolean | null = null;
 
-  // Size grid
-  readonly SIZE_LIST = ['S', 'M', 'L', 'XL', 'XXL', 'NC1', 'NC2', 'NC3'];
+  // Size grid mirrors the order-card template: adult sizes split by gender, children sizes in a separate row.
+  readonly ADULT_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'NC', 'TE'];
+  readonly CHILD_SIZES = ['NC1', 'NC2', 'NC3'];
+  readonly SIZE_LIST = [...this.ADULT_SIZES, ...this.CHILD_SIZES];
+  readonly SIZE_GENDERS = [
+    { key: 'NAM', label: 'NAM' },
+    { key: 'NU', label: 'NỮ' }
+  ];
   sizeQty: Record<string, number> = {};
 
-  getSizeQtyInput(size: string): number { return this.sizeQty[size] || 0; }
-  onSizeQtyChange(size: string, event: Event): void {
+  sizeKey(size: string, gender?: string): string {
+    return gender ? `${gender}:${size}` : size;
+  }
+
+  getSizeQtyInput(size: string, gender?: string): number {
+    return this.sizeQty[this.sizeKey(size, gender)] || 0;
+  }
+
+  onSizeQtyChange(size: string, event: Event, gender?: string): void {
     const val = parseInt((event.target as HTMLInputElement).value, 10);
-    this.sizeQty[size] = isNaN(val) || val < 0 ? 0 : val;
+    this.sizeQty[this.sizeKey(size, gender)] = isNaN(val) || val < 0 ? 0 : val;
   }
   getTotalQtyInput(): number {
     return Object.values(this.sizeQty).reduce((a, b) => a + b, 0);
@@ -101,6 +115,7 @@ export class OrderFormComponent implements OnInit {
       dealId: [''],
       orderDate: [this.formatDate(new Date())],
       productionDaysOptionId: [''],
+      orderTypeId: ['', Validators.required],
       completionDate: [{ value: '', disabled: true }],
       returnDate: [{ value: '', disabled: true }],
       depositCode: [''],
@@ -155,6 +170,7 @@ export class OrderFormComponent implements OnInit {
       materials: this.settingsService.getLookups('materials'),
       shirtForms: this.settingsService.getLookups('product-forms'),
       styleSpecs: this.settingsService.getLookups('product-specifications'),
+      orderTypes: this.settingsService.getLookups('order-types'),
       collections: this.settingsService.getCollections(),
       productionDaysOptions: this.settingsService.getProductionDaysOptions(),
       users: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true }),
@@ -170,6 +186,7 @@ export class OrderFormComponent implements OnInit {
         this.materials = res.materials || [];
         this.shirtForms = res.shirtForms || [];
         this.styleSpecs = res.styleSpecs || [];
+        this.orderTypes = (res.orderTypes || []).filter(x => x.isActive);
         this.collections = res.collections || [];
         this.productionDaysOptions = (res.productionDaysOptions || []).filter(o => o.isActive);
         this.users = res.users?.items || [];
@@ -389,6 +406,7 @@ export class OrderFormComponent implements OnInit {
           dealId: order.dealId || '',
           orderDate: this.formatDate(new Date(order.orderDate)),
           productionDaysOptionId: order.productionDaysOptionId || '',
+          orderTypeId: order.orderTypeId || '',
           completionDate: order.completionDate ? this.formatDate(new Date(order.completionDate)) : '',
           returnDate: order.returnDate ? this.formatDate(new Date(order.returnDate)) : '',
           depositCode: order.depositCode || '',
@@ -445,7 +463,7 @@ export class OrderFormComponent implements OnInit {
         this.sizeQty = {};
         order.items.forEach(item => {
           if (item.size) {
-            const sz = item.size.trim().toUpperCase();
+            const sz = this.normalizeSizeKey(item.size);
             this.sizeQty[sz] = (this.sizeQty[sz] || 0) + item.quantity;
           }
         });
@@ -514,6 +532,7 @@ export class OrderFormComponent implements OnInit {
       dealId: f.dealId || null,
       orderDate: f.orderDate ? new Date(f.orderDate) : undefined,
       productionDaysOptionId: f.productionDaysOptionId || undefined,
+      orderTypeId: f.orderTypeId || undefined,
       depositCode: f.depositCode || undefined,
       assignedToUserId: f.assignedToUserId || undefined,
       designerUserId: f.designerUserId || undefined,
@@ -538,17 +557,17 @@ export class OrderFormComponent implements OnInit {
       styleNotes: f.styleNotes,
       internalNotes: f.internalNotes,
       customerNotes: f.customerNotes,
-      items: this.SIZE_LIST
-        .filter(s => (this.sizeQty[s] || 0) > 0)
-        .map(s => ({
+      items: Object.entries(this.sizeQty)
+        .filter(([, quantity]) => quantity > 0)
+        .map(([size, quantity]) => ({
           collectionId: pi.collectionId || undefined,
           materialId: pi.materialId || undefined,
           mainColorId: pi.mainColorId || undefined,
           accentColorId: pi.accentColorId || undefined,
           formId: pi.formId || undefined,
           specificationId: pi.specificationId || undefined,
-          size: s,
-          quantity: this.sizeQty[s],
+          size,
+          quantity,
           unit: 'cái',
           unitPrice: pi.unitPrice || 0,
           discountPercent: pi.itemDiscountPercent || 0,
@@ -571,4 +590,16 @@ export class OrderFormComponent implements OnInit {
   cancel(): void { this.router.navigate(['/orders']); }
 
   get f() { return this.orderForm.controls; }
+
+  private normalizeSizeKey(size: string): string {
+    const normalized = size.trim().toUpperCase();
+    if (normalized.includes(':')) {
+      const [rawGender, rawSize] = normalized.split(':', 2);
+      const gender = rawGender === 'NỮ' || rawGender === 'NU' ? 'NU' : 'NAM';
+      return this.sizeKey(rawSize, gender);
+    }
+
+    if (this.CHILD_SIZES.includes(normalized)) return this.sizeKey(normalized, 'NAM');
+    return this.sizeKey(normalized, 'NAM');
+  }
 }

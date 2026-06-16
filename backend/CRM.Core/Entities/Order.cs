@@ -60,6 +60,9 @@ public class Order : BaseEntity
 
     // Uniform-specific fields
     public string? StyleNotes { get; set; }
+    public string? CustomerNotes { get; set; }
+    public Guid? OrderTypeId { get; set; }
+    public string? OrderTypeName { get; set; }
 
     // Production days option (admin-managed)
     public Guid? ProductionDaysOptionId { get; set; }
@@ -94,6 +97,7 @@ public class Order : BaseEntity
     public virtual User? ShipperUser { get; set; }
     public virtual ProductionDaysOption? ProductionDaysOption { get; set; }
     public virtual Design? Design { get; set; }
+    public virtual OrderType? OrderType { get; set; }
     public virtual ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
     public virtual ICollection<Design> Designs { get; set; } = new List<Design>();
     public virtual ICollection<OrderProductionStep> ProductionSteps { get; set; } = new List<OrderProductionStep>();

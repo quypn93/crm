@@ -980,6 +980,10 @@ namespace CRM.Infrastructure.Migrations
                     b.Property<string>("CustomerName")
                         .HasColumnType("text");
 
+                    b.Property<string>("CustomerNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<Guid?>("DealId")
                         .HasColumnType("uuid");
 
@@ -1054,6 +1058,13 @@ namespace CRM.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<Guid?>("OrderTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("OrderTypeName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<decimal>("PaidAmount")
                         .HasPrecision(18, 2)
@@ -1167,6 +1178,8 @@ namespace CRM.Infrastructure.Migrations
 
                     b.HasIndex("OrderNumber")
                         .IsUnique();
+
+                    b.HasIndex("OrderTypeId");
 
                     b.HasIndex("PaymentStatus");
 
@@ -1331,6 +1344,33 @@ namespace CRM.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("OrderProductionSteps", (string)null);
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.OrderType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OrderTypes");
                 });
 
             modelBuilder.Entity("CRM.Core.Entities.ProductForm", b =>
@@ -2241,6 +2281,11 @@ namespace CRM.Infrastructure.Migrations
                         .HasForeignKey("DesignerUserId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("CRM.Core.Entities.OrderType", "OrderType")
+                        .WithMany()
+                        .HasForeignKey("OrderTypeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("CRM.Core.Entities.ProductionDaysOption", "ProductionDaysOption")
                         .WithMany()
                         .HasForeignKey("ProductionDaysOptionId")
@@ -2262,6 +2307,8 @@ namespace CRM.Infrastructure.Migrations
                     b.Navigation("Design");
 
                     b.Navigation("DesignerUser");
+
+                    b.Navigation("OrderType");
 
                     b.Navigation("ProductionDaysOption");
 

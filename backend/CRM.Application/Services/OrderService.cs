@@ -33,13 +33,21 @@ public class OrderService : IOrderService
     public async Task<OrderDto?> GetByIdAsync(Guid id)
     {
         var order = await _unitOfWork.Orders.GetByIdWithDetailsAsync(id);
-        return order != null ? _mapper.Map<OrderDto>(order) : null;
+        if (order == null) return null;
+
+        var dto = _mapper.Map<OrderDto>(order);
+        dto.CreatedByManagerName = await ResolveManagerNameAsync(order.CreatedByUserId);
+        return dto;
     }
 
     public async Task<OrderDto?> GetByOrderNumberAsync(string orderNumber)
     {
         var order = await _unitOfWork.Orders.GetByOrderNumberAsync(orderNumber);
-        return order != null ? _mapper.Map<OrderDto>(order) : null;
+        if (order == null) return null;
+
+        var dto = _mapper.Map<OrderDto>(order);
+        dto.CreatedByManagerName = await ResolveManagerNameAsync(order.CreatedByUserId);
+        return dto;
     }
 
     public async Task<PaginatedResult<OrderDto>> GetPagedAsync(OrderFilterDto filter)
@@ -64,25 +72,32 @@ public class OrderService : IOrderService
             filter.SortOrder);
 
         var dtos = _mapper.Map<List<OrderDto>>(items);
+        await EnrichManagerNamesAsync(dtos);
         return PaginatedResult<OrderDto>.Create(dtos, totalCount, filter.Page, filter.PageSize);
     }
 
     public async Task<IEnumerable<OrderDto>> GetByCustomerAsync(Guid customerId)
     {
         var orders = await _unitOfWork.Orders.GetByCustomerAsync(customerId);
-        return _mapper.Map<IEnumerable<OrderDto>>(orders);
+        var dtos = _mapper.Map<List<OrderDto>>(orders);
+        await EnrichManagerNamesAsync(dtos);
+        return dtos;
     }
 
     public async Task<IEnumerable<OrderDto>> GetByDealAsync(Guid dealId)
     {
         var orders = await _unitOfWork.Orders.GetByDealAsync(dealId);
-        return _mapper.Map<IEnumerable<OrderDto>>(orders);
+        var dtos = _mapper.Map<List<OrderDto>>(orders);
+        await EnrichManagerNamesAsync(dtos);
+        return dtos;
     }
 
     public async Task<IEnumerable<OrderDto>> GetMyOrdersAsync(Guid userId)
     {
         var orders = await _unitOfWork.Orders.GetByAssignedUserAsync(userId);
-        return _mapper.Map<IEnumerable<OrderDto>>(orders);
+        var dtos = _mapper.Map<List<OrderDto>>(orders);
+        await EnrichManagerNamesAsync(dtos);
+        return dtos;
     }
 
     public async Task<OrderDto> CreateAsync(CreateOrderDto dto, Guid userId)
@@ -125,10 +140,19 @@ public class OrderService : IOrderService
                 completionDate = DateTime.UtcNow.AddDays(prodOption.Days);
         }
         var returnDate = completionDate?.AddDays(1);
+        OrderType? orderType = null;
+        if (dto.OrderTypeId.HasValue)
+        {
+            orderType = await _unitOfWork.OrderTypes.FirstOrDefaultAsync(x => x.Id == dto.OrderTypeId.Value);
+            if (orderType == null)
+                throw new KeyNotFoundException("Không tìm thấy dạng đơn.");
+        }
 
         var order = new Order
         {
             OrderNumber = await _unitOfWork.Orders.GenerateOrderNumberAsync(),
+            OrderTypeId = dto.OrderTypeId,
+            OrderTypeName = orderType?.Name,
             CustomerId = dto.CustomerId,
             CustomerName = customer?.Name ?? dto.CustomerName,
             DealId = dto.DealId,
@@ -154,6 +178,7 @@ public class OrderService : IOrderService
             TaxPercent = dto.TaxPercent,
             Notes = dto.Notes,
             InternalNotes = dto.InternalNotes,
+            CustomerNotes = dto.CustomerNotes,
             StyleNotes = dto.StyleNotes,
             CreatedByUserId = userId,
             AssignedToUserId = dto.AssignedToUserId ?? userId,
@@ -216,6 +241,15 @@ public class OrderService : IOrderService
         order.ProductionDaysOptionId = dto.ProductionDaysOptionId;
         order.ProductionDays = prodOption?.Days ?? order.ProductionDays;
         order.DepositCode = dto.DepositCode;
+        OrderType? orderType = null;
+        if (dto.OrderTypeId.HasValue)
+        {
+            orderType = await _unitOfWork.OrderTypes.FirstOrDefaultAsync(x => x.Id == dto.OrderTypeId.Value);
+            if (orderType == null)
+                throw new KeyNotFoundException("Không tìm thấy dạng đơn.");
+        }
+        order.OrderTypeId = dto.OrderTypeId;
+        order.OrderTypeName = orderType?.Name;
         order.DeliveryMethod = dto.DeliveryMethod;
         order.ShippingContactName = dto.ShippingContactName;
         order.ShippingPhone = dto.ShippingPhone;
@@ -230,6 +264,7 @@ public class OrderService : IOrderService
         order.TaxPercent = dto.TaxPercent;
         order.Notes = dto.Notes;
         order.InternalNotes = dto.InternalNotes;
+        order.CustomerNotes = dto.CustomerNotes;
         order.StyleNotes = dto.StyleNotes;
         order.AssignedToUserId = dto.AssignedToUserId;
         // Đổi sang Vehicle/GHTK → clear shipper (kế hoạch giao đã thay đổi).
@@ -607,5 +642,70 @@ public class OrderService : IOrderService
         await _unitOfWork.SaveChangesAsync();
 
         return await GetByIdAsync(id) ?? throw new InvalidOperationException("Lỗi khi tải đơn hàng.");
+    }
+    private async Task EnrichManagerNamesAsync(IEnumerable<OrderDto> orders)
+    {
+        var cache = new Dictionary<Guid, string?>();
+        foreach (var order in orders)
+        {
+            if (!cache.TryGetValue(order.CreatedByUserId, out var managerName))
+            {
+                managerName = await ResolveManagerNameAsync(order.CreatedByUserId);
+                cache[order.CreatedByUserId] = managerName;
+            }
+
+            order.CreatedByManagerName = managerName;
+        }
+    }
+
+    private async Task<string?> ResolveManagerNameAsync(Guid createdByUserId)
+    {
+        var creator = await _unitOfWork.Users.GetByIdWithRolesAsync(createdByUserId);
+        if (creator == null) return null;
+
+        var creatorRoles = creator.UserRoles
+            .Select(ur => ur.Role.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var managerRole = ResolveManagerRole(creatorRoles);
+        if (string.IsNullOrWhiteSpace(managerRole)) return null;
+
+        if (creatorRoles.Contains(managerRole))
+            return creator.FullName;
+
+        var users = await _unitOfWork.Users.GetAllWithRolesAsync();
+        var manager = users
+            .Where(u => u.IsActive)
+            .FirstOrDefault(u => u.UserRoles.Any(ur =>
+                ur.Role.Name.Equals(managerRole, StringComparison.OrdinalIgnoreCase)));
+
+        return manager?.FullName;
+    }
+
+    private static string? ResolveManagerRole(IReadOnlySet<string> roles)
+    {
+        if (roles.Contains(RoleNames.SalesManager) || roles.Contains(RoleNames.SalesRep))
+            return RoleNames.SalesManager;
+        if (roles.Contains(RoleNames.DesignManager) || roles.Contains(RoleNames.Designer))
+            return RoleNames.DesignManager;
+        if (roles.Contains(RoleNames.ProductionManager)
+            || roles.Contains(RoleNames.ProductionStaff)
+            || roles.Overlaps(RoleNames.ProductionStageRoles))
+            return RoleNames.ProductionManager;
+        if (roles.Contains(RoleNames.QualityManager) || roles.Contains(RoleNames.QualityControl))
+            return RoleNames.QualityManager;
+        if (roles.Contains(RoleNames.DeliveryManager) || roles.Contains(RoleNames.DeliveryStaff))
+            return RoleNames.DeliveryManager;
+        if (roles.Contains(RoleNames.MarketingManager)
+            || roles.Contains(RoleNames.ContentManager)
+            || roles.Contains(RoleNames.ContentStaff)
+            || roles.Contains(RoleNames.MediaMarketing)
+            || roles.Contains(RoleNames.DigitalAds)
+            || roles.Contains(RoleNames.Media))
+            return RoleNames.MarketingManager;
+        if (roles.Contains(RoleNames.Admin))
+            return RoleNames.Admin;
+
+        return null;
     }
 }

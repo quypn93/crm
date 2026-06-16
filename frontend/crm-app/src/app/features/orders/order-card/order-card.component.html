@@ -1,176 +1,82 @@
 <div class="card-scroll-wrapper">
-  <!-- Nếu có ảnh thiết kế → hiển thị ảnh thay cho khung card mặc định -->
-  <div *ngIf="order.designImageUrl" class="card-design-wrapper" #cardRef>
-    <img [src]="resolveImageUrl(order.designImageUrl)"
-         class="card-design-img"
+  <div class="card-root" [class.has-uploaded-design]="order.designImageUrl" #cardRef>
+    <img *ngIf="order.designImageUrl"
+         [src]="resolveImageUrl(order.designImageUrl)"
+         class="uploaded-design-full"
          alt="Ảnh thiết kế đơn hàng"
          crossorigin="anonymous">
-  </div>
 
-  <div *ngIf="!order.designImageUrl" class="card-root" #cardRef>
+    <img *ngIf="!order.designImageUrl" src="/assets/xanh-mark.png" class="company-mark" alt="Đồng Phục Xanh">
 
-    <!-- ═══ HEADER ═══ -->
-    <div class="hdr">
-      <div class="hdr-left">
-        <img [src]="branding.logoPath" class="hdr-logo" [alt]="branding.logoAlt">
-        <div class="hdr-brand">
-          <div>{{ branding.headerLine1 }}</div>
-          <div>{{ branding.headerLine2 }}</div>
-        </div>
-      </div>
-      <div class="hdr-mid">
-        <div class="hdr-order-num">{{ order.orderNumber }}</div>
-      </div>
-      <div class="hdr-right">
-        <div class="hdr-meta-item">
-          <span class="meta-lbl">KH:</span>
-          <span class="meta-val">{{ order.customerName || '—' }}</span>
-        </div>
-        <div class="hdr-sep"></div>
-        <div class="hdr-meta-item">
-          <span class="meta-lbl">DESIGN:</span>
-          <span class="meta-val">{{ order.designerUserName || '—' }}</span>
-        </div>
-        <div class="hdr-sep"></div>
-        <div class="hdr-meta-item">
-          <span class="meta-lbl">SALE:</span>
-          <span class="meta-val">{{ order.assignedToUserName || '—' }}</span>
-        </div>
-      </div>
+    <div class="top-value customer">{{ order.customerName || '' }}</div>
+    <div class="top-value designer">{{ order.designerUserName || '' }}</div>
+    <div class="top-value sale">{{ order.assignedToUserName || '' }}</div>
+
+    <ng-container *ngIf="!order.designImageUrl">
+      <div class="design-stage empty"></div>
+    </ng-container>
+
+    <div class="spec-content">
+      <div *ngFor="let line of getSpecificationLines()">{{ line }}</div>
     </div>
 
-    <!-- ═══ BODY ═══ -->
-    <div class="body">
+    <div class="size-content">
+      <table class="size-table">
+        <tbody>
+          <tr>
+            <th>SIZE</th>
+            <th *ngFor="let size of ADULT_SIZES">{{ size }}</th>
+            <th>TỔNG</th>
+          </tr>
+          <tr>
+            <th>NAM</th>
+            <td *ngFor="let size of ADULT_SIZES">{{ getSizeQty(size, 'NAM') }}</td>
+            <td class="total-cell" rowspan="2">{{ getTotalQty() }}</td>
+          </tr>
+          <tr>
+            <th>NỮ</th>
+            <td *ngFor="let size of ADULT_SIZES">{{ getSizeQty(size, 'NU') }}</td>
+          </tr>
+        </tbody>
+      </table>
 
-      <!-- LEFT: NGÀY LÊN ĐƠN + QUÀ TẶNG -->
-      <div class="col-left">
-        <div class="date-badge-wrap">
-          <div class="date-badge">
-            NGÀY LÊN ĐƠN:
-            <span class="date-v">{{ fmt(order.orderDate) }}</span>
-          </div>
-        </div>
-        <div class="gift-box">
-          <div class="gift-title">QUÀ TẶNG</div>
-          <!-- [IMAGE SLOT] user sẽ thêm ảnh -->
-          <div class="img-slot"></div>
-        </div>
-      </div>
-
-      <!-- CENTER: ảnh áo (placeholder) -->
-      <div class="col-center"></div>
-
-      <!-- RIGHT: CHẾ TÁC + TÊN RIÊNG -->
-      <div class="col-right">
-        <div class="craft-row">
-          <div class="craft-box">
-            <div class="craft-lbl">CHẾ TÁC MẶT TRƯỚC</div>
-            <!-- [IMAGE SLOT] -->
-            <div class="craft-img-slot"></div>
-            <div class="craft-sub">KỸ THUẬT SỐ</div>
-          </div>
-          <div class="craft-box">
-            <div class="craft-lbl">CHẾ TÁC MẶT SAU</div>
-            <!-- [IMAGE SLOT] -->
-            <div class="craft-img-slot"></div>
-            <div class="craft-sub">KỸ THUẬT SỐ</div>
-          </div>
-        </div>
-
-        <div class="names-box">
-          <div class="names-title">TÊN RIÊNG IN DƯỚI LOGO NGỰC</div>
-          <!-- [IMAGE SLOT] user sẽ thêm ảnh -->
-          <div class="names-img-slot">
-            <!-- Fallback: render từ dữ liệu nếu có -->
-            <div class="names-grid" *ngIf="parsePersonNames().length">
-              <div class="names-col" *ngFor="let grp of parsePersonNames()">
-                <div class="nm-size-hdr" [style.color]="sizeColor(grp.size)">SIZE {{ grp.size }}</div>
-                <div class="nm-line" *ngFor="let n of grp.names">{{ n }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <table class="child-size-table">
+        <tbody>
+          <tr>
+            <ng-container *ngFor="let gender of ['NAM', 'NU']">
+              <th *ngFor="let size of CHILD_SIZES">{{ size }} {{ gender === 'NAM' ? 'NAM' : 'NỮ' }}</th>
+            </ng-container>
+          </tr>
+          <tr>
+            <ng-container *ngFor="let gender of ['NAM', 'NU']">
+              <td *ngFor="let size of CHILD_SIZES">{{ getSizeQty(size, gender === 'NAM' ? 'NAM' : 'NU') }}</td>
+            </ng-container>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- ═══ BOTTOM ═══ -->
-    <div class="btm">
-
-      <!-- Info table: CHẤT LIỆU / MÀU SẮC / KIỂU DÁNG -->
-      <div class="info-tbl">
-        <div class="info-row">
-          <div class="info-lbl">CHẤT LIỆU</div>
-          <div class="info-val">{{ getMaterial() }}</div>
-        </div>
-        <div class="info-row">
-          <div class="info-lbl">MÀU SẮC</div>
-          <div class="info-val" style="white-space:pre-line">{{ getColorText() }}</div>
-        </div>
-        <div class="info-row info-row-tall">
-          <div class="info-lbl">KIỂU DÁNG</div>
-          <div class="info-val" style="white-space:pre-line">{{ getStyleText() }}</div>
-        </div>
-      </div>
-
-      <!-- Right: size table + dates + note + QR -->
-      <div class="btm-right">
-
-        <!-- Size table -->
-        <div class="sz-tbl">
-          <div class="sz-hdr-row">
-            <div class="sz-cell sz-hdr-cell" *ngFor="let s of SIZES">{{ s }}</div>
-            <div class="sz-cell sz-hdr-cell sz-col-total">TỔNG</div>
-          </div>
-          <div class="sz-val-row">
-            <div class="sz-cell sz-val-cell" *ngFor="let s of SIZES">
-              <span [class.has-val]="getSizeQty(s) > 0">
-                {{ getSizeQty(s) > 0 ? getSizeQty(s) : '' }}
-              </span>
-            </div>
-            <div class="sz-cell sz-val-cell sz-col-total">
-              <span [class.has-val]="getTotalQty() > 0">
-                {{ getTotalQty() > 0 ? getTotalQty() : '' }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Dates + Note + QR -->
-        <div class="btm-footer">
-          <div class="dates-col">
-            <div class="date-btn">
-              NGÀY XONG :
-              <span class="date-btn-val">{{ fmt(order.completionDate) }}</span>
-            </div>
-            <div class="date-btn">
-              NGÀY TRẢ :
-              <span class="date-btn-val">{{ fmt(order.returnDate) }}</span>
-            </div>
-          </div>
-          <div class="note-col">
-            <div class="note-lbl">LƯU Ý:</div>
-            <div class="note-val">{{ order.internalNotes }}</div>
-          </div>
-          <div class="qr-col">
-            <img *ngIf="qrDataUrl" [src]="qrDataUrl" class="qr-img" alt="QR">
-          </div>
-        </div>
-
-      </div>
+    <div class="note-content" *ngIf="getOrderNote()">
+      <strong>CHÚ Ý:</strong> {{ getOrderNote() }}
     </div>
 
-    <!-- ═══ DISCLAIMER ═══ -->
-    <div class="disclaimer">
-      <span class="disc-bar"></span>
-      Chú ý: Quý khách vui lòng kiểm tra kỹ mẫu áo &amp; nội dung in trước khi sản xuất.
-      Đơn hàng sẽ được sản xuất chuẩn theo maket này.
+    <div class="order-code">{{ getOrderFooterLine() }}</div>
+
+    <div class="date-meta">
+      <div>NGÀY LÊN ĐƠN: {{ fmtFull(order.orderDate) }}</div>
+      <div>NGÀY XONG HÀNG: {{ fmtFull(order.completionDate) }}</div>
     </div>
 
+    <div class="staff-meta">
+      <div>DESIGN: {{ order.designerUserName || '' }}</div>
+      <div>SALE: {{ order.assignedToUserName || '' }}</div>
+      <div>LEADER: {{ order.createdByManagerName || '' }}</div>
+    </div>
+
+    <img *ngIf="qrDataUrl" [src]="qrDataUrl" class="qr-img" alt="QR">
   </div>
 </div>
 
-<!-- Export button + slot cho action phụ (ví dụ: upload ảnh thiết kế của Designer) -->
 <div class="export-actions">
   <button class="btn-export" (click)="exportImage()" [disabled]="isRendering">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnChanges, AfterViewInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, ViewChild } from '@angular/core';
 import { Order } from '../../../core/models/order.model';
 import { environment } from '../../../../environments/environment';
 import html2canvas from 'html2canvas';
@@ -11,15 +11,24 @@ import html2canvas from 'html2canvas';
 export class OrderCardComponent implements OnChanges, AfterViewInit {
   @Input() order!: Order;
   @ViewChild('cardRef') cardRef!: ElementRef<HTMLElement>;
+
   isRendering = false;
   qrDataUrl = '';
   branding = environment.branding;
+  readonly ADULT_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'NC', 'TE'];
+  readonly CHILD_SIZES = ['NC1', 'NC2', 'NC3'];
+
   private viewReady = false;
 
-  ngAfterViewInit(): void { this.viewReady = true; if (this.order) this.generateQr(); }
-  ngOnChanges(): void     { if (this.viewReady && this.order) this.generateQr(); }
+  ngAfterViewInit(): void {
+    this.viewReady = true;
+    if (this.order) this.generateQr();
+  }
 
-  // Dùng để build URL ảnh thiết kế (API serve static ở /uploads/... cùng origin với apiUrl)
+  ngOnChanges(): void {
+    if (this.viewReady && this.order) this.generateQr();
+  }
+
   resolveImageUrl(path?: string): string {
     if (!path) return '';
     if (path.startsWith('http')) return path;
@@ -27,30 +36,23 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
     return origin + (path.startsWith('/') ? path : '/' + path);
   }
 
-  private generateQr(): void {
-    import('qrcode').then(QRCode => {
-      const token = this.order.qrCodeToken;
-      if (!token) { this.qrDataUrl = ''; return; }
-      const url = `${window.location.origin}/scan/${token}`;
-      QRCode.toDataURL(url, { width: 220, margin: 1 }).then(d => this.qrDataUrl = d);
-    });
-  }
-
   async exportImage(): Promise<void> {
     if (!this.cardRef) return;
+
     this.isRendering = true;
     try {
       const el = this.cardRef.nativeElement;
-      const wrapper = el.parentElement; // .card-scroll-wrapper giữ --card-scale
-      // Tạm thời reset scale để html2canvas chụp full resolution
+      const wrapper = el.parentElement;
       const prevTransform = el.style.transform;
       const prevMarginBottom = el.style.marginBottom;
       const prevMarginRight = el.style.marginRight;
       const prevWrapperOverflow = wrapper?.style.overflow ?? '';
+
       el.style.transform = 'scale(1)';
       el.style.marginBottom = '0';
       el.style.marginRight = '0';
       if (wrapper) wrapper.style.overflow = 'visible';
+
       const canvas = await html2canvas(el, {
         scale: 2,
         useCORS: true,
@@ -59,10 +61,12 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
         scrollX: 0,
         scrollY: 0,
       });
+
       el.style.transform = prevTransform;
       el.style.marginBottom = prevMarginBottom;
       el.style.marginRight = prevMarginRight;
       if (wrapper) wrapper.style.overflow = prevWrapperOverflow;
+
       const a = document.createElement('a');
       a.download = `${this.order.orderNumber}.png`;
       a.href = canvas.toDataURL('image/png');
@@ -72,59 +76,138 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
     }
   }
 
-  // ── Data helpers ──────────────────────────────────────────
+  getSpecificationLines(): string[] {
+    const item = this.order.items?.[0];
+    const lines = [
+      item?.collectionName,
+      item?.formName,
+      item?.materialName,
+      this.getColorText(),
+      item?.specificationName,
+      this.getStyleText(),
+    ]
+      .flatMap(value => (value || '').split('\n'))
+      .map(value => value.replace(/^-\s*/, '').trim())
+      .filter(Boolean);
 
-  parsePersonNames(): { size: string; names: string[] }[] { return []; }
-  parseGiftItems(): string[] { return []; }
-
-  private parseStyleNotes(): [string, string][] {
-    if (!this.order.styleNotes) return [];
-    return this.order.styleNotes.split('|').map(p => p.trim()).filter(p => p.includes(':'))
-      .map(p => { const i = p.indexOf(':'); return [p.slice(0,i).trim(), p.slice(i+1).trim()] as [string,string]; });
+    return [...new Set(lines.map(value => value.toUpperCase()))];
   }
 
-  getMaterial(): string {
-    const e = this.parseStyleNotes().find(([k]) => /chất liệu/i.test(k));
-    if (e) return e[1];
-    return [...new Set(this.order.items.map(i => i.materialName).filter(Boolean))].join(', ');
+  getOrderNote(): string {
+    return (this.order.styleNotes || '').trim();
   }
 
-  getColorText(): string {
-    const lines = this.parseStyleNotes().filter(([k]) => /màu/i.test(k))
-      .map(([k,v]) => `- ${k.toUpperCase()}: ${v}`);
-    if (lines.length) return lines.join('\n');
-    return [...new Set(this.order.items.map(i => i.mainColorName).filter(Boolean))].join(', ');
+  getOrderFooterLine(): string {
+    const orderType = (this.order.orderTypeName || '').trim().toUpperCase();
+    const delivery = this.getDeliveryText();
+    return ['# ' + this.order.orderNumber, orderType, delivery].filter(Boolean).join(' / ');
   }
 
-  getStyleText(): string {
-    return this.parseStyleNotes().filter(([k]) => !/màu|chất liệu/i.test(k))
-      .map(([k,v]) => `- ${k.toUpperCase()}: ${v}`).join('\n');
+  private getDeliveryText(): string {
+    if (this.order.deliveryMethod === 2) return 'GHTK';
+    return (this.order.deliveryMethodName || '').trim().toUpperCase();
   }
 
-  getSizeQty(size: string): number {
-    return this.order.items
-      .filter(i => i.size?.trim().toUpperCase() === size)
-      .reduce((s, i) => s + i.quantity, 0);
+  getSizeQty(size: string, gender?: 'NAM' | 'NU'): number {
+    const normalizedSize = size.trim().toUpperCase();
+    return (this.order.items || [])
+      .filter(item => this.matchesSize(item.size, normalizedSize, gender))
+      .reduce((sum, item) => sum + item.quantity, 0);
   }
 
   getTotalQty(): number {
-    return this.order.items.reduce((s, i) => s + i.quantity, 0);
+    return (this.order.items || []).reduce((sum, item) => sum + item.quantity, 0);
   }
 
-  fmt(d: Date|string|null|undefined): string {
+  fmt(d: Date | string | null | undefined): string {
     if (!d) return '';
     const dt = new Date(d);
-    if (isNaN(dt.getTime())) return '';
-    return `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}`;
+    if (Number.isNaN(dt.getTime())) return '';
+    return `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  fmtFull(d: Date | string | null | undefined): string {
+    if (!d) return '00/00/0000';
+    const dt = new Date(d);
+    if (Number.isNaN(dt.getTime())) return '00/00/0000';
+    return `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}/${dt.getFullYear()}`;
   }
 
   sizeColor(size: string): string {
-    const map: Record<string,string> = {
-      S:'#1565c0',M:'#1565c0',L:'#00695c',XL:'#b71c1c',
-      XXL:'#1565c0',NC1:'#1b5e20',NC2:'#6a1b9a',NC3:'#e65100'
+    const map: Record<string, string> = {
+      S: '#1565c0',
+      M: '#1565c0',
+      L: '#00695c',
+      XL: '#b71c1c',
+      XXL: '#1565c0',
+      NC1: '#1b5e20',
+      NC2: '#6a1b9a',
+      NC3: '#e65100'
     };
     return map[size.toUpperCase()] ?? '#1a237e';
   }
 
-  readonly SIZES = ['S','M','L','XL','XXL','NC1','NC2','NC3'];
+  parsePersonNames(): { size: string; names: string[] }[] {
+    return [];
+  }
+
+  parseGiftItems(): string[] {
+    return [];
+  }
+
+  private generateQr(): void {
+    import('qrcode').then(QRCode => {
+      const token = this.order.qrCodeToken;
+      if (!token) {
+        this.qrDataUrl = '';
+        return;
+      }
+      const url = `${window.location.origin}/scan/${token}`;
+      QRCode.toDataURL(url, { width: 220, margin: 1 }).then(dataUrl => this.qrDataUrl = dataUrl);
+    });
+  }
+
+  private parseStyleNotes(): [string, string][] {
+    if (!this.order.styleNotes) return [];
+    return this.order.styleNotes
+      .split('|')
+      .map(part => part.trim())
+      .filter(part => part.includes(':'))
+      .map(part => {
+        const index = part.indexOf(':');
+        return [part.slice(0, index).trim(), part.slice(index + 1).trim()] as [string, string];
+      });
+  }
+
+  private getColorText(): string {
+    const colorLines = this.parseStyleNotes()
+      .filter(([key]) => /màu/i.test(key))
+      .map(([key, value]) => `${key}: ${value}`);
+
+    if (colorLines.length) return colorLines.join('\n');
+
+    return [...new Set((this.order.items || []).map(item => item.mainColorName).filter(Boolean))]
+      .join('\n');
+  }
+
+  private getStyleText(): string {
+    return this.parseStyleNotes()
+      .filter(([key]) => !/màu|chất liệu/i.test(key))
+      .map(([key, value]) => `${key}: ${value}`)
+      .join('\n');
+  }
+
+  private matchesSize(value: string | undefined, size: string, gender?: 'NAM' | 'NU'): boolean {
+    const normalized = (value || '').trim().toUpperCase();
+    if (!normalized) return false;
+
+    if (normalized.includes(':')) {
+      const [rawGender, rawSize] = normalized.split(':', 2);
+      const normalizedGender = rawGender === 'NỮ' || rawGender === 'NU' ? 'NU' : 'NAM';
+      return rawSize === size && (!gender || normalizedGender === gender);
+    }
+
+    if (gender === 'NU') return false;
+    return normalized === size;
+  }
 }
