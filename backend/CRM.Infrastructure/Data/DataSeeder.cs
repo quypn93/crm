@@ -435,6 +435,8 @@ public static class DataSeeder
             );
         }
 
+        await EnsureOrderTypesSchemaAsync(context);
+
         if (!await context.OrderTypes.AnyAsync())
         {
             context.OrderTypes.AddRange(
@@ -508,5 +510,42 @@ public static class DataSeeder
                 new[] { "Cổ trụ, tay ngắn" },
                 new[] { "Trắng", "Xanh Dương Nhạt", "Be/Kem" });
         }
+    }
+
+    private static async Task EnsureOrderTypesSchemaAsync(CrmDbContext context)
+    {
+        await context.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS "OrderTypes" (
+                "Id" uuid NOT NULL,
+                "Name" text NOT NULL,
+                "Description" text NULL,
+                "IsActive" boolean NOT NULL,
+                "CreatedAt" timestamp with time zone NOT NULL DEFAULT now(),
+                "UpdatedAt" timestamp with time zone NULL,
+                CONSTRAINT "PK_OrderTypes" PRIMARY KEY ("Id")
+            );
+
+            ALTER TABLE "Orders"
+                ADD COLUMN IF NOT EXISTS "CustomerNotes" character varying(1000) NULL,
+                ADD COLUMN IF NOT EXISTS "OrderTypeId" uuid NULL,
+                ADD COLUMN IF NOT EXISTS "OrderTypeName" character varying(100) NULL;
+
+            CREATE INDEX IF NOT EXISTS "IX_Orders_OrderTypeId"
+                ON "Orders" ("OrderTypeId");
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM pg_constraint
+                    WHERE conname = 'FK_Orders_OrderTypes_OrderTypeId'
+                ) THEN
+                    ALTER TABLE "Orders"
+                    ADD CONSTRAINT "FK_Orders_OrderTypes_OrderTypeId"
+                    FOREIGN KEY ("OrderTypeId") REFERENCES "OrderTypes" ("Id")
+                    ON DELETE SET NULL;
+                END IF;
+            END $$;
+            """);
     }
 }
