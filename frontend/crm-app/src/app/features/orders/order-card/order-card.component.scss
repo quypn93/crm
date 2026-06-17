@@ -77,90 +77,53 @@ $red: #c83c43;
 
 .top-value {
   position: absolute;
-  top: 28px;
-  height: 42px;
+  top: 31px;
+  height: 22px;
   color: #fff;
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 800;
-  line-height: 1;
+  line-height: 22px;
   overflow: hidden;
   text-transform: uppercase;
   white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #155986;
+  display: block;
+  background: transparent;
   z-index: 2;
 }
 
 .top-value.customer {
-  left: 635px;
-  width: 305px;
-  padding-left: 18px;
-  clip-path: polygon(0 0, 100% 0, calc(100% - 44px) 100%, 0 100%);
+  left: 736px;
+  width: 162px;
 }
 
 .top-value.designer {
-  left: 1054px;
-  width: 312px;
-  padding-left: 18px;
+  left: 1158px;
+  width: 129px;
 }
 
 .top-value.sale {
-  left: 1366px;
-  width: 258px;
-  padding-left: 18px;
-  background: #24304f;
-}
-
-.top-value::before {
-  flex-shrink: 0;
-  font-size: 15px;
-  font-weight: 900;
-}
-
-.top-value.customer::before {
-  content: 'CUSTOMER:';
-}
-
-.top-value.designer::before {
-  content: 'DESIGNER:';
-}
-
-.top-value.sale::before {
-  content: 'SALE:';
+  left: 1468px;
+  width: 95px;
 }
 
 .card-root.has-uploaded-design {
   .top-value {
     top: 31px;
-    height: 22px;
-    padding-left: 0;
-    background: transparent;
-    clip-path: none;
-    font-size: 12px;
-    line-height: 22px;
-    gap: 0;
-    display: block;
-  }
-
-  .top-value::before {
-    content: none;
   }
 
   .top-value.customer {
-    left: 728px;
-    width: 155px;
+    left: 736px;
+    width: 162px;
   }
 
   .top-value.designer {
-    left: 1168px;
-    width: 115px;
+    left: 1158px;
+    width: 129px;
   }
 
   .top-value.sale {
     left: 1468px;
-    width: 60px;
+    width: 95px;
   }
 }
 
