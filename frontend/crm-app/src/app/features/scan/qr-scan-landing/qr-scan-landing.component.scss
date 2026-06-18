@@ -3,7 +3,7 @@
   background: var(--bg-app);
   font-family: var(--font-family);
   position: relative;
-  overflow-x: hidden;
+  overflow-x: auto;
 
   &::before {
     content: '';
@@ -160,25 +160,31 @@
 
 .scan-content {
   padding: 16px;
-  max-width: 900px;
+  max-width: 1058px;
   margin: 0 auto;
   position: relative;
   z-index: 1;
 
   ::ng-deep .card-scroll-wrapper {
-    overflow: hidden;
+    --card-scale: calc((100vw - 32px) / 1654);
+    overflow: visible;
     background: transparent;
     padding: 0;
   }
+
   ::ng-deep .card-root {
-    transform: scale(#{"calc(100vw / 1450)"});
-    transform-origin: top left;
-    margin-bottom: #{"calc((100vw / 1450 - 1) * 900px)"} !important;
+    transform: scale(var(--card-scale));
+    margin-bottom: calc(2560px * (var(--card-scale) - 1));
   }
+
   @media (min-width: 920px) {
+    ::ng-deep .card-scroll-wrapper {
+      --card-scale: 0.62;
+    }
+
     ::ng-deep .card-root {
-      transform: scale(0.62);
-      margin-bottom: -342px !important;
+      transform: scale(var(--card-scale));
+      margin-bottom: calc(2560px * (var(--card-scale) - 1));
     }
   }
 }
