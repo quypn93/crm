@@ -77,6 +77,7 @@ $red: #c83c43;
 
 .top-value {
   position: absolute;
+  display: none;
   top: 31px;
   height: 22px;
   color: #fff;
@@ -86,7 +87,6 @@ $red: #c83c43;
   overflow: hidden;
   text-transform: uppercase;
   white-space: nowrap;
-  display: block;
   background: transparent;
   z-index: 2;
 }
