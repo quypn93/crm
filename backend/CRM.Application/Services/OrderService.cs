@@ -623,6 +623,17 @@ public class OrderService : IOrderService
         return await GetByIdAsync(id) ?? throw new InvalidOperationException();
     }
 
+    public async Task<OrderDto> SetDesignFileAsync(Guid id, string fileUrl, string fileName)
+    {
+        var order = await _unitOfWork.Orders.GetByIdAsync(id)
+            ?? throw new KeyNotFoundException("KhÃ´ng tÃ¬m tháº¥y Ä‘Æ¡n hÃ ng.");
+        order.DesignFileUrl = fileUrl;
+        order.DesignFileName = fileName;
+        _unitOfWork.Orders.Update(order);
+        await _unitOfWork.SaveChangesAsync();
+        return await GetByIdAsync(id) ?? throw new InvalidOperationException();
+    }
+
     public async Task<OrderDto?> GetByQrTokenAsync(string token)
     {
         var order = await _unitOfWork.Orders.FirstOrDefaultAsync(o => o.QrCodeToken == token);

@@ -167,6 +167,12 @@ export class OrderService {
   }
 
   // ─── GHTK ───────────────────────────────────────────────────
+  uploadDesignFile(orderId: string, file: File): Observable<Order> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.api.post<Order>(`orders/${orderId}/design-file`, form);
+  }
+
   getGhtkStatus(): Observable<{ configured: boolean }> {
     return this.api.get<{ configured: boolean }>('ghtk/status');
   }

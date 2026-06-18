@@ -339,6 +339,36 @@ public class OrdersController : ControllerBase
     }
 
     /// <summary>Khách xem đơn hàng qua QR token (read-only, không cần đăng nhập).</summary>
+    /// <summary>Upload file goc thiet ke cua don hang cho san xuat tai ve.</summary>
+    [HttpPost("{id}/design-file")]
+    public async Task<ActionResult<ApiResponse<OrderDto>>> UploadDesignFile(Guid id, IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(ApiResponse<OrderDto>.Fail("Khong co file."));
+
+        var allowed = new[]
+        {
+            ".cdr", ".ai", ".eps", ".pdf", ".psd", ".svg",
+            ".zip", ".rar", ".7z",
+            ".jpg", ".jpeg", ".png", ".webp"
+        };
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!allowed.Contains(ext))
+            return BadRequest(ApiResponse<OrderDto>.Fail("Dinh dang file thiet ke khong ho tro."));
+
+        var uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "design-files");
+        Directory.CreateDirectory(uploadsRoot);
+        var originalName = Path.GetFileName(file.FileName);
+        var fileName = $"{id}_{DateTime.UtcNow:yyyyMMddHHmmss}{ext}";
+        var fullPath = Path.Combine(uploadsRoot, fileName);
+        using (var stream = System.IO.File.Create(fullPath))
+            await file.CopyToAsync(stream);
+
+        var url = $"/uploads/design-files/{fileName}";
+        var result = await _orderService.SetDesignFileAsync(id, url, originalName);
+        return Ok(ApiResponse<OrderDto>.Ok(result, "Upload file thiet ke thanh cong."));
+    }
+
     [HttpGet("public/by-token/{token}")]
     [AllowAnonymous]
     public async Task<ActionResult<ApiResponse<OrderDto>>> GetPublicByToken(string token)

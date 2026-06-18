@@ -159,6 +159,8 @@ export interface Order {
   orderTypeId?: string;
   orderTypeName?: string;
   designImageUrl?: string;
+  designFileUrl?: string;
+  designFileName?: string;
   designId?: string;
   designName?: string;
   designCompletedImageUrl?: string;

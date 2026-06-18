@@ -119,6 +119,8 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         builder.Property(o => o.DepositCode).HasMaxLength(100);
         builder.Property(o => o.DesignImageUrl).HasMaxLength(500);
+        builder.Property(o => o.DesignFileUrl).HasMaxLength(500);
+        builder.Property(o => o.DesignFileName).HasMaxLength(255);
         builder.Property(o => o.CustomerNotes).HasMaxLength(1000);
         builder.Property(o => o.OrderTypeName).HasMaxLength(100);
 

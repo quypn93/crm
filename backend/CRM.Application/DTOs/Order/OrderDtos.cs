@@ -41,6 +41,8 @@ public class OrderDto
 
     // Designer upload
     public string? DesignImageUrl { get; set; }
+    public string? DesignFileUrl { get; set; }
+    public string? DesignFileName { get; set; }
 
     // Design có sẵn
     public Guid? DesignId { get; set; }

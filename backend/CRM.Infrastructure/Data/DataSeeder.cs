@@ -527,6 +527,8 @@ public static class DataSeeder
 
             ALTER TABLE "Orders"
                 ADD COLUMN IF NOT EXISTS "CustomerNotes" character varying(1000) NULL,
+                ADD COLUMN IF NOT EXISTS "DesignFileName" character varying(255) NULL,
+                ADD COLUMN IF NOT EXISTS "DesignFileUrl" character varying(500) NULL,
                 ADD COLUMN IF NOT EXISTS "OrderTypeId" uuid NULL,
                 ADD COLUMN IF NOT EXISTS "OrderTypeName" character varying(100) NULL;
 

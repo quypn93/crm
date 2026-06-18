@@ -73,6 +73,8 @@ public class Order : BaseEntity
 
     // Designer upload (ảnh đơn hàng sau khi thiết kế)
     public string? DesignImageUrl { get; set; }
+    public string? DesignFileUrl { get; set; }
+    public string? DesignFileName { get; set; }
 
     // Design có sẵn (tái sử dụng từ flow assignment của Designer)
     public Guid? DesignId { get; set; }

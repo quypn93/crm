@@ -92,6 +92,16 @@
       {{ isUploadingDesign ? 'Đang upload...' : (order.designImageUrl ? 'Thay ảnh thiết kế' : 'Upload ảnh thiết kế') }}
       <input type="file" accept="image/*" hidden (change)="onDesignImageSelected($event)" [disabled]="isUploadingDesign">
     </label>
+    <label slot="extra-actions" class="btn-upload-design-file" *ngIf="canUploadDesignImage()" [class.disabled]="isUploadingDesignFile">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <polyline points="12 18 12 12"/>
+        <polyline points="9 15 12 12 15 15"/>
+      </svg>
+      {{ isUploadingDesignFile ? 'Đang upload...' : (order.designFileUrl ? 'Thay file thiết kế' : 'Upload file thiết kế') }}
+      <input type="file" accept=".cdr,.ai,.eps,.pdf,.psd,.svg,.zip,.rar,.7z,image/*" hidden (change)="onDesignFileSelected($event)" [disabled]="isUploadingDesignFile">
+    </label>
   </app-order-card>
 
   <div class="content-grid">
@@ -267,6 +277,21 @@
         <div *ngIf="!order.designImageUrl" style="color:#64748b;font-size:14px;">
           Chưa có ảnh thiết kế.
           <ng-container *ngIf="canUploadDesignImage()"> Dùng nút "Upload ảnh thiết kế" cạnh "Xuất ảnh đơn hàng" phía trên.</ng-container>
+        </div>
+      </div>
+
+      <div class="info-card" *ngIf="order.designFileUrl || canUploadDesignImage()">
+        <h3>File thiết kế sản xuất</h3>
+        <a *ngIf="order.designFileUrl"
+           class="design-file-link"
+           [href]="resolveFileUrl(order.designFileUrl)"
+           target="_blank"
+           rel="noopener">
+          {{ order.designFileName || 'Tải file thiết kế' }}
+        </a>
+        <div *ngIf="!order.designFileUrl" style="color:#64748b;font-size:14px;">
+          Chưa có file thiết kế gốc.
+          <ng-container *ngIf="canUploadDesignImage()"> Dùng nút "Upload file thiết kế" phía trên.</ng-container>
         </div>
       </div>
 

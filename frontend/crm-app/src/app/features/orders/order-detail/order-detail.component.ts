@@ -363,6 +363,7 @@ export class OrderDetailComponent implements OnInit {
 
   // Designer upload
   isUploadingDesign = false;
+  isUploadingDesignFile = false;
   designUploadError = '';
 
   // GHTK state
@@ -483,6 +484,28 @@ export class OrderDetailComponent implements OnInit {
     });
   }
 
+  onDesignFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this.order) return;
+    this.isUploadingDesignFile = true;
+    this.designUploadError = '';
+    this.orderService.uploadDesignFile(this.order.id, file).subscribe({
+      next: (updated) => {
+        this.order = updated;
+        this.isUploadingDesignFile = false;
+        input.value = '';
+        this.toast.success('Đã cập nhật file thiết kế.');
+      },
+      error: (err) => {
+        this.isUploadingDesignFile = false;
+        const msg = err?.error?.message || 'Upload file thiết kế thất bại.';
+        this.designUploadError = msg;
+        this.toast.error(msg);
+      }
+    });
+  }
+
   apiOrigin(): string {
     // Static files (ví dụ /uploads/designs/...) được API serve cùng origin với apiUrl (bỏ đuôi /api).
     const url = environment.apiUrl || '';
@@ -495,6 +518,10 @@ export class OrderDetailComponent implements OnInit {
     // path có thể là '/uploads/...' → prepend origin của API
     const origin = this.apiOrigin();
     return origin + (path.startsWith('/') ? path : '/' + path);
+  }
+
+  resolveFileUrl(path?: string): string {
+    return this.resolveImageUrl(path);
   }
 
   printOrder(): void {

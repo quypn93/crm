@@ -21,5 +21,6 @@ public interface IOrderService
     Task<OrderSummaryDto> GetSummaryAsync(Guid? userId = null);
     Task<OrderDto> GenerateQrAsync(Guid id);
     Task<OrderDto> SetDesignImageAsync(Guid id, string imageUrl);
+    Task<OrderDto> SetDesignFileAsync(Guid id, string fileUrl, string fileName);
     Task<OrderDto?> GetByQrTokenAsync(string token);
 }

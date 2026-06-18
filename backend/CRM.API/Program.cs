@@ -302,6 +302,11 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowAngular");
 var staticFileContentTypes = new FileExtensionContentTypeProvider();
 staticFileContentTypes.Mappings[".avif"] = "image/avif";
+staticFileContentTypes.Mappings[".cdr"] = "application/octet-stream";
+staticFileContentTypes.Mappings[".ai"] = "application/postscript";
+staticFileContentTypes.Mappings[".eps"] = "application/postscript";
+staticFileContentTypes.Mappings[".psd"] = "image/vnd.adobe.photoshop";
+staticFileContentTypes.Mappings[".7z"] = "application/x-7z-compressed";
 app.UseStaticFiles(new StaticFileOptions
 {
     ContentTypeProvider = staticFileContentTypes
