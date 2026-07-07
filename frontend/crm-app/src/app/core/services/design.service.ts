@@ -52,6 +52,8 @@ export interface ColorFabric {
   id: string;
   name: string;
   description?: string;
+  materialId?: string;
+  materialName?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -176,6 +178,7 @@ export interface DesignFilter {
 export interface CreateColorFabricDto {
   name: string;
   description?: string;
+  materialId?: string;
 }
 
 export interface UpdateColorFabricDto extends CreateColorFabricDto {

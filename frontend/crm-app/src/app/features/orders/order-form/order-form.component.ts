@@ -65,11 +65,13 @@ export class OrderFormComponent implements OnInit {
   readonly deliveryMethodOptions = [
     { value: DeliveryMethod.InHouse, label: DeliveryMethodLabels[DeliveryMethod.InHouse] },
     { value: DeliveryMethod.Vehicle, label: DeliveryMethodLabels[DeliveryMethod.Vehicle] },
-    { value: DeliveryMethod.GHTK,    label: DeliveryMethodLabels[DeliveryMethod.GHTK] }
+    { value: DeliveryMethod.GHTK,    label: DeliveryMethodLabels[DeliveryMethod.GHTK] },
+    { value: DeliveryMethod.ViettelPost, label: DeliveryMethodLabels[DeliveryMethod.ViettelPost] }
   ];
 
   // null = chưa biết (đang load), true = đã cấu hình token + kho, false = chưa cấu hình.
   ghtkConfigured: boolean | null = null;
+  viettelPostConfigured: boolean | null = null;
 
   // Size grid mirrors the order-card template: adult sizes split by gender, children sizes in a separate row.
   readonly ADULT_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'NC', 'TE'];
@@ -95,6 +97,25 @@ export class OrderFormComponent implements OnInit {
   }
   getTotalQtyInput(): number {
     return Object.values(this.sizeQty).reduce((a, b) => a + b, 0);
+  }
+
+  // Form "Classic" chia NAM/NỮ; "Oversize"/"Unisex" dùng 1 dòng, không chia giới tính.
+  // Mặc định (chưa chọn form) = chia giới tính như Classic.
+  isGenderedForm(): boolean {
+    const id = this.orderForm.get('productInfo.formId')?.value;
+    const name = (this.shirtForms.find(f => f.id === id)?.name || '').toLowerCase();
+    return !(name.includes('oversize') || name.includes('unisex'));
+  }
+
+  // Khi đổi giữa dạng chia giới tính ↔ 1 dòng, key size không tương thích (VD "NAM:S" vs "S")
+  // nên xoá sizeQty để tránh cộng dồn nhầm số lượng cũ.
+  private lastGendered: boolean | null = null;
+  private onFormModeChange(): void {
+    const gendered = this.isGenderedForm();
+    if (this.lastGendered !== null && this.lastGendered !== gendered) {
+      this.sizeQty = {};
+    }
+    this.lastGendered = gendered;
   }
 
   constructor(
@@ -163,6 +184,10 @@ export class OrderFormComponent implements OnInit {
       next: (s) => { this.ghtkConfigured = !!s?.configured; },
       error: () => { this.ghtkConfigured = false; }
     });
+    this.orderService.getViettelPostStatus().subscribe({
+      next: (s) => { this.viettelPostConfigured = !!s?.configured; },
+      error: () => { this.viettelPostConfigured = false; }
+    });
 
     forkJoin({
       customers: this.customerService.getCustomers({ page: 1, pageSize: 200 }),
@@ -197,6 +222,7 @@ export class OrderFormComponent implements OnInit {
         this.deposits = res.deposits || [];
 
         this.resetAttributeFilters();
+        this.updateColorControlsState();
 
         if (this.isEditMode) {
           this.loadOrder();
@@ -215,6 +241,8 @@ export class OrderFormComponent implements OnInit {
     this.orderForm.get('productionDaysOptionId')?.valueChanges.subscribe(() => this.recalcDates());
     this.orderForm.get('orderDate')?.valueChanges.subscribe(() => this.recalcDates());
     this.orderForm.get('productInfo.collectionId')?.valueChanges.subscribe((id: string) => this.onCollectionChange(id));
+    this.orderForm.get('productInfo.formId')?.valueChanges.subscribe(() => this.onFormModeChange());
+    this.orderForm.get('productInfo.materialId')?.valueChanges.subscribe(() => this.onMaterialChange());
     this.orderForm.get('shippingProvinceCode')?.valueChanges.subscribe((code: string) => this.onProvinceChange(code));
     this.orderForm.get('designId')?.valueChanges.subscribe((id: string) => this.onDesignChange(id));
     this.orderForm.get('depositCode')?.valueChanges.subscribe((code: string) => this.onDepositCodeChange(code));
@@ -293,9 +321,8 @@ export class OrderFormComponent implements OnInit {
 
   onCollectionChange(collectionId: string): void {
     const col = this.collections.find(c => c.id === collectionId);
-    if (!col) { this.resetAttributeFilters(); return; }
+    if (!col) { this.resetAttributeFilters(); this.recomputeFilteredColors(); return; }
     this.filteredMaterials = this.materials.filter(m => col.materialIds.includes(m.id));
-    this.filteredColors = this.colorFabrics.filter(c => col.colorFabricIds.includes(c.id));
     this.filteredForms = this.shirtForms.filter(f => col.formIds.includes(f.id));
     this.filteredSpecs = this.styleSpecs.filter(s => col.specificationIds.includes(s.id));
 
@@ -306,10 +333,61 @@ export class OrderFormComponent implements OnInit {
       if (v && !arr.find(x => x.id === v)) pi?.get(key)?.setValue('');
     };
     clearIfMissing('materialId', this.filteredMaterials);
-    clearIfMissing('mainColorId', this.filteredColors);
-    clearIfMissing('accentColorId', this.filteredColors);
     clearIfMissing('formId', this.filteredForms);
     clearIfMissing('specificationId', this.filteredSpecs);
+
+    // Màu lọc theo cả bộ sưu tập lẫn chất liệu đang chọn.
+    this.recomputeFilteredColors();
+  }
+
+  // Màu "ăn theo" chất liệu: chỉ hiển thị màu của chất liệu đang chọn (kèm màu dùng chung không gán).
+  // Kết hợp với lọc theo bộ sưu tập (nếu có).
+  onMaterialChange(): void {
+    this.recomputeFilteredColors();
+    this.updateColorControlsState();
+  }
+
+  // Phải chọn chất liệu trước khi chọn màu.
+  hasMaterialSelected(): boolean {
+    return !!this.orderForm.get('productInfo.materialId')?.value;
+  }
+
+  // Khoá 2 ô màu (chính + phối) khi chưa chọn chất liệu.
+  private updateColorControlsState(): void {
+    const pi = this.orderForm.get('productInfo');
+    const main = pi?.get('mainColorId');
+    const accent = pi?.get('accentColorId');
+    if (this.hasMaterialSelected()) {
+      main?.enable({ emitEvent: false });
+      accent?.enable({ emitEvent: false });
+    } else {
+      main?.setValue('', { emitEvent: false });
+      accent?.setValue('', { emitEvent: false });
+      main?.disable({ emitEvent: false });
+      accent?.disable({ emitEvent: false });
+    }
+  }
+
+  private recomputeFilteredColors(): void {
+    const pi = this.orderForm.get('productInfo');
+    const collectionId = pi?.get('collectionId')?.value;
+    const materialId = pi?.get('materialId')?.value;
+    const col = this.collections.find(c => c.id === collectionId);
+
+    let colors = col
+      ? this.colorFabrics.filter(c => col.colorFabricIds.includes(c.id))
+      : this.colorFabrics;
+    if (materialId) {
+      colors = colors.filter(c => c.materialId === materialId || !c.materialId);
+    }
+    this.filteredColors = colors;
+
+    const clearIfMissing = (key: string) => {
+      const v = pi?.get(key)?.value;
+      if (v && !this.filteredColors.find(x => x.id === v)) pi?.get(key)?.setValue('');
+    };
+    clearIfMissing('mainColorId');
+    clearIfMissing('accentColorId');
   }
 
   private recalcDates(): void {
@@ -460,13 +538,17 @@ export class OrderFormComponent implements OnInit {
           if (firstItem.collectionId) this.onCollectionChange(firstItem.collectionId);
         }
 
+        // Xác định form của đơn để biết size lưu dạng chia giới tính hay 1 dòng.
+        const orderFormName = (this.shirtForms.find(f => f.id === firstItem?.formId)?.name || '').toLowerCase();
+        const orderGendered = !(orderFormName.includes('oversize') || orderFormName.includes('unisex'));
         this.sizeQty = {};
         order.items.forEach(item => {
           if (item.size) {
-            const sz = this.normalizeSizeKey(item.size);
+            const sz = this.normalizeSizeKey(item.size, orderGendered);
             this.sizeQty[sz] = (this.sizeQty[sz] || 0) + item.quantity;
           }
         });
+        this.lastGendered = orderGendered;
 
         this.items.clear();
         this.isLoading = false;
@@ -591,15 +673,14 @@ export class OrderFormComponent implements OnInit {
 
   get f() { return this.orderForm.controls; }
 
-  private normalizeSizeKey(size: string): string {
+  private normalizeSizeKey(size: string, gendered: boolean): string {
     const normalized = size.trim().toUpperCase();
     if (normalized.includes(':')) {
       const [rawGender, rawSize] = normalized.split(':', 2);
+      if (!gendered) return rawSize;
       const gender = rawGender === 'NỮ' || rawGender === 'NU' ? 'NU' : 'NAM';
       return this.sizeKey(rawSize, gender);
     }
-
-    if (this.CHILD_SIZES.includes(normalized)) return this.sizeKey(normalized, 'NAM');
-    return this.sizeKey(normalized, 'NAM');
+    return gendered ? this.sizeKey(normalized, 'NAM') : normalized;
   }
 }

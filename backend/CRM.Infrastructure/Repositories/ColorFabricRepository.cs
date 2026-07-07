@@ -11,6 +11,16 @@ public class ColorFabricRepository : Repository<ColorFabric>, IColorFabricReposi
     {
     }
 
+    public override async Task<ColorFabric?> GetByIdAsync(Guid id)
+    {
+        return await _dbSet.Include(cf => cf.Material).FirstOrDefaultAsync(cf => cf.Id == id);
+    }
+
+    public override async Task<IEnumerable<ColorFabric>> GetAllAsync()
+    {
+        return await _dbSet.Include(cf => cf.Material).OrderBy(cf => cf.Name).ToListAsync();
+    }
+
     public async Task<ColorFabric?> GetByNameAsync(string name)
     {
         return await _dbSet.FirstOrDefaultAsync(cf => cf.Name == name);
@@ -23,7 +33,7 @@ public class ColorFabricRepository : Repository<ColorFabric>, IColorFabricReposi
         string? sortBy,
         string sortOrder)
     {
-        var query = _dbSet.AsQueryable();
+        var query = _dbSet.Include(cf => cf.Material).AsQueryable();
 
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(search))

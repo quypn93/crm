@@ -151,7 +151,7 @@
           <div class="form-group">
             <label>Màu sắc chính <span class="required">*</span></label>
             <select formControlName="mainColorId">
-              <option value="">-- Chọn màu --</option>
+              <option value="">{{ hasMaterialSelected() ? '-- Chọn màu --' : '-- Chọn chất liệu trước --' }}</option>
               <option *ngFor="let c of filteredColors" [value]="c.id">{{ c.name }}</option>
             </select>
           </div>
@@ -160,7 +160,7 @@
           <div class="form-group">
             <label>Màu phối</label>
             <select formControlName="accentColorId">
-              <option value="">-- Chọn màu --</option>
+              <option value="">{{ hasMaterialSelected() ? '-- Chọn màu --' : '-- Chọn chất liệu trước --' }}</option>
               <option *ngFor="let c of filteredColors" [value]="c.id">{{ c.name }}</option>
             </select>
           </div>
@@ -197,7 +197,8 @@
         <!-- Size grid -->
         <div class="size-grid-section">
           <div class="size-grid-label">Số lượng theo size <span class="required">*</span></div>
-          <div class="size-matrix">
+          <!-- Classic: chia NAM / NỮ -->
+          <div class="size-matrix" *ngIf="isGenderedForm()">
             <table>
               <thead>
                 <tr>
@@ -244,18 +245,46 @@
               </tbody>
             </table>
           </div>
-          <div class="size-grid legacy-size-grid">
-            <div class="size-col" *ngFor="let s of SIZE_LIST">
-              <div class="size-name">{{ s }}</div>
-              <input type="number" class="size-qty-input"
-                     [value]="getSizeQtyInput(s)"
-                     (input)="onSizeQtyChange(s, $event)"
-                     min="0" placeholder="0">
-            </div>
-            <div class="size-col total-col">
-              <div class="size-name">TỔNG</div>
-              <div class="size-total">{{ getTotalQtyInput() }}</div>
-            </div>
+
+          <!-- Oversize / Unisex: không chia giới tính, 1 dòng -->
+          <div class="size-matrix" *ngIf="!isGenderedForm()">
+            <table>
+              <thead>
+                <tr>
+                  <th *ngFor="let s of ADULT_SIZES">{{ s }}</th>
+                  <th class="total-head">TỔNG</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td *ngFor="let s of ADULT_SIZES">
+                    <input type="number"
+                           [value]="getSizeQtyInput(s)"
+                           (input)="onSizeQtyChange(s, $event)"
+                           min="0" placeholder="0">
+                  </td>
+                  <td class="total-cell">{{ getTotalQtyInput() }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table class="child-size-input-table">
+              <thead>
+                <tr>
+                  <th *ngFor="let s of CHILD_SIZES">{{ s }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td *ngFor="let s of CHILD_SIZES">
+                    <input type="number"
+                           [value]="getSizeQtyInput(s)"
+                           (input)="onSizeQtyChange(s, $event)"
+                           min="0" placeholder="0">
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           <div class="error-text" *ngIf="getTotalQtyInput() < 1">
             Tổng số lượng sản phẩm phải ít nhất là 1.
@@ -298,6 +327,15 @@
             <div class="hint hint-warning" *ngIf="ghtkConfigured === false">
               ⚠ GHTK chưa cấu hình — đơn vẫn lưu nhãn "GHTK" nhưng không tạo vận đơn tự động.
               Yêu cầu admin điền token + thông tin kho trong <code>appsettings.Ghtk</code>.
+            </div>
+          </ng-container>
+          <ng-container *ngIf="orderForm.get('deliveryMethod')?.value === DeliveryMethod.ViettelPost">
+            <div class="hint" *ngIf="viettelPostConfigured === true">
+              Vận đơn Viettel Post sẽ được tạo tự động khi đơn chuyển sang "Sẵn sàng giao".
+            </div>
+            <div class="hint hint-warning" *ngIf="viettelPostConfigured === false">
+              ⚠ Viettel Post chưa cấu hình — đơn vẫn lưu nhãn "Viettel Post" nhưng không tạo vận đơn tự động.
+              Yêu cầu admin điền token + thông tin kho trong <code>appsettings.ViettelPost</code>.
             </div>
           </ng-container>
         </div>

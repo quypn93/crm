@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { DesignService, ColorFabric, CreateColorFabricDto, UpdateColorFabricDto } from '../../../core/services/design.service';
+import { SettingsService } from '../../../core/services/settings.service';
+import { LookupItem } from '../../../core/models/lookup.model';
 
 @Component({
   selector: 'app-color-fabrics',
@@ -13,18 +15,22 @@ export class ColorFabricsComponent implements OnInit {
   showForm = false;
   isEditing = false;
   currentFabric: ColorFabric | null = null;
+  materials: LookupItem[] = [];
 
   formData = {
     name: '',
-    description: ''
+    description: '',
+    materialId: ''
   };
 
   constructor(
     private designService: DesignService,
+    private settingsService: SettingsService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    this.settingsService.getLookups('materials').subscribe(m => this.materials = m || []);
     this.loadColorFabrics();
   }
 
@@ -45,7 +51,7 @@ export class ColorFabricsComponent implements OnInit {
     this.showForm = true;
     this.isEditing = false;
     this.currentFabric = null;
-    this.formData = { name: '', description: '' };
+    this.formData = { name: '', description: '', materialId: '' };
   }
 
   openEditForm(fabric: ColorFabric): void {
@@ -54,14 +60,15 @@ export class ColorFabricsComponent implements OnInit {
     this.currentFabric = fabric;
     this.formData = {
       name: fabric.name,
-      description: fabric.description || ''
+      description: fabric.description || '',
+      materialId: fabric.materialId || ''
     };
   }
 
   closeForm(): void {
     this.showForm = false;
     this.currentFabric = null;
-    this.formData = { name: '', description: '' };
+    this.formData = { name: '', description: '', materialId: '' };
   }
 
   saveColorFabric(): void {
@@ -71,7 +78,8 @@ export class ColorFabricsComponent implements OnInit {
       const dto: UpdateColorFabricDto = {
         id: this.currentFabric.id,
         name: this.formData.name,
-        description: this.formData.description || undefined
+        description: this.formData.description || undefined,
+        materialId: this.formData.materialId || undefined
       };
       this.designService.updateColorFabric(this.currentFabric.id, dto).subscribe({
         next: () => {
@@ -82,7 +90,8 @@ export class ColorFabricsComponent implements OnInit {
     } else {
       const dto: CreateColorFabricDto = {
         name: this.formData.name,
-        description: this.formData.description || undefined
+        description: this.formData.description || undefined,
+        materialId: this.formData.materialId || undefined
       };
       this.designService.createColorFabric(dto).subscribe({
         next: () => {

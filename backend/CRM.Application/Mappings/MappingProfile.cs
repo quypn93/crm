@@ -107,7 +107,8 @@ public class MappingProfile : Profile
         CreateMap<DepositTransaction, CRM.Application.DTOs.Lookup.DepositTransactionDto>();
 
         // ColorFabric mappings
-        CreateMap<ColorFabric, ColorFabricDto>();
+        CreateMap<ColorFabric, ColorFabricDto>()
+            .ForMember(d => d.MaterialName, opt => opt.MapFrom(s => s.Material != null ? s.Material.Name : null));
         CreateMap<CreateColorFabricDto, ColorFabric>();
         CreateMap<UpdateColorFabricDto, ColorFabric>();
 

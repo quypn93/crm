@@ -252,31 +252,47 @@ public class DepositTransactionService : IDepositTransactionService
         return ToDto(e);
     }
 
-    public async Task<DepositTransactionDto> HandleSePayWebhookAsync(SePayWebhookPayload payload)
+    public async Task<int> HandleCassoWebhookAsync(CassoWebhookPayload payload)
     {
-        // Chỉ quan tâm giao dịch tiền vào
-        if (!string.Equals(payload.TransferType, "in", StringComparison.OrdinalIgnoreCase))
-            return new DepositTransactionDto();
+        if (payload.Data == null || payload.Data.Count == 0) return 0;
 
-        var externalId = payload.Id.ToString();
-        var exists = await _db.DepositTransactions.AnyAsync(x => x.ExternalId == externalId);
-        if (exists) return new DepositTransactionDto();
+        // Casso gửi cả tiền vào (amount > 0) lẫn tiền ra (amount < 0) — chỉ giữ tiền vào
+        var incoming = payload.Data.Where(t => t.Amount > 0).ToList();
+        if (incoming.Count == 0) return 0;
 
-        var e = new DepositTransaction
+        // Lọc các giao dịch đã lưu trước đó (dedupe theo Id của Casso)
+        var externalIds = incoming.Select(t => t.Id.ToString()).ToList();
+        var existing = await _db.DepositTransactions
+            .Where(x => x.ExternalId != null && externalIds.Contains(x.ExternalId))
+            .Select(x => x.ExternalId!)
+            .ToListAsync();
+        var existingSet = existing.ToHashSet();
+
+        var added = 0;
+        foreach (var t in incoming)
         {
-            // Ưu tiên `code` (SePay tự parse từ nội dung CK), fallback sang referenceCode
-            Code = !string.IsNullOrWhiteSpace(payload.Code) ? payload.Code! : (payload.ReferenceCode ?? externalId),
-            Amount = payload.TransferAmount,
-            BankName = payload.Gateway ?? string.Empty,
-            AccountNumber = payload.AccountNumber,
-            Description = ExtractRealContent(payload.Content ?? payload.Description),
-            TransactionDate = ParseSePayDateUtc(payload.TransactionDate),
-            Source = "sepay",
-            ExternalId = externalId
-        };
-        _db.DepositTransactions.Add(e);
-        await _db.SaveChangesAsync();
-        return ToDto(e);
+            var externalId = t.Id.ToString();
+            if (existingSet.Contains(externalId)) continue;
+            existingSet.Add(externalId); // tránh trùng ngay trong cùng 1 batch
+
+            _db.DepositTransactions.Add(new DepositTransaction
+            {
+                // Casso không tách sẵn mã đơn — dùng mã tham chiếu ngân hàng (tid) làm Mã GD,
+                // mã khách gõ (nếu có) nằm trong Description để sale đối chiếu.
+                Code = !string.IsNullOrWhiteSpace(t.Tid) ? t.Tid! : externalId,
+                Amount = t.Amount,
+                BankName = t.BankAbbreviation ?? t.BankName ?? string.Empty,
+                AccountNumber = t.SubAccId ?? t.BankSubAccId,
+                Description = ExtractRealContent(t.Description),
+                TransactionDate = ParseCassoDateUtc(t.When),
+                Source = "casso",
+                ExternalId = externalId
+            });
+            added++;
+        }
+
+        if (added > 0) await _db.SaveChangesAsync();
+        return added;
     }
 
     public async Task DeleteAsync(Guid id)
@@ -304,9 +320,9 @@ public class DepositTransactionService : IDepositTransactionService
     private static readonly TimeZoneInfo VnTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
         OperatingSystem.IsWindows() ? "SE Asia Standard Time" : "Asia/Ho_Chi_Minh");
 
-    // SePay gửi `transactionDate` dạng "yyyy-MM-dd HH:mm:ss" theo giờ Việt Nam, không kèm timezone.
+    // Casso gửi `when` dạng "yyyy-MM-dd HH:mm:ss" theo giờ Việt Nam, không kèm timezone.
     // PostgreSQL `timestamptz` chỉ chấp nhận DateTime.Kind=Utc nên phải convert.
-    private static DateTime ParseSePayDateUtc(string? raw)
+    private static DateTime ParseCassoDateUtc(string? raw)
     {
         if (!DateTime.TryParse(raw, out var t)) return DateTime.UtcNow;
         return t.Kind == DateTimeKind.Unspecified

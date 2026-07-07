@@ -16,17 +16,20 @@ public class OrderService : IOrderService
     private readonly IQrCodeService _qrCodeService;
     private readonly IOrderProductionService _orderProductionService;
     private readonly IGhtkShipmentService _ghtkService;
+    private readonly IViettelPostShipmentService _viettelPostService;
     private readonly ILogger<OrderService> _logger;
 
     public OrderService(IUnitOfWork unitOfWork, IMapper mapper,
         IQrCodeService qrCodeService, IOrderProductionService orderProductionService,
-        IGhtkShipmentService ghtkService, ILogger<OrderService> logger)
+        IGhtkShipmentService ghtkService, IViettelPostShipmentService viettelPostService,
+        ILogger<OrderService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _qrCodeService = qrCodeService;
         _orderProductionService = orderProductionService;
         _ghtkService = ghtkService;
+        _viettelPostService = viettelPostService;
         _logger = logger;
     }
 
@@ -369,6 +372,22 @@ public class OrderService : IOrderService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Auto-create GHTK shipment failed for order {OrderId}", order.Id);
+            }
+        }
+
+        // Auto-create Viettel Post shipment khi chuyển sang ReadyToShip và delivery method = ViettelPost.
+        if (dto.Status == OrderStatus.ReadyToShip
+            && order.DeliveryMethod == DeliveryMethod.ViettelPost
+            && string.IsNullOrWhiteSpace(order.ViettelPostLabel)
+            && _viettelPostService.IsConfigured)
+        {
+            try
+            {
+                await _viettelPostService.CreateShipmentAsync(order.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Auto-create Viettel Post shipment failed for order {OrderId}", order.Id);
             }
         }
 

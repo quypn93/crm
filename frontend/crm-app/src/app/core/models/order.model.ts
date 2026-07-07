@@ -13,13 +13,15 @@ export enum OrderStatus {
 export enum DeliveryMethod {
   InHouse = 0,
   Vehicle = 1,
-  GHTK = 2
+  GHTK = 2,
+  ViettelPost = 3
 }
 
 export const DeliveryMethodLabels: Record<DeliveryMethod, string> = {
   [DeliveryMethod.InHouse]: 'Nhà giao',
   [DeliveryMethod.Vehicle]: 'Giao xe',
-  [DeliveryMethod.GHTK]:    'Giao Hàng Tiết Kiệm'
+  [DeliveryMethod.GHTK]:    'Giao Hàng Tiết Kiệm',
+  [DeliveryMethod.ViettelPost]: 'Viettel Post'
 };
 
 export enum PaymentStatus {
@@ -134,6 +136,16 @@ export interface Order {
   ghtkInsuranceFee?: number;
   ghtkLastError?: string;
   ghtkSyncedAt?: Date;
+
+  // Viettel Post tracking — chỉ có nếu deliveryMethod = ViettelPost
+  viettelPostLabel?: string;
+  viettelPostTrackingUrl?: string;
+  viettelPostStatus?: string;
+  viettelPostStatusCode?: number;
+  viettelPostFee?: number;
+  viettelPostInsuranceFee?: number;
+  viettelPostLastError?: string;
+  viettelPostSyncedAt?: Date;
 
   subTotal: number;
   discountPercent: number;

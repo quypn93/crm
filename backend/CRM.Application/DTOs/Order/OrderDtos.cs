@@ -71,6 +71,16 @@ public class OrderDto
     public string? GhtkLastError { get; set; }
     public DateTime? GhtkSyncedAt { get; set; }
 
+    // Viettel Post tracking (read-only — chỉ set qua flow ViettelPostShipmentService)
+    public string? ViettelPostLabel { get; set; }
+    public string? ViettelPostTrackingUrl { get; set; }
+    public string? ViettelPostStatus { get; set; }
+    public int? ViettelPostStatusCode { get; set; }
+    public decimal? ViettelPostFee { get; set; }
+    public decimal? ViettelPostInsuranceFee { get; set; }
+    public string? ViettelPostLastError { get; set; }
+    public DateTime? ViettelPostSyncedAt { get; set; }
+
     public PaymentStatus PaymentStatus { get; set; }
     public string PaymentStatusName => GetPaymentStatusName(PaymentStatus);
     public string? PaymentMethod { get; set; }

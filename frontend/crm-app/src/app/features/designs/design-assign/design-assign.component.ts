@@ -30,7 +30,13 @@ export class DesignAssignComponent implements OnInit {
 
   shirtForms: LookupItem[] = [];
   colorFabrics: ColorFabric[] = [];
+  materials: LookupItem[] = [];
   designers: UserListItem[] = [];
+
+  // Chất liệu chỉ dùng để lọc màu trên UI (màu ăn theo chất liệu) — không lưu vào design,
+  // vì mỗi màu đã thuộc về một chất liệu nên chất liệu suy ra được từ màu.
+  selectedMaterialId = '';
+  filteredColors: ColorFabric[] = [];
 
   chestLogoUploading = false;
   backLogoUploading = false;
@@ -66,13 +72,16 @@ export class DesignAssignComponent implements OnInit {
     forkJoin({
       forms: this.settingsService.getLookups('product-forms'),
       colors: this.designService.getAllColorFabrics(),
+      materials: this.settingsService.getLookups('materials'),
       designers: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true, role: 'Designer' })
     }).subscribe({
       next: (res) => {
         this.shirtForms = res.forms || [];
         this.colorFabrics = res.colors || [];
+        this.materials = res.materials || [];
         this.designers = res.designers?.items || [];
         if (this.editMode && this.designId) this.loadExisting(this.designId);
+        else this.applyColorGate();
       }
     });
   }
@@ -95,9 +104,16 @@ export class DesignAssignComponent implements OnInit {
           assignmentNotes: d.assignmentNotes || ''
         });
 
+        // Suy ra chất liệu từ màu chính đã chọn để lọc lại danh sách màu.
+        const mainColor = this.colorFabrics.find(c => c.id === d.colorFabricId);
+        this.selectedMaterialId = mainColor?.materialId || '';
+        this.recomputeColors();
+
         // Khi designer đã hoàn thành — khoá form, chỉ cho xem.
         if (d.status === DesignStatus.Completed) {
           this.form.disable();
+        } else {
+          this.applyColorGate();
         }
         this.isLoading = false;
       },
@@ -109,6 +125,47 @@ export class DesignAssignComponent implements OnInit {
   }
 
   get readOnly(): boolean { return this.currentStatus === DesignStatus.Completed; }
+
+  // Phải chọn chất liệu trước khi chọn màu.
+  hasMaterialSelected(): boolean { return !!this.selectedMaterialId; }
+
+  onMaterialChange(): void {
+    this.recomputeColors();
+    this.applyColorGate();
+  }
+
+  // Màu ăn theo chất liệu: chỉ hiển thị màu của chất liệu đang chọn (kèm màu dùng chung).
+  // Fallback khi sửa dữ liệu cũ (màu chưa gắn chất liệu): hiển thị tất cả để không mất lựa chọn.
+  private recomputeColors(): void {
+    const mainVal = this.form.get('colorFabricId')?.value;
+    if (this.selectedMaterialId) {
+      this.filteredColors = this.colorFabrics.filter(c => c.materialId === this.selectedMaterialId || !c.materialId);
+    } else if (mainVal) {
+      this.filteredColors = this.colorFabrics;
+    } else {
+      this.filteredColors = [];
+    }
+
+    const main = this.form.get('colorFabricId');
+    const accent = this.form.get('accentColorFabricId');
+    if (main?.value && !this.filteredColors.find(c => c.id === main.value)) main.setValue('');
+    if (accent?.value && !this.filteredColors.find(c => c.id === accent.value)) accent.setValue('');
+  }
+
+  // Khoá 2 ô màu khi chưa chọn chất liệu (trừ khi đang sửa và đã có màu sẵn).
+  private applyColorGate(): void {
+    if (this.readOnly) return;
+    const main = this.form.get('colorFabricId');
+    const accent = this.form.get('accentColorFabricId');
+    const enabled = !!this.selectedMaterialId || !!main?.value;
+    if (enabled) {
+      main?.enable({ emitEvent: false });
+      accent?.enable({ emitEvent: false });
+    } else {
+      main?.disable({ emitEvent: false });
+      accent?.disable({ emitEvent: false });
+    }
+  }
 
   onLogoSelected(event: Event, slot: 'chest' | 'back'): void {
     const input = event.target as HTMLInputElement;

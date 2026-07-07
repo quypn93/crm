@@ -55,23 +55,33 @@ public interface IDepositTransactionService
 {
     Task<IEnumerable<DepositTransactionDto>> GetAllAsync();
     Task<DepositTransactionDto> CreateAsync(CreateDepositTransactionDto dto);
-    Task<DepositTransactionDto> HandleSePayWebhookAsync(SePayWebhookPayload payload);
+    Task<int> HandleCassoWebhookAsync(CassoWebhookPayload payload);
     Task DeleteAsync(Guid id);
 }
 
-// SePay webhook shape. Docs: https://docs.sepay.vn/tich-hop-webhooks.html
-public class SePayWebhookPayload
+// Casso webhook shape (Secure-Token / legacy). Docs: https://developer.casso.vn/webhook/thiet-lap-webhook-thu-cong
+// Casso gửi một envelope { "error": 0, "data": [ {...}, ... ] } — kể cả 1 giao dịch cũng nằm trong mảng.
+public class CassoWebhookPayload
 {
-    public long Id { get; set; }
-    public string? Gateway { get; set; }               // Ngân hàng, vd "Techcombank"
-    public string? TransactionDate { get; set; }       // "yyyy-MM-dd HH:mm:ss"
-    public string? AccountNumber { get; set; }
-    public string? Code { get; set; }                  // Mã code tự parse từ nội dung
-    public string? Content { get; set; }               // Nội dung chuyển khoản
-    public string? TransferType { get; set; }          // "in" | "out"
-    public decimal TransferAmount { get; set; }
-    public decimal? Accumulated { get; set; }          // Số dư sau giao dịch
-    public string? SubAccount { get; set; }
-    public string? ReferenceCode { get; set; }         // Mã tham chiếu ngân hàng (FT...)
-    public string? Description { get; set; }
+    public int Error { get; set; }
+    public List<CassoTransaction> Data { get; set; } = new();
+}
+
+public class CassoTransaction
+{
+    public long Id { get; set; }                       // Id giao dịch của Casso (dùng dedupe)
+    public string? Tid { get; set; }                   // Mã tham chiếu ngân hàng (FT...)
+    public string? Description { get; set; }           // Nội dung chuyển khoản
+    public decimal Amount { get; set; }                // > 0: tiền vào, < 0: tiền ra
+    [System.Text.Json.Serialization.JsonPropertyName("cusum_balance")]
+    public decimal? CusumBalance { get; set; }         // Số dư sau giao dịch
+    public string? When { get; set; }                  // "yyyy-MM-dd HH:mm:ss" giờ VN
+    [System.Text.Json.Serialization.JsonPropertyName("bank_sub_acc_id")]
+    public string? BankSubAccId { get; set; }          // Số tài khoản nhận
+    public string? SubAccId { get; set; }              // Số tài khoản nhận (bản mới)
+    public string? BankName { get; set; }
+    public string? BankAbbreviation { get; set; }      // vd "TCB", "VCB"
+    public string? CorresponsiveName { get; set; }     // Tên người chuyển
+    public string? CorresponsiveAccount { get; set; }  // STK người chuyển
+    public string? CorresponsiveBankName { get; set; }
 }

@@ -26,7 +26,7 @@
         placeholder="Tìm kiếm theo tên, email...">
     </div>
 
-    <select [(ngModel)]="filterRole" (change)="onFilterChange()" class="filter-select">
+    <select *ngIf="isAdmin" [(ngModel)]="filterRole" (change)="onFilterChange()" class="filter-select">
       <option value="">Tất cả vai trò</option>
       <option *ngFor="let role of roles" [value]="role.name">{{ getRoleLabel(role.name) }}</option>
     </select>
@@ -110,7 +110,7 @@
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
               </button>
-              <button class="btn-icon btn-danger" title="Xóa" (click)="deleteUser(user)">
+              <button *ngIf="isAdmin" class="btn-icon btn-danger" title="Xóa" (click)="deleteUser(user)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="3 6 5 6 21 6"></polyline>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>

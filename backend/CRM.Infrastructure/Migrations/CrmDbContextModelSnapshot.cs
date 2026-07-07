@@ -215,6 +215,9 @@ namespace CRM.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<Guid?>("MaterialId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -224,6 +227,8 @@ namespace CRM.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MaterialId");
 
                     b.HasIndex("Name");
 
@@ -1166,6 +1171,36 @@ namespace CRM.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal?>("ViettelPostFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal?>("ViettelPostInsuranceFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("ViettelPostLabel")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ViettelPostLastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("ViettelPostStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("ViettelPostStatusCode")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ViettelPostSyncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ViettelPostTrackingUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AssignedToUserId");
@@ -1196,6 +1231,8 @@ namespace CRM.Infrastructure.Migrations
                     b.HasIndex("ShipperUserId");
 
                     b.HasIndex("Status");
+
+                    b.HasIndex("ViettelPostLabel");
 
                     b.ToTable("Orders", (string)null);
                 });
@@ -2095,6 +2132,16 @@ namespace CRM.Infrastructure.Migrations
                     b.Navigation("Collection");
 
                     b.Navigation("ProductSpecification");
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.ColorFabric", b =>
+                {
+                    b.HasOne("CRM.Core.Entities.Material", "Material")
+                        .WithMany()
+                        .HasForeignKey("MaterialId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Material");
                 });
 
             modelBuilder.Entity("CRM.Core.Entities.Conversation", b =>

@@ -4,6 +4,7 @@ using CRM.Application.Services;
 using CRM.Infrastructure.Services;
 using CRM.Infrastructure.Services.Email;
 using CRM.Infrastructure.Services.Ghtk;
+using CRM.Infrastructure.Services.ViettelPost;
 using CRM.Application.Interfaces;
 using CRM.Core.Interfaces;
 using CRM.Infrastructure.Data;
@@ -241,6 +242,14 @@ builder.Services.AddHttpClient<IGhtkClient, GhtkClient>(c =>
     c.Timeout = TimeSpan.FromSeconds(30);
 });
 builder.Services.AddScoped<IGhtkShipmentService, GhtkShipmentService>();
+
+// Viettel Post integration — endpoint & shipment orchestrator
+builder.Services.Configure<ViettelPostOptions>(builder.Configuration.GetSection("ViettelPost"));
+builder.Services.AddHttpClient<IViettelPostClient, ViettelPostClient>(c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddScoped<IViettelPostShipmentService, ViettelPostShipmentService>();
 
 // Notification system
 builder.Services.AddSignalR();

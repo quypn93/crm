@@ -52,17 +52,25 @@
             </select>
           </div>
           <div class="form-group">
+            <label>Chất liệu <span class="required">*</span></label>
+            <select [(ngModel)]="selectedMaterialId" [ngModelOptions]="{standalone: true}"
+                    (ngModelChange)="onMaterialChange()" [disabled]="readOnly">
+              <option value="">-- Chọn chất liệu --</option>
+              <option *ngFor="let m of materials" [value]="m.id">{{ m.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label>Màu áo chính <span class="required">*</span></label>
             <select formControlName="colorFabricId">
-              <option value="">-- Chọn màu --</option>
-              <option *ngFor="let c of colorFabrics" [value]="c.id">{{ c.name }}</option>
+              <option value="">{{ hasMaterialSelected() ? '-- Chọn màu --' : '-- Chọn chất liệu trước --' }}</option>
+              <option *ngFor="let c of filteredColors" [value]="c.id">{{ c.name }}</option>
             </select>
           </div>
           <div class="form-group">
             <label>Màu phối</label>
             <select formControlName="accentColorFabricId">
-              <option value="">-- Không có --</option>
-              <option *ngFor="let c of colorFabrics" [value]="c.id">{{ c.name }}</option>
+              <option value="">{{ hasMaterialSelected() ? '-- Không có --' : '-- Chọn chất liệu trước --' }}</option>
+              <option *ngFor="let c of filteredColors" [value]="c.id">{{ c.name }}</option>
             </select>
           </div>
         </div>

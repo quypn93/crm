@@ -6,6 +6,7 @@ import {
   UserSearchParams,
   RoleItem
 } from '../../../core/services/user-management.service';
+import { AuthService, RoleNames } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-user-list',
@@ -16,6 +17,8 @@ export class UserListComponent implements OnInit {
   users: UserListItem[] = [];
   roles: RoleItem[] = [];
   isLoading = false;
+  // Admin: quản lý mọi user. Trưởng phòng kinh doanh: chỉ thấy/thao tác Nhân viên kinh doanh.
+  isAdmin = false;
 
   searchTerm = '';
   filterRole = '';
@@ -28,11 +31,18 @@ export class UserListComponent implements OnInit {
 
   constructor(
     private userService: UserManagementService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.loadRoles();
+    this.isAdmin = this.authService.hasAnyRole([RoleNames.Admin]);
+    if (this.isAdmin) {
+      this.loadRoles(); // getRoles là API riêng của Admin
+    } else {
+      // Trưởng phòng kinh doanh chỉ xem danh sách Nhân viên kinh doanh.
+      this.filterRole = RoleNames.SalesRep;
+    }
     this.loadUsers();
   }
 

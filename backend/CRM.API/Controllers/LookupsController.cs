@@ -183,21 +183,17 @@ public class DepositsController : ControllerBase
         return Ok(ApiResponse.Ok("Xóa thành công."));
     }
 
-    // SePay webhook: POST /api/deposits/sepay-webhook
-    // SePay gửi header `Authorization: Apikey <YOUR_API_KEY>` — config tại SePay:ApiKey
-    [HttpPost("sepay-webhook")]
+    // Casso webhook: POST /api/deposits/casso-webhook
+    // Casso gửi header `Secure-Token: <YOUR_SECURE_TOKEN>` — config tại Casso:SecureToken
+    [HttpPost("casso-webhook")]
     [AllowAnonymous]
-    public async Task<IActionResult> SePayWebhook([FromBody] SePayWebhookPayload payload, [FromHeader(Name = "Authorization")] string? authorization)
+    public async Task<IActionResult> CassoWebhook([FromBody] CassoWebhookPayload payload, [FromHeader(Name = "Secure-Token")] string? secureToken)
     {
-        var expectedKey = _config["SePay:ApiKey"];
-        if (!string.IsNullOrEmpty(expectedKey))
-        {
-            var expected = $"Apikey {expectedKey}";
-            if (authorization != expected)
-                return Unauthorized(new { error = "Invalid API key" });
-        }
+        var expectedToken = _config["Casso:SecureToken"];
+        if (!string.IsNullOrEmpty(expectedToken) && secureToken != expectedToken)
+            return Unauthorized(new { error = "Invalid secure token" });
 
-        await _svc.HandleSePayWebhookAsync(payload);
+        await _svc.HandleCassoWebhookAsync(payload);
         return Ok(new { success = true });
     }
 }

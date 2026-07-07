@@ -458,6 +458,97 @@ export class OrderDetailComponent implements OnInit {
     });
   }
 
+  // ── Viettel Post ────────────────────────────────────────────────────
+  isViettelPostBusy = false;
+  viettelPostError = '';
+
+  isViettelPostOrder(): boolean {
+    return this.order?.deliveryMethod === DeliveryMethod.ViettelPost;
+  }
+
+  canCreateViettelPost(): boolean {
+    return this.isViettelPostOrder()
+      && !this.order?.viettelPostLabel
+      && this.authService.hasAnyRole(['Admin', 'SalesManager', 'SalesRep', 'DeliveryManager', 'DeliveryStaff']);
+  }
+
+  canCancelViettelPost(): boolean {
+    return this.isViettelPostOrder()
+      && !!this.order?.viettelPostLabel
+      && this.order?.status !== OrderStatus.Delivered
+      && this.order?.status !== OrderStatus.Completed
+      && this.authService.hasAnyRole(['Admin', 'SalesManager', 'DeliveryManager']);
+  }
+
+  estimateViettelPostFee(): void {
+    if (!this.order) return;
+    this.isViettelPostBusy = true;
+    this.viettelPostError = '';
+    this.orderService.estimateViettelPostFee(this.order.id).subscribe({
+      next: (fee) => {
+        this.isViettelPostBusy = false;
+        this.toast.success(`Phí Viettel Post ước tính: ${this.formatCurrency(fee.fee + fee.insuranceFee)}`);
+        this.loadOrder(this.order!.id);
+      },
+      error: (err) => {
+        this.isViettelPostBusy = false;
+        this.viettelPostError = err?.error?.message || 'Không lấy được phí Viettel Post.';
+      }
+    });
+  }
+
+  createViettelPostShipment(): void {
+    if (!this.order) return;
+    if (!confirm(`Tạo vận đơn Viettel Post cho đơn ${this.order.orderNumber}?`)) return;
+    this.isViettelPostBusy = true;
+    this.viettelPostError = '';
+    this.orderService.createViettelPostShipment(this.order.id).subscribe({
+      next: () => {
+        this.isViettelPostBusy = false;
+        this.toast.success('Đã tạo vận đơn Viettel Post.');
+        this.loadOrder(this.order!.id);
+      },
+      error: (err) => {
+        this.isViettelPostBusy = false;
+        this.viettelPostError = err?.error?.message || 'Tạo vận đơn Viettel Post thất bại.';
+      }
+    });
+  }
+
+  cancelViettelPostShipment(): void {
+    if (!this.order) return;
+    if (!confirm(`Huỷ vận đơn Viettel Post ${this.order.viettelPostLabel}?`)) return;
+    this.isViettelPostBusy = true;
+    this.viettelPostError = '';
+    this.orderService.cancelViettelPostShipment(this.order.id).subscribe({
+      next: () => {
+        this.isViettelPostBusy = false;
+        this.toast.success('Đã huỷ vận đơn Viettel Post.');
+        this.loadOrder(this.order!.id);
+      },
+      error: (err) => {
+        this.isViettelPostBusy = false;
+        this.viettelPostError = err?.error?.message || 'Huỷ vận đơn Viettel Post thất bại.';
+      }
+    });
+  }
+
+  syncViettelPostStatus(): void {
+    if (!this.order) return;
+    this.isViettelPostBusy = true;
+    this.viettelPostError = '';
+    this.orderService.syncViettelPostStatus(this.order.id).subscribe({
+      next: () => {
+        this.isViettelPostBusy = false;
+        this.loadOrder(this.order!.id);
+      },
+      error: (err) => {
+        this.isViettelPostBusy = false;
+        this.viettelPostError = err?.error?.message || 'Đồng bộ trạng thái Viettel Post thất bại.';
+      }
+    });
+  }
+
   canUploadDesignImage(): boolean {
     return this.authService.hasAnyRole(['Admin', 'Designer']);
   }

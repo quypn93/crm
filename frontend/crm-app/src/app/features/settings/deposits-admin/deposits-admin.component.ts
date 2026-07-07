@@ -12,7 +12,7 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
       </div>
 
       <p style="color:#64748b;font-size:13px;">
-        Giao dịch từ SePay webhook sẽ tự động xuất hiện ở đây. Sale có thể nhìn vào danh sách này để biết mã giao dịch nào là của mình và điền vào đơn hàng.
+        Giao dịch từ Casso webhook sẽ tự động xuất hiện ở đây. Sale có thể nhìn vào danh sách này để biết mã giao dịch nào là của mình và điền vào đơn hàng.
       </p>
 
       <table class="table">
@@ -34,7 +34,7 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
             <td style="text-align:right;color:#16a34a;font-weight:600;">{{ d.amount | number }} đ</td>
             <td>{{ d.bankName }}</td>
             <td>{{ d.description }}</td>
-            <td><span class="badge" [class.auto]="d.source==='sepay'">{{ d.source }}</span></td>
+            <td><span class="badge" [class.auto]="d.source==='casso'">{{ d.source }}</span></td>
             <td>
               <button class="btn btn-sm btn-danger" (click)="remove(d)">Xóa</button>
             </td>

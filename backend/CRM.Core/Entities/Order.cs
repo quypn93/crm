@@ -48,6 +48,16 @@ public class Order : BaseEntity
     public string? GhtkLastError { get; set; }          // Lỗi lần gọi API gần nhất
     public DateTime? GhtkSyncedAt { get; set; }
 
+    // Viettel Post tracking — chỉ điền khi DeliveryMethod = ViettelPost
+    public string? ViettelPostLabel { get; set; }       // Mã vận đơn (ORDER_NUMBER) trả về từ Viettel Post
+    public string? ViettelPostTrackingUrl { get; set; }
+    public string? ViettelPostStatus { get; set; }      // Trạng thái raw từ Viettel Post
+    public int? ViettelPostStatusCode { get; set; }     // ORDER_STATUS code
+    public decimal? ViettelPostFee { get; set; }        // Phí vận chuyển Viettel Post trả (reference)
+    public decimal? ViettelPostInsuranceFee { get; set; }
+    public string? ViettelPostLastError { get; set; }
+    public DateTime? ViettelPostSyncedAt { get; set; }
+
     // Payment info
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
     public string? PaymentMethod { get; set; }

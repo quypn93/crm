@@ -8,7 +8,7 @@ public class DepositTransaction : BaseEntity
     public string? AccountNumber { get; set; }
     public string? Description { get; set; }                  // Nội dung chuyển khoản
     public DateTime TransactionDate { get; set; }
-    public string Source { get; set; } = "manual";            // manual | sepay
+    public string Source { get; set; } = "manual";            // manual | casso
     public string? ExternalId { get; set; }                   // Id từ webhook nhà cung cấp (dedupe)
     public Guid? MatchedOrderId { get; set; }                 // Order mà sale đã claim mã này
     public virtual Order? MatchedOrder { get; set; }

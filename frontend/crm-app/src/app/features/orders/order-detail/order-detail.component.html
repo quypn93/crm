@@ -193,6 +193,65 @@
               </div>
             </ng-template>
           </div>
+
+          <!-- Viettel Post tracking — chỉ hiện khi đơn chọn Viettel Post -->
+          <div class="info-item full-width ghtk-panel" *ngIf="isViettelPostOrder()">
+            <div class="ghtk-header">
+              <strong>Vận đơn Viettel Post</strong>
+              <div class="ghtk-actions">
+                <button type="button" class="btn btn-sm btn-outline"
+                        *ngIf="!order.viettelPostLabel"
+                        [disabled]="isViettelPostBusy"
+                        (click)="estimateViettelPostFee()">Tính phí ước tính</button>
+                <button type="button" class="btn btn-sm btn-primary"
+                        *ngIf="canCreateViettelPost()"
+                        [disabled]="isViettelPostBusy"
+                        (click)="createViettelPostShipment()">Tạo vận đơn Viettel Post</button>
+                <button type="button" class="btn btn-sm btn-outline"
+                        *ngIf="order.viettelPostLabel"
+                        [disabled]="isViettelPostBusy"
+                        (click)="syncViettelPostStatus()">Đồng bộ</button>
+                <button type="button" class="btn btn-sm btn-danger"
+                        *ngIf="canCancelViettelPost()"
+                        [disabled]="isViettelPostBusy"
+                        (click)="cancelViettelPostShipment()">Huỷ vận đơn</button>
+              </div>
+            </div>
+            <div class="alert alert-danger" *ngIf="viettelPostError">{{ viettelPostError }}</div>
+            <div class="ghtk-body" *ngIf="order.viettelPostLabel; else vtpNoLabel">
+              <div class="ghtk-row">
+                <span class="label">Mã vận đơn</span>
+                <span class="value">
+                  <a *ngIf="order.viettelPostTrackingUrl" [href]="order.viettelPostTrackingUrl" target="_blank" rel="noopener">{{ order.viettelPostLabel }}</a>
+                  <ng-container *ngIf="!order.viettelPostTrackingUrl">{{ order.viettelPostLabel }}</ng-container>
+                </span>
+              </div>
+              <div class="ghtk-row">
+                <span class="label">Trạng thái</span>
+                <span class="value">{{ order.viettelPostStatus || '-' }} <em *ngIf="order.viettelPostStatusCode !== undefined">(code {{ order.viettelPostStatusCode }})</em></span>
+              </div>
+              <div class="ghtk-row" *ngIf="order.viettelPostFee">
+                <span class="label">Phí Viettel Post</span>
+                <span class="value">{{ formatCurrency(order.viettelPostFee) }}<span *ngIf="order.viettelPostInsuranceFee"> + BH {{ formatCurrency(order.viettelPostInsuranceFee) }}</span></span>
+              </div>
+              <div class="ghtk-row" *ngIf="order.viettelPostSyncedAt">
+                <span class="label">Đồng bộ</span>
+                <span class="value">{{ order.viettelPostSyncedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="ghtk-row" *ngIf="order.viettelPostLastError">
+                <span class="label">Lỗi gần nhất</span>
+                <span class="value text-danger">{{ order.viettelPostLastError }}</span>
+              </div>
+            </div>
+            <ng-template #vtpNoLabel>
+              <div class="ghtk-body" *ngIf="order.viettelPostFee">
+                Phí Viettel Post ước tính: <strong>{{ formatCurrency(order.viettelPostFee) }}</strong>
+              </div>
+              <div class="ghtk-body muted" *ngIf="!order.viettelPostFee">
+                Chưa tạo vận đơn Viettel Post. Sẽ tự tạo khi đơn chuyển sang "Sẵn sàng giao" (nếu Viettel Post đã cấu hình).
+              </div>
+            </ng-template>
+          </div>
           <div class="info-item">
             <span class="label">Người nhận</span>
             <span class="value">{{ order.shippingContactName || '-' }}</span>

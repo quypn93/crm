@@ -69,6 +69,14 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.GhtkLastError).HasMaxLength(1000);
         builder.HasIndex(o => o.GhtkLabel);
 
+        builder.Property(o => o.ViettelPostLabel).HasMaxLength(50);
+        builder.Property(o => o.ViettelPostTrackingUrl).HasMaxLength(500);
+        builder.Property(o => o.ViettelPostStatus).HasMaxLength(50);
+        builder.Property(o => o.ViettelPostFee).HasPrecision(18, 2);
+        builder.Property(o => o.ViettelPostInsuranceFee).HasPrecision(18, 2);
+        builder.Property(o => o.ViettelPostLastError).HasMaxLength(1000);
+        builder.HasIndex(o => o.ViettelPostLabel);
+
         builder.Property(o => o.PaymentMethod)
             .HasMaxLength(100);
 

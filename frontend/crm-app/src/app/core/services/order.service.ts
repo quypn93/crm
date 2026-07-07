@@ -36,6 +36,22 @@ export interface GhtkShipment {
   syncedAt?: string;
 }
 
+export interface ViettelPostFee {
+  fee: number;
+  insuranceFee: number;
+  deliveryType?: string;
+}
+
+export interface ViettelPostShipment {
+  label?: string;
+  trackingUrl?: string;
+  status?: string;
+  statusCode?: number;
+  fee?: number;
+  insuranceFee?: number;
+  syncedAt?: string;
+}
+
 export interface OrderSearchParams {
   search?: string;
   customerId?: string;
@@ -191,6 +207,26 @@ export class OrderService {
 
   syncGhtkStatus(orderId: string): Observable<GhtkShipment> {
     return this.api.post<GhtkShipment>(`ghtk/orders/${orderId}/sync`, {});
+  }
+
+  getViettelPostStatus(): Observable<{ configured: boolean }> {
+    return this.api.get<{ configured: boolean }>('viettelpost/status');
+  }
+
+  estimateViettelPostFee(orderId: string): Observable<ViettelPostFee> {
+    return this.api.post<ViettelPostFee>(`viettelpost/orders/${orderId}/estimate-fee`, {});
+  }
+
+  createViettelPostShipment(orderId: string): Observable<ViettelPostShipment> {
+    return this.api.post<ViettelPostShipment>(`viettelpost/orders/${orderId}/create`, {});
+  }
+
+  cancelViettelPostShipment(orderId: string): Observable<void> {
+    return this.api.post<void>(`viettelpost/orders/${orderId}/cancel`, {});
+  }
+
+  syncViettelPostStatus(orderId: string): Observable<ViettelPostShipment> {
+    return this.api.post<ViettelPostShipment>(`viettelpost/orders/${orderId}/sync`, {});
   }
 
   getPublicByToken(token: string): Observable<Order> {

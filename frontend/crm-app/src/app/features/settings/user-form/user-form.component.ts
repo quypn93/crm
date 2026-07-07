@@ -7,6 +7,7 @@ import {
   CreateUserDto,
   UpdateUserDto
 } from '../../../core/services/user-management.service';
+import { AuthService, RoleNames } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-user-form',
@@ -22,10 +23,13 @@ export class UserFormComponent implements OnInit {
   errorMessage = '';
   roles: RoleItem[] = [];
   selectedRoles: Set<string> = new Set();
+  // Admin: chọn nhiều vai trò. Trưởng phòng kinh doanh: chỉ tạo được Nhân viên kinh doanh (SalesRep).
+  isAdmin = false;
 
   constructor(
     private fb: FormBuilder,
     private userService: UserManagementService,
+    private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute
   ) {
@@ -40,7 +44,13 @@ export class UserFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadRoles();
+    this.isAdmin = this.authService.hasAnyRole([RoleNames.Admin]);
+    if (this.isAdmin) {
+      this.loadRoles(); // getRoles là API riêng của Admin
+    } else {
+      // Trưởng phòng kinh doanh: khoá vai trò là SalesRep.
+      this.selectedRoles = new Set([RoleNames.SalesRep]);
+    }
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id && id !== 'new') {
@@ -71,7 +81,7 @@ export class UserFormComponent implements OnInit {
           phoneNumber: user.phoneNumber,
           isActive: user.isActive
         });
-        this.selectedRoles = new Set(user.roles);
+        this.selectedRoles = this.isAdmin ? new Set(user.roles) : new Set([RoleNames.SalesRep]);
         this.isLoading = false;
       },
       error: () => {

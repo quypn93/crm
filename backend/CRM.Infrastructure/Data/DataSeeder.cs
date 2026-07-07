@@ -9,6 +9,12 @@ public static class DataSeeder
 {
     public static async Task SeedAsync(CrmDbContext context)
     {
+        // Đảm bảo cột MaterialId trên ColorFabrics tồn tại (idempotent) — vì Migrate() là no-op trên prod.
+        await EnsureColorFabricMaterialSchemaAsync(context);
+
+        // Đảm bảo các cột tracking Viettel Post trên Orders tồn tại (idempotent).
+        await EnsureViettelPostColumnsAsync(context);
+
         await SeedDealStagesAsync(context);
         await context.SaveChangesAsync();
 
@@ -32,6 +38,10 @@ public static class DataSeeder
 
         await SeedLookupsAsync(context);
         await context.SaveChangesAsync();
+
+        await SeedSheetMaterialsAndColorsAsync(context);
+
+        await RemoveLegacyMaterialsColorsAsync(context);
 
         await SeedVietnamLocationsAsync(context);
         await context.SaveChangesAsync();
@@ -416,10 +426,30 @@ public static class DataSeeder
         if (!await context.ProductForms.AnyAsync())
         {
             context.ProductForms.AddRange(
-                new ProductForm { Name = "Ôm (Slim Fit)",     IsActive = true },
-                new ProductForm { Name = "Vừa (Regular Fit)", IsActive = true },
-                new ProductForm { Name = "Rộng (Loose Fit)",  IsActive = true }
+                new ProductForm { Name = "Classic",  IsActive = true },
+                new ProductForm { Name = "Oversize", IsActive = true },
+                new ProductForm { Name = "Unisex",   IsActive = true }
             );
+        }
+        else
+        {
+            // DB đã có dữ liệu: đổi taxonomy form cũ (Slim/Regular/Loose) → Classic/Oversize/Unisex.
+            // Giữ nguyên Id nên các đơn cũ vẫn trỏ đúng formId. Idempotent: chạy lại không tác động.
+            var formRenames = new Dictionary<string, string>
+            {
+                ["Ôm (Slim Fit)"]     = "Classic",
+                ["Vừa (Regular Fit)"] = "Oversize",
+                ["Rộng (Loose Fit)"]  = "Unisex",
+            };
+            var existingForms = await context.ProductForms.ToListAsync();
+            foreach (var f in existingForms)
+            {
+                if (formRenames.TryGetValue(f.Name, out var newName) &&
+                    !existingForms.Any(o => o.Name == newName))
+                {
+                    f.Name = newName;
+                }
+            }
         }
 
         // ── ProductSpecifications (cổ / tay / chi tiết) ───────────────
@@ -482,7 +512,7 @@ public static class DataSeeder
                 "Bộ sưu tập cổ bẻ",
                 "Áo polo cổ bẻ, đa dạng chất liệu và màu sắc",
                 new[] { "Cotton 100%", "Cotton pha (CVC)", "Thun cá sấu" },
-                new[] { "Ôm (Slim Fit)", "Vừa (Regular Fit)" },
+                new[] { "Classic", "Oversize" },
                 new[] { "Cổ bẻ (polo), tay ngắn", "Cổ bẻ (polo), tay dài" },
                 new[] { "Trắng", "Đen", "Xanh Dương", "Xanh Lá", "Đỏ" });
 
@@ -490,7 +520,7 @@ public static class DataSeeder
                 "Bộ sưu tập cổ dệt",
                 "Áo polo cổ dệt cao cấp",
                 new[] { "Cotton 100%", "Thun cá sấu", "Coolmate" },
-                new[] { "Vừa (Regular Fit)" },
+                new[] { "Oversize" },
                 new[] { "Cổ bẻ (polo), tay ngắn" },
                 new[] { "Trắng", "Đen", "Xanh Lá", "Đỏ Đô", "Xanh Rêu" });
 
@@ -498,7 +528,7 @@ public static class DataSeeder
                 "Bộ sưu tập cổ tròn",
                 "Áo thun cổ tròn căn bản",
                 new[] { "Cotton 100%", "TC (65% Polyester, 35% Cotton)", "Thun cotton" },
-                new[] { "Ôm (Slim Fit)", "Vừa (Regular Fit)", "Rộng (Loose Fit)" },
+                new[] { "Classic", "Oversize", "Unisex" },
                 new[] { "Cổ tròn, tay ngắn", "Cổ tròn, tay dài" },
                 new[] { "Trắng", "Đen", "Xám", "Xanh Dương", "Đỏ", "Vàng" });
 
@@ -506,7 +536,7 @@ public static class DataSeeder
                 "Bộ sưu tập đồng phục công sở",
                 "Áo sơ mi công sở, kate cao cấp",
                 new[] { "Kate" },
-                new[] { "Ôm (Slim Fit)", "Vừa (Regular Fit)" },
+                new[] { "Classic", "Oversize" },
                 new[] { "Cổ trụ, tay ngắn" },
                 new[] { "Trắng", "Xanh Dương Nhạt", "Be/Kem" });
         }
@@ -545,6 +575,145 @@ public static class DataSeeder
                     ALTER TABLE "Orders"
                     ADD CONSTRAINT "FK_Orders_OrderTypes_OrderTypeId"
                     FOREIGN KEY ("OrderTypeId") REFERENCES "OrderTypes" ("Id")
+                    ON DELETE SET NULL;
+                END IF;
+            END $$;
+            """);
+    }
+
+    // Xoá chất liệu + màu generic cũ (seed đời đầu), giữ lại data theo sheet BẢNG MÀU.
+    // Xoá theo đúng tên seed cũ nên chạy lại an toàn (không đụng chất liệu/màu người dùng tự thêm).
+    // FK đã cấu hình: xoá sẽ cascade các link Collection và SET NULL tham chiếu ở OrderItems/Designs/ShirtComponents.
+    private static async Task RemoveLegacyMaterialsColorsAsync(CrmDbContext context)
+    {
+        await context.Database.ExecuteSqlRawAsync("""
+            DELETE FROM "ColorFabrics"
+            WHERE "MaterialId" IS NULL AND "Name" IN (
+                'Trắng','Đen','Xanh Dương','Xanh Dương Nhạt','Xanh Lá','Đỏ','Vàng','Cam',
+                'Tím','Hồng','Xám','Nâu','Be/Kem','Xanh Rêu','Đỏ Đô'
+            );
+
+            DELETE FROM "Materials"
+            WHERE "Name" IN (
+                'Cotton 100%','Cotton pha (CVC)','TC (65% Polyester, 35% Cotton)','Kate',
+                'Thun cá sấu','Thun cotton','Mè bóng','Coolmate'
+            );
+            """);
+    }
+
+    // Chất liệu + màu theo sheet "BẢNG MÀU" — thêm mới, giữ nguyên data cũ (idempotent, chạy mỗi lần khởi động).
+    // Mỗi màu gắn với chất liệu tương ứng (màu ăn theo chất liệu). Chỉ thêm chất liệu/màu chưa tồn tại theo tên.
+    private static async Task SeedSheetMaterialsAndColorsAsync(CrmDbContext context)
+    {
+        // (Tên chất liệu, danh sách màu) theo sheet BẢNG MÀU. Mỗi chất liệu có bộ màu riêng.
+        var sheet = new (string Material, string[] Colors)[]
+        {
+            ("X-FIT", new[]
+            {
+                "Nâu 01", "Cacao 01", "vàng nghệ 01", "Vàng đậm 01", "Đen 01", "Xám đậm 01",
+                "Xám lợt 01", "Trắng gạo 01", "Xanh đen 01", "Bích đậm 01", "Thiên thanh 01",
+                "Kem 01", "Tím Huế 01", "Xám xanh 01", "Xanh biển 01", "Ve chai tươi 01",
+                "Kết đậm 01", "Lý đậm 01", "Cam đậm 01", "Đỏ đô 01", "Đỏ 01", "Sen đậm 01", "Ruốc 01"
+            }),
+            ("X-SOFT", new[] { "ĐEN 02", "TRẮNG GẠO 02", "CAM 02" }),
+            ("X-PLUS", new[]
+            {
+                "Trắng gạo 03", "Vàng 03", "Vàng bò 03", "Xám 03", "Vỏ đậu 03", "Cổ vịt 03",
+                "Biển 03", "Kem 03", "Biển nhạt 03", "Bích 03", "YA03", "Cacao 03", "Xám đậm 03",
+                "Xanh đen 03", "Đen 03", "Lý 03", "Rêu 03", "Đỏ đô 03"
+            }),
+            ("X-COOL", new[]
+            {
+                "NHO 05", "ĐỎ ĐÔ 05", "ĐO TƯƠI 05", "ĐEN 05", "XANH ĐEN 05", "BÍCH 05",
+                "XÁM ĐẬM 05", "XÁM NHẠT 05", "TRẮNG GẠO 05", "VÀNG 05", "KEM CHEESE 05", "XANH IRIS 05"
+            }),
+            ("X-CORE", new[]
+            {
+                "ĐỎ ĐÔ 04", "ĐỎ 04", "CAM 04", "HỒNG NHẠT 04", "VÀNG NHẠT 04", "TRẮNG GẠO 04",
+                "VÀNG BÒ 04", "XANH YA 04", "XANH BÍCH 04", "XANH THAN 04", "XANH KÉT 04", "LÝ 04", "ĐEN 04"
+            }),
+            ("X-Air", new[] { "TRẮNG" }),
+            ("X-Airmax", new[] { "TRẮNG" }),
+            ("X-Prime", new[] { "TRẮNG" }),
+        };
+
+        // 1) Đảm bảo các chất liệu tồn tại (thêm cái chưa có) rồi lưu để có Id.
+        var materials = await context.Materials.ToListAsync();
+        var newMaterials = false;
+        foreach (var (materialName, _) in sheet)
+        {
+            if (materials.Any(m => m.Name == materialName)) continue;
+            var m = new Material { Name = materialName, IsActive = true };
+            context.Materials.Add(m);
+            materials.Add(m);
+            newMaterials = true;
+        }
+        if (newMaterials) await context.SaveChangesAsync();
+
+        // 2) Thêm màu chưa có cho từng chất liệu. Dedup theo (tên màu + chất liệu) nên các chất liệu
+        //    khác nhau vẫn có thể cùng tên màu (VD "TRẮNG" của X-Air/X-Airmax/X-Prime). Idempotent.
+        var existingPairs = (await context.ColorFabrics
+                .Where(c => c.MaterialId != null)
+                .Select(c => new { c.Name, c.MaterialId })
+                .ToListAsync())
+            .Select(x => (x.Name.ToLower(), x.MaterialId!.Value))
+            .ToHashSet();
+
+        var addedColors = false;
+        foreach (var (materialName, colors) in sheet)
+        {
+            var material = materials.First(m => m.Name == materialName);
+            foreach (var raw in colors)
+            {
+                var colorName = raw.Trim();
+                if (colorName.Length == 0) continue;
+                if (!existingPairs.Add((colorName.ToLower(), material.Id))) continue;
+                context.ColorFabrics.Add(new ColorFabric { Name = colorName, MaterialId = material.Id });
+                addedColors = true;
+            }
+        }
+        if (addedColors) await context.SaveChangesAsync();
+    }
+
+    // Thêm cột tracking Viettel Post trên Orders (idempotent) — mirror các cột Ghtk*.
+    private static async Task EnsureViettelPostColumnsAsync(CrmDbContext context)
+    {
+        await context.Database.ExecuteSqlRawAsync("""
+            ALTER TABLE "Orders"
+                ADD COLUMN IF NOT EXISTS "ViettelPostLabel" character varying(50) NULL,
+                ADD COLUMN IF NOT EXISTS "ViettelPostTrackingUrl" character varying(500) NULL,
+                ADD COLUMN IF NOT EXISTS "ViettelPostStatus" character varying(50) NULL,
+                ADD COLUMN IF NOT EXISTS "ViettelPostStatusCode" integer NULL,
+                ADD COLUMN IF NOT EXISTS "ViettelPostFee" numeric(18,2) NULL,
+                ADD COLUMN IF NOT EXISTS "ViettelPostInsuranceFee" numeric(18,2) NULL,
+                ADD COLUMN IF NOT EXISTS "ViettelPostLastError" character varying(1000) NULL,
+                ADD COLUMN IF NOT EXISTS "ViettelPostSyncedAt" timestamp with time zone NULL;
+
+            CREATE INDEX IF NOT EXISTS "IX_Orders_ViettelPostLabel"
+                ON "Orders" ("ViettelPostLabel");
+            """);
+    }
+
+    // Màu ăn theo chất liệu: thêm cột ColorFabrics.MaterialId + FK → Materials (idempotent).
+    private static async Task EnsureColorFabricMaterialSchemaAsync(CrmDbContext context)
+    {
+        await context.Database.ExecuteSqlRawAsync("""
+            ALTER TABLE "ColorFabrics"
+                ADD COLUMN IF NOT EXISTS "MaterialId" uuid NULL;
+
+            CREATE INDEX IF NOT EXISTS "IX_ColorFabrics_MaterialId"
+                ON "ColorFabrics" ("MaterialId");
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM pg_constraint
+                    WHERE conname = 'FK_ColorFabrics_Materials_MaterialId'
+                ) THEN
+                    ALTER TABLE "ColorFabrics"
+                    ADD CONSTRAINT "FK_ColorFabrics_Materials_MaterialId"
+                    FOREIGN KEY ("MaterialId") REFERENCES "Materials" ("Id")
                     ON DELETE SET NULL;
                 END IF;
             END $$;

@@ -20,5 +20,13 @@ public class ColorFabricConfiguration : IEntityTypeConfiguration<ColorFabric>
             .HasMaxLength(500);
 
         builder.HasIndex(cf => cf.Name);
+
+        // Màu ăn theo chất liệu: FK optional, xoá chất liệu thì gỡ liên kết (SET NULL).
+        builder.HasOne(cf => cf.Material)
+            .WithMany()
+            .HasForeignKey(cf => cf.MaterialId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasIndex(cf => cf.MaterialId);
     }
 }
