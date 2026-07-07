@@ -119,6 +119,12 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
     return (this.order.items || []).reduce((sum, item) => sum + item.quantity, 0);
   }
 
+  // Form "Classic" chia NAM/NỮ; "Oversize"/"Unisex" hiển thị 1 dòng, không chia giới tính.
+  isGenderedForm(): boolean {
+    const name = (this.order?.items?.[0]?.formName || '').toLowerCase();
+    return !(name.includes('oversize') || name.includes('unisex'));
+  }
+
   fmt(d: Date | string | null | undefined): string {
     if (!d) return '';
     const dt = new Date(d);

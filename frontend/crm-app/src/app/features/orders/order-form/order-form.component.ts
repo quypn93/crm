@@ -322,9 +322,13 @@ export class OrderFormComponent implements OnInit {
   onCollectionChange(collectionId: string): void {
     const col = this.collections.find(c => c.id === collectionId);
     if (!col) { this.resetAttributeFilters(); this.recomputeFilteredColors(); return; }
-    this.filteredMaterials = this.materials.filter(m => col.materialIds.includes(m.id));
-    this.filteredForms = this.shirtForms.filter(f => col.formIds.includes(f.id));
-    this.filteredSpecs = this.styleSpecs.filter(s => col.specificationIds.includes(s.id));
+    // Nếu bộ sưu tập không giới hạn (danh sách rỗng, VD sau khi đổi data chất liệu) thì hiện toàn bộ.
+    const mats = this.materials.filter(m => col.materialIds.includes(m.id));
+    const forms = this.shirtForms.filter(f => col.formIds.includes(f.id));
+    const specs = this.styleSpecs.filter(s => col.specificationIds.includes(s.id));
+    this.filteredMaterials = mats.length ? mats : this.materials;
+    this.filteredForms = forms.length ? forms : this.shirtForms;
+    this.filteredSpecs = specs.length ? specs : this.styleSpecs;
 
     // Clear selections not in filtered set
     const pi = this.orderForm.get('productInfo');
@@ -374,9 +378,12 @@ export class OrderFormComponent implements OnInit {
     const materialId = pi?.get('materialId')?.value;
     const col = this.collections.find(c => c.id === collectionId);
 
-    let colors = col
-      ? this.colorFabrics.filter(c => col.colorFabricIds.includes(c.id))
-      : this.colorFabrics;
+    let colors = this.colorFabrics;
+    if (col) {
+      const colColors = this.colorFabrics.filter(c => col.colorFabricIds.includes(c.id));
+      // Bộ sưu tập không giới hạn màu → giữ toàn bộ (tránh dropdown rỗng sau khi đổi data).
+      if (colColors.length) colors = colColors;
+    }
     if (materialId) {
       colors = colors.filter(c => c.materialId === materialId || !c.materialId);
     }

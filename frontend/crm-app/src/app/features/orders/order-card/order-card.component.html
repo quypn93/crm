@@ -21,39 +21,69 @@
     </div>
 
     <div class="size-content">
-      <table class="size-table">
-        <tbody>
-          <tr>
-            <th>SIZE</th>
-            <th *ngFor="let size of ADULT_SIZES">{{ size }}</th>
-            <th>TỔNG</th>
-          </tr>
-          <tr>
-            <th>NAM</th>
-            <td *ngFor="let size of ADULT_SIZES">{{ getSizeQty(size, 'NAM') }}</td>
-            <td class="total-cell" rowspan="2">{{ getTotalQty() }}</td>
-          </tr>
-          <tr>
-            <th>NỮ</th>
-            <td *ngFor="let size of ADULT_SIZES">{{ getSizeQty(size, 'NU') }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <!-- Classic: chia NAM / NỮ -->
+      <ng-container *ngIf="isGenderedForm()">
+        <table class="size-table">
+          <tbody>
+            <tr>
+              <th>SIZE</th>
+              <th *ngFor="let size of ADULT_SIZES">{{ size }}</th>
+              <th>TỔNG</th>
+            </tr>
+            <tr>
+              <th>NAM</th>
+              <td *ngFor="let size of ADULT_SIZES">{{ getSizeQty(size, 'NAM') }}</td>
+              <td class="total-cell" rowspan="2">{{ getTotalQty() }}</td>
+            </tr>
+            <tr>
+              <th>NỮ</th>
+              <td *ngFor="let size of ADULT_SIZES">{{ getSizeQty(size, 'NU') }}</td>
+            </tr>
+          </tbody>
+        </table>
 
-      <table class="child-size-table">
-        <tbody>
-          <tr>
-            <ng-container *ngFor="let gender of ['NAM', 'NU']">
-              <th *ngFor="let size of CHILD_SIZES">{{ size }} {{ gender === 'NAM' ? 'NAM' : 'NỮ' }}</th>
-            </ng-container>
-          </tr>
-          <tr>
-            <ng-container *ngFor="let gender of ['NAM', 'NU']">
-              <td *ngFor="let size of CHILD_SIZES">{{ getSizeQty(size, gender === 'NAM' ? 'NAM' : 'NU') }}</td>
-            </ng-container>
-          </tr>
-        </tbody>
-      </table>
+        <table class="child-size-table">
+          <tbody>
+            <tr>
+              <ng-container *ngFor="let gender of ['NAM', 'NU']">
+                <th *ngFor="let size of CHILD_SIZES">{{ size }} {{ gender === 'NAM' ? 'NAM' : 'NỮ' }}</th>
+              </ng-container>
+            </tr>
+            <tr>
+              <ng-container *ngFor="let gender of ['NAM', 'NU']">
+                <td *ngFor="let size of CHILD_SIZES">{{ getSizeQty(size, gender === 'NAM' ? 'NAM' : 'NU') }}</td>
+              </ng-container>
+            </tr>
+          </tbody>
+        </table>
+      </ng-container>
+
+      <!-- Oversize / Unisex: không chia giới tính, 1 dòng -->
+      <ng-container *ngIf="!isGenderedForm()">
+        <table class="size-table">
+          <tbody>
+            <tr>
+              <th *ngFor="let size of ADULT_SIZES">{{ size }}</th>
+              <th>TỔNG</th>
+            </tr>
+            <tr>
+              <td *ngFor="let size of ADULT_SIZES">{{ getSizeQty(size) }}</td>
+              <td class="total-cell">{{ getTotalQty() }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table class="child-size-table">
+          <tbody>
+            <tr>
+              <th *ngFor="let size of CHILD_SIZES">{{ size }}</th>
+            </tr>
+            <tr>
+              <td *ngFor="let size of CHILD_SIZES">{{ getSizeQty(size) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </ng-container>
     </div>
 
     <div class="note-content" *ngIf="getOrderNote()">
