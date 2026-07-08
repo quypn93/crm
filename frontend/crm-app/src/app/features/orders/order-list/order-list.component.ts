@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import * as ExcelJS from 'exceljs';
 import { OrderService, OrderSearchParams } from '../../../core/services/order.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -14,6 +15,7 @@ export class OrderListComponent implements OnInit {
   orders: Order[] = [];
   isLoading = false;
   isExporting = false;
+  showExportMenu = false;
   searchTerm = '';
   currentPage = 1;
   pageSize = 10;
@@ -95,7 +97,12 @@ export class OrderListComponent implements OnInit {
     this.loadOrders();
   }
 
-  exportExcel(): void {
+  toggleExportMenu(): void {
+    this.showExportMenu = !this.showExportMenu;
+  }
+
+  export(format: 'xlsx' | 'csv'): void {
+    this.showExportMenu = false;
     if (this.isExporting) return;
     this.isExporting = true;
 
@@ -116,9 +123,19 @@ export class OrderListComponent implements OnInit {
           this.isExporting = false;
           return;
         }
-        this.downloadCsv(items);
-        this.toast.success(`Đã xuất ${items.length} đơn hàng.`);
-        this.isExporting = false;
+        const done = () => {
+          this.toast.success(`Đã xuất ${items.length} đơn hàng.`);
+          this.isExporting = false;
+        };
+        if (format === 'xlsx') {
+          this.downloadXlsx(items).then(done).catch(() => {
+            this.toast.error('Không thể tạo file Excel.');
+            this.isExporting = false;
+          });
+        } else {
+          this.downloadCsv(items);
+          done();
+        }
       },
       error: () => {
         this.toast.error('Không thể xuất dữ liệu.');
@@ -127,24 +144,8 @@ export class OrderListComponent implements OnInit {
     });
   }
 
-  private downloadCsv(orders: Order[]): void {
-    const headers = ['Mã đơn', 'Số sản phẩm', 'Khách hàng', 'Trạng thái', 'Thanh toán', 'Tổng tiền', 'Còn nợ', 'Ngày tạo'];
-
-    const escape = (v: any): string => {
-      const s = v === null || v === undefined ? '' : String(v);
-      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
-
-    const formatDate = (d: any): string => {
-      if (!d) return '';
-      const date = new Date(d);
-      if (isNaN(date.getTime())) return '';
-      const dd = String(date.getDate()).padStart(2, '0');
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      return `${dd}/${mm}/${date.getFullYear()}`;
-    };
-
-    const rows = orders.map(o => [
+  private buildRows(orders: Order[]): (string | number)[][] {
+    return orders.map(o => [
       o.orderNumber,
       o.itemsCount,
       o.customerName || 'N/A',
@@ -152,23 +153,77 @@ export class OrderListComponent implements OnInit {
       this.getPaymentStatusLabel(o.paymentStatus),
       o.totalAmount ?? 0,
       (o.totalAmount ?? 0) - (o.paidAmount ?? 0),
-      formatDate(o.createdAt)
+      this.formatDateShort(o.createdAt)
     ]);
+  }
 
-    const csv = [headers, ...rows]
+  private formatDateShort(d: any): string {
+    if (!d) return '';
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return '';
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}/${date.getFullYear()}`;
+  }
+
+  private fileStamp(): string {
+    const now = new Date();
+    return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+  }
+
+  private readonly exportHeaders = ['Mã đơn', 'Số sản phẩm', 'Khách hàng', 'Trạng thái', 'Thanh toán', 'Tổng tiền', 'Còn nợ', 'Ngày tạo'];
+
+  private triggerDownload(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private async downloadXlsx(orders: Order[]): Promise<void> {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Đơn hàng');
+
+    const headerRow = sheet.addRow(this.exportHeaders);
+    headerRow.eachCell(cell => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6D5AE6' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    });
+
+    this.buildRows(orders).forEach(r => sheet.addRow(r));
+
+    // Định dạng cột số tiền (F = Tổng tiền, G = Còn nợ).
+    ['F', 'G'].forEach(col => {
+      sheet.getColumn(col).numFmt = '#,##0" ₫"';
+    });
+
+    sheet.columns.forEach((col, i) => {
+      col.width = [16, 12, 22, 18, 18, 16, 16, 12][i] || 14;
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    this.triggerDownload(blob, `don-hang-${this.fileStamp()}.xlsx`);
+  }
+
+  private downloadCsv(orders: Order[]): void {
+    const escape = (v: any): string => {
+      const s = v === null || v === undefined ? '' : String(v);
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+
+    const csv = [this.exportHeaders, ...this.buildRows(orders)]
       .map(row => row.map(escape).join(','))
       .join('\r\n');
 
     // BOM UTF-8 để Excel đọc đúng tiếng Việt.
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const now = new Date();
-    const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `don-hang-${stamp}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    this.triggerDownload(blob, `don-hang-${this.fileStamp()}.csv`);
   }
 
   viewOrder(id: string): void {
