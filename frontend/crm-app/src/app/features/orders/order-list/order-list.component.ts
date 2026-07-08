@@ -13,6 +13,7 @@ import { Order, OrderStatus, PaymentStatus, OrderStatusLabels, PaymentStatusLabe
 export class OrderListComponent implements OnInit {
   orders: Order[] = [];
   isLoading = false;
+  isExporting = false;
   searchTerm = '';
   currentPage = 1;
   pageSize = 10;
@@ -92,6 +93,82 @@ export class OrderListComponent implements OnInit {
   onPageChange(page: number): void {
     this.currentPage = page;
     this.loadOrders();
+  }
+
+  exportExcel(): void {
+    if (this.isExporting) return;
+    this.isExporting = true;
+
+    // Lấy toàn bộ đơn theo bộ lọc hiện tại (không chỉ trang đang xem).
+    const params: OrderSearchParams = {
+      search: this.searchTerm,
+      page: 1,
+      pageSize: 100000
+    };
+    if (this.selectedStatus !== null) params.status = this.selectedStatus;
+    if (this.selectedPaymentStatus !== null) params.paymentStatus = this.selectedPaymentStatus;
+
+    this.orderService.getOrders(params).subscribe({
+      next: (response) => {
+        const items = response?.items || [];
+        if (items.length === 0) {
+          this.toast.error('Không có đơn hàng nào để xuất.');
+          this.isExporting = false;
+          return;
+        }
+        this.downloadCsv(items);
+        this.toast.success(`Đã xuất ${items.length} đơn hàng.`);
+        this.isExporting = false;
+      },
+      error: () => {
+        this.toast.error('Không thể xuất dữ liệu.');
+        this.isExporting = false;
+      }
+    });
+  }
+
+  private downloadCsv(orders: Order[]): void {
+    const headers = ['Mã đơn', 'Số sản phẩm', 'Khách hàng', 'Trạng thái', 'Thanh toán', 'Tổng tiền', 'Còn nợ', 'Ngày tạo'];
+
+    const escape = (v: any): string => {
+      const s = v === null || v === undefined ? '' : String(v);
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+
+    const formatDate = (d: any): string => {
+      if (!d) return '';
+      const date = new Date(d);
+      if (isNaN(date.getTime())) return '';
+      const dd = String(date.getDate()).padStart(2, '0');
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      return `${dd}/${mm}/${date.getFullYear()}`;
+    };
+
+    const rows = orders.map(o => [
+      o.orderNumber,
+      o.itemsCount,
+      o.customerName || 'N/A',
+      this.getStatusLabel(o.status),
+      this.getPaymentStatusLabel(o.paymentStatus),
+      o.totalAmount ?? 0,
+      (o.totalAmount ?? 0) - (o.paidAmount ?? 0),
+      formatDate(o.createdAt)
+    ]);
+
+    const csv = [headers, ...rows]
+      .map(row => row.map(escape).join(','))
+      .join('\r\n');
+
+    // BOM UTF-8 để Excel đọc đúng tiếng Việt.
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const now = new Date();
+    const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `don-hang-${stamp}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   viewOrder(id: string): void {
