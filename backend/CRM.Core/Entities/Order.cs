@@ -38,6 +38,12 @@ public class Order : BaseEntity
     public string? ShippingCity { get; set; }               // [Deprecated] giữ lại để tương thích dữ liệu cũ
     public string? ShippingNotes { get; set; }
 
+    // ID danh mục hành chính Viettel Post cho địa chỉ NGƯỜI NHẬN (chọn trực tiếp từ danh mục VTP
+    // khi giao ViettelPost). Có ID thì tạo vận đơn dùng thẳng, khỏi dò khớp tên.
+    public int? ReceiverProvinceId { get; set; }
+    public int? ReceiverDistrictId { get; set; }
+    public int? ReceiverWardId { get; set; }
+
     // Địa chỉ gửi hàng (kho gửi) chọn cho đơn — dùng cho Viettel Post. Null = dùng địa chỉ mặc định.
     public Guid? SenderAddressId { get; set; }
     public virtual SenderAddress? SenderAddress { get; set; }

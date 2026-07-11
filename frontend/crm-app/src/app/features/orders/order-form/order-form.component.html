@@ -371,31 +371,71 @@
               Vui lòng nhập số điện thoại.
             </div>
           </div>
-          <div class="form-group">
-            <label>Tỉnh/Thành phố <span class="required">*</span></label>
-            <select formControlName="shippingProvinceCode">
-              <option value="">-- Chọn tỉnh/thành --</option>
-              <option *ngFor="let p of provinces" [value]="p.code">{{ p.fullName }}</option>
-            </select>
-            <div class="error-text" *ngIf="f['shippingProvinceCode'].invalid && f['shippingProvinceCode'].touched">
-              Vui lòng chọn tỉnh/thành phố.
+          <!-- Địa chỉ người nhận theo danh mục CRM — giao thường (Nhà giao/Giao xe) -->
+          <ng-container *ngIf="!isViettelPost()">
+            <div class="form-group">
+              <label>Tỉnh/Thành phố <span class="required">*</span></label>
+              <select formControlName="shippingProvinceCode">
+                <option value="">-- Chọn tỉnh/thành --</option>
+                <option *ngFor="let p of provinces" [value]="p.code">{{ p.fullName }}</option>
+              </select>
+              <div class="error-text" *ngIf="f['shippingProvinceCode'].invalid && f['shippingProvinceCode'].touched">
+                Vui lòng chọn tỉnh/thành phố.
+              </div>
             </div>
-          </div>
-          <div class="form-group">
-            <label>Phường/Xã <span class="required">*</span></label>
-            <select formControlName="shippingWardCode"
-                    [attr.disabled]="!orderForm.get('shippingProvinceCode')?.value ? true : null">
-              <option value="">-- Chọn phường/xã --</option>
-              <option *ngFor="let w of wards" [value]="w.code">{{ w.name }}</option>
-            </select>
-            <div class="hint" *ngIf="isLoadingWards">Đang tải danh sách xã/phường...</div>
-            <div class="hint" *ngIf="!isLoadingWards && !wards.length && orderForm.get('shippingProvinceCode')?.value">
-              Chưa có dữ liệu xã/phường cho tỉnh này.
+            <div class="form-group">
+              <label>Phường/Xã <span class="required">*</span></label>
+              <select formControlName="shippingWardCode"
+                      [attr.disabled]="!orderForm.get('shippingProvinceCode')?.value ? true : null">
+                <option value="">-- Chọn phường/xã --</option>
+                <option *ngFor="let w of wards" [value]="w.code">{{ w.name }}</option>
+              </select>
+              <div class="hint" *ngIf="isLoadingWards">Đang tải danh sách xã/phường...</div>
+              <div class="hint" *ngIf="!isLoadingWards && !wards.length && orderForm.get('shippingProvinceCode')?.value">
+                Chưa có dữ liệu xã/phường cho tỉnh này.
+              </div>
+              <div class="error-text" *ngIf="f['shippingWardCode'].invalid && f['shippingWardCode'].touched">
+                Vui lòng chọn phường/xã.
+              </div>
             </div>
-            <div class="error-text" *ngIf="f['shippingWardCode'].invalid && f['shippingWardCode'].touched">
-              Vui lòng chọn phường/xã.
+          </ng-container>
+
+          <!-- Địa chỉ người nhận theo danh mục Viettel Post (Tỉnh → Quận/Huyện → Phường/Xã) -->
+          <ng-container *ngIf="isViettelPost()">
+            <div class="form-group">
+              <label>Tỉnh/Thành phố (VTP) <span class="required">*</span></label>
+              <select formControlName="receiverProvinceId" (change)="onVtpProvinceChange()">
+                <option [ngValue]="0">-- Chọn tỉnh/thành --</option>
+                <option *ngFor="let p of vtpProvinces" [ngValue]="p.PROVINCE_ID">{{ p.PROVINCE_NAME }}</option>
+              </select>
+              <div class="error-text" *ngIf="f['receiverProvinceId'].invalid && f['receiverProvinceId'].touched">
+                Vui lòng chọn tỉnh/thành phố.
+              </div>
             </div>
-          </div>
+            <div class="form-group">
+              <label>Quận/Huyện (VTP) <span class="required">*</span></label>
+              <select formControlName="receiverDistrictId" (change)="onVtpDistrictChange()"
+                      [attr.disabled]="!orderForm.get('receiverProvinceId')?.value ? true : null">
+                <option [ngValue]="0">-- Chọn quận/huyện --</option>
+                <option *ngFor="let d of vtpDistricts" [ngValue]="d.DISTRICT_ID">{{ d.DISTRICT_NAME }}</option>
+              </select>
+              <div class="error-text" *ngIf="f['receiverDistrictId'].invalid && f['receiverDistrictId'].touched">
+                Vui lòng chọn quận/huyện.
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Phường/Xã (VTP) <span class="required">*</span></label>
+              <select formControlName="receiverWardId"
+                      [attr.disabled]="!orderForm.get('receiverDistrictId')?.value ? true : null">
+                <option [ngValue]="0">-- Chọn phường/xã --</option>
+                <option *ngFor="let w of vtpWards" [ngValue]="w.WARDS_ID">{{ w.WARDS_NAME }}</option>
+              </select>
+              <div class="hint" *ngIf="isLoadingVtpAddr">Đang tải danh mục Viettel Post...</div>
+              <div class="error-text" *ngIf="f['receiverWardId'].invalid && f['receiverWardId'].touched">
+                Vui lòng chọn phường/xã.
+              </div>
+            </div>
+          </ng-container>
           <div class="form-group full-width">
             <label>Địa chỉ chi tiết <span class="required">*</span></label>
             <input type="text" formControlName="shippingAddress" placeholder="Số nhà, đường, thôn/xóm...">

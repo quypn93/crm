@@ -1105,6 +1105,15 @@ namespace CRM.Infrastructure.Migrations
                     b.Property<string>("QrCodeToken")
                         .HasColumnType("text");
 
+                    b.Property<int?>("ReceiverDistrictId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ReceiverProvinceId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ReceiverWardId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("ReturnDate")
                         .HasColumnType("timestamp with time zone");
 

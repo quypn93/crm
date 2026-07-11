@@ -62,6 +62,9 @@ public class OrderDto
     public string? ShippingWardName { get; set; }
     public string? ShippingCity { get; set; }
     public string? ShippingNotes { get; set; }
+    public int? ReceiverProvinceId { get; set; }
+    public int? ReceiverDistrictId { get; set; }
+    public int? ReceiverWardId { get; set; }
 
     // GHTK tracking (read-only — chỉ set qua flow GhtkShipmentService)
     public string? GhtkLabel { get; set; }
@@ -198,6 +201,9 @@ public class CreateOrderDto
     public string? ShippingWardName { get; set; }
     public string? ShippingCity { get; set; }
     public string? ShippingNotes { get; set; }
+    public int? ReceiverProvinceId { get; set; }
+    public int? ReceiverDistrictId { get; set; }
+    public int? ReceiverWardId { get; set; }
     public decimal DiscountPercent { get; set; }
     public decimal TaxPercent { get; set; } = 10;
     public string? Notes { get; set; }

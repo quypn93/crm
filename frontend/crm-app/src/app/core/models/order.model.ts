@@ -126,6 +126,9 @@ export interface Order {
   shippingWardName?: string;
   shippingCity?: string;             // [legacy] dữ liệu cũ
   shippingNotes?: string;
+  receiverProvinceId?: number;
+  receiverDistrictId?: number;
+  receiverWardId?: number;
 
   // GHTK tracking — chỉ có nếu deliveryMethod = GHTK
   ghtkLabel?: string;
@@ -233,6 +236,9 @@ export interface CreateOrderRequest {
   shippingWardName?: string;
   shippingCity?: string;
   shippingNotes?: string;
+  receiverProvinceId?: number;
+  receiverDistrictId?: number;
+  receiverWardId?: number;
   discountPercent?: number;
   taxPercent?: number;
   shippingFee?: number;

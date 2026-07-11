@@ -178,6 +178,9 @@ public class OrderService : IOrderService
             ShippingWardName = dto.ShippingWardName,
             ShippingCity = dto.ShippingCity ?? customer?.City,
             ShippingNotes = dto.ShippingNotes,
+            ReceiverProvinceId = dto.ReceiverProvinceId,
+            ReceiverDistrictId = dto.ReceiverDistrictId,
+            ReceiverWardId = dto.ReceiverWardId,
             DiscountPercent = dto.DiscountPercent,
             TaxPercent = dto.TaxPercent,
             Notes = dto.Notes,
@@ -265,6 +268,9 @@ public class OrderService : IOrderService
         order.ShippingWardName = dto.ShippingWardName;
         order.ShippingCity = dto.ShippingCity;
         order.ShippingNotes = dto.ShippingNotes;
+        order.ReceiverProvinceId = dto.ReceiverProvinceId;
+        order.ReceiverDistrictId = dto.ReceiverDistrictId;
+        order.ReceiverWardId = dto.ReceiverWardId;
         order.DiscountPercent = dto.DiscountPercent;
         order.TaxPercent = dto.TaxPercent;
         order.Notes = dto.Notes;

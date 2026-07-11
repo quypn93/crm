@@ -247,6 +247,13 @@ public class ViettelPostShipmentService : IViettelPostShipmentService
     // Dò danh mục VTP: khớp Tỉnh theo tên, rồi duyệt Quận/Huyện tìm Phường/Xã khớp tên.
     private async Task<(int provinceId, int districtId, int wardId)> ResolveReceiverAsync(Order order, CancellationToken ct)
     {
+        // Ưu tiên ID danh mục VTP đã chọn trực tiếp khi tạo đơn — chính xác, khỏi dò tên.
+        if (order.ReceiverProvinceId is int rpid && rpid > 0
+            && order.ReceiverDistrictId is int rdid && rdid > 0
+            && order.ReceiverWardId is int rwid && rwid > 0)
+            return (rpid, rdid, rwid);
+
+        // Fallback (đơn cũ chưa có ID): dò khớp tên Tỉnh/Phường với danh mục VTP.
         var provinces = await _client.GetProvincesAsync(ct);
         var prov = MatchByName(provinces, p => p.ProvinceName, order.ShippingProvinceName);
         if (prov?.ProvinceId is not int pid)

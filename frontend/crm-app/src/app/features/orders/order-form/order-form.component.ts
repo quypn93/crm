@@ -11,7 +11,7 @@ import { UserManagementService, UserListItem } from '../../../core/services/user
 import { AuthService } from '../../../core/services/auth.service';
 import { LocationService } from '../../../core/services/location.service';
 import { CreateOrderItemRequest, DeliveryMethod, DeliveryMethodLabels } from '../../../core/models/order.model';
-import { Collection, LookupItem, ProductionDaysOption, DepositTransaction, SenderAddress } from '../../../core/models/lookup.model';
+import { Collection, LookupItem, ProductionDaysOption, DepositTransaction, SenderAddress, VtpCategory } from '../../../core/models/lookup.model';
 import { Province, Ward } from '../../../core/models/location.model';
 
 @Component({
@@ -56,6 +56,12 @@ export class OrderFormComponent implements OnInit {
   provinces: Province[] = [];
   wards: Ward[] = [];
   isLoadingWards = false;
+
+  // Danh mục hành chính Viettel Post cho địa chỉ NGƯỜI NHẬN (chỉ dùng khi giao ViettelPost).
+  vtpProvinces: VtpCategory[] = [];
+  vtpDistricts: VtpCategory[] = [];
+  vtpWards: VtpCategory[] = [];
+  isLoadingVtpAddr = false;
 
   // Deposit lookup theo mã giao dịch (sale gõ vào ô "Mã cọc tiền"):
   // null = chưa nhập mã, undefined = đã nhập nhưng không khớp, object = đã khớp.
@@ -151,6 +157,10 @@ export class OrderFormComponent implements OnInit {
       shippingAddress: ['', Validators.required],
       shippingProvinceCode: ['', Validators.required],
       shippingWardCode: ['', Validators.required],
+      // Địa chỉ người nhận theo danh mục Viettel Post (chỉ bắt buộc khi giao ViettelPost).
+      receiverProvinceId: [0],
+      receiverDistrictId: [0],
+      receiverWardId: [0],
       shippingNotes: [''],
       discountPercent: [0, [Validators.min(0), Validators.max(100)]],
       taxPercent: [0, [Validators.min(0), Validators.max(100)]],
@@ -257,6 +267,7 @@ export class OrderFormComponent implements OnInit {
       if (Number(v) !== DeliveryMethod.InHouse) {
         this.orderForm.get('shipperUserId')?.setValue('', { emitEvent: false });
       }
+      this.applyDeliveryValidators(v);
     });
   }
 
@@ -314,6 +325,83 @@ export class OrderFormComponent implements OnInit {
       next: (wards) => { this.wards = wards; this.isLoadingWards = false; },
       error: () => { this.wards = []; this.isLoadingWards = false; }
     });
+  }
+
+  // ── Địa chỉ người nhận theo danh mục Viettel Post ──────────────────────
+  isViettelPost(): boolean {
+    return Number(this.orderForm.get('deliveryMethod')?.value) === DeliveryMethod.ViettelPost;
+  }
+
+  // Khi giao ViettelPost: dùng dropdown VTP (bắt buộc), bỏ ràng buộc dropdown CRM; và ngược lại.
+  private applyDeliveryValidators(method: any): void {
+    const isVtp = Number(method) === DeliveryMethod.ViettelPost;
+    const prov = this.orderForm.get('shippingProvinceCode');
+    const ward = this.orderForm.get('shippingWardCode');
+    const rProv = this.orderForm.get('receiverProvinceId');
+    const rDist = this.orderForm.get('receiverDistrictId');
+    const rWard = this.orderForm.get('receiverWardId');
+    if (isVtp) {
+      prov?.clearValidators(); ward?.clearValidators();
+      rProv?.setValidators([Validators.min(1)]);
+      rDist?.setValidators([Validators.min(1)]);
+      rWard?.setValidators([Validators.min(1)]);
+      if (!this.vtpProvinces.length) this.loadVtpProvinces();
+    } else {
+      prov?.setValidators([Validators.required]); ward?.setValidators([Validators.required]);
+      rProv?.clearValidators(); rDist?.clearValidators(); rWard?.clearValidators();
+    }
+    [prov, ward, rProv, rDist, rWard].forEach(c => c?.updateValueAndValidity({ emitEvent: false }));
+  }
+
+  private loadVtpProvinces(): void {
+    this.settingsService.getVtpProvinces().subscribe({
+      next: p => this.vtpProvinces = p || [],
+      error: () => this.vtpProvinces = []
+    });
+  }
+
+  onVtpProvinceChange(keepChildren = false): void {
+    const pid = Number(this.orderForm.get('receiverProvinceId')?.value) || 0;
+    if (!keepChildren) {
+      this.orderForm.get('receiverDistrictId')?.setValue(0);
+      this.orderForm.get('receiverWardId')?.setValue(0);
+      this.vtpDistricts = []; this.vtpWards = [];
+    }
+    if (!pid) return;
+    this.isLoadingVtpAddr = true;
+    this.settingsService.getVtpDistricts(pid).subscribe({
+      next: d => { this.vtpDistricts = d || []; this.isLoadingVtpAddr = false; },
+      error: () => { this.vtpDistricts = []; this.isLoadingVtpAddr = false; }
+    });
+  }
+
+  onVtpDistrictChange(keepWard = false): void {
+    const did = Number(this.orderForm.get('receiverDistrictId')?.value) || 0;
+    if (!keepWard) { this.orderForm.get('receiverWardId')?.setValue(0); this.vtpWards = []; }
+    if (!did) return;
+    this.isLoadingVtpAddr = true;
+    this.settingsService.getVtpWards(did).subscribe({
+      next: w => { this.vtpWards = w || []; this.isLoadingVtpAddr = false; },
+      error: () => { this.vtpWards = []; this.isLoadingVtpAddr = false; }
+    });
+  }
+
+  private patchVtpReceiver(provId?: number, distId?: number, wardId?: number): void {
+    if (!provId) return;
+    const setProv = () => {
+      this.orderForm.get('receiverProvinceId')?.setValue(provId, { emitEvent: false });
+      this.settingsService.getVtpDistricts(provId).subscribe(d => {
+        this.vtpDistricts = d || [];
+        if (!distId) return;
+        this.orderForm.get('receiverDistrictId')?.setValue(distId, { emitEvent: false });
+        this.settingsService.getVtpWards(distId).subscribe(w => {
+          this.vtpWards = w || [];
+          if (wardId) this.orderForm.get('receiverWardId')?.setValue(wardId, { emitEvent: false });
+        });
+      });
+    };
+    if (this.vtpProvinces.length) setProv();
+    else this.settingsService.getVtpProvinces().subscribe(p => { this.vtpProvinces = p || []; setProv(); });
   }
 
   get items(): FormArray { return this.orderForm.get('items') as FormArray; }
@@ -532,6 +620,11 @@ export class OrderFormComponent implements OnInit {
           this.orderForm.get('shippingWardCode')?.setValue(order.shippingWardCode || '', { emitEvent: false });
         }
 
+        // VTP receiver (edit mode): nạp cascade tỉnh→huyện→xã rồi set lại ID đã lưu.
+        if (Number(order.deliveryMethod) === DeliveryMethod.ViettelPost && order.receiverProvinceId) {
+          this.patchVtpReceiver(order.receiverProvinceId, order.receiverDistrictId, order.receiverWardId);
+        }
+
         const selectedCustomer = this.customers.find(c => c.id === order.customerId);
         if (selectedCustomer) this.customerSearchText = this.getCustomerDisplayName(selectedCustomer);
         else if (order.customerName) this.customerSearchText = order.customerName;
@@ -620,8 +713,11 @@ export class OrderFormComponent implements OnInit {
 
     const f = this.orderForm.getRawValue();
     const pi = f.productInfo || {};
+    const isVtp = this.isViettelPost();
     const selectedProvince = this.provinces.find(p => p.code === f.shippingProvinceCode);
     const selectedWard = this.wards.find(w => w.code === f.shippingWardCode);
+    const vtpProv = this.vtpProvinces.find(p => p.PROVINCE_ID === Number(f.receiverProvinceId));
+    const vtpWard = this.vtpWards.find(w => w.WARDS_ID === Number(f.receiverWardId));
     const orderData = {
       customerId: f.customerId || undefined,
       customerName: !f.customerId ? this.customerSearchText || undefined : undefined,
@@ -642,10 +738,13 @@ export class OrderFormComponent implements OnInit {
       shippingContactName: f.shippingContactName || undefined,
       shippingPhone: f.shippingPhone || undefined,
       shippingAddress: f.shippingAddress || undefined,
-      shippingProvinceCode: f.shippingProvinceCode || undefined,
-      shippingProvinceName: selectedProvince?.fullName || undefined,
-      shippingWardCode: f.shippingWardCode || undefined,
-      shippingWardName: selectedWard?.name || undefined,
+      shippingProvinceCode: isVtp ? undefined : (f.shippingProvinceCode || undefined),
+      shippingProvinceName: isVtp ? (vtpProv?.PROVINCE_NAME || undefined) : (selectedProvince?.fullName || undefined),
+      shippingWardCode: isVtp ? undefined : (f.shippingWardCode || undefined),
+      shippingWardName: isVtp ? (vtpWard?.WARDS_NAME || undefined) : (selectedWard?.name || undefined),
+      receiverProvinceId: isVtp ? (Number(f.receiverProvinceId) || undefined) : undefined,
+      receiverDistrictId: isVtp ? (Number(f.receiverDistrictId) || undefined) : undefined,
+      receiverWardId: isVtp ? (Number(f.receiverWardId) || undefined) : undefined,
       shippingNotes: f.shippingNotes || undefined,
       discountPercent: f.discountPercent,
       taxPercent: f.taxPercent,
