@@ -4,7 +4,7 @@ import { forkJoin } from 'rxjs';
 import { OrderService } from '../../../core/services/order.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { ProductionService, OrderProductionProgress } from '../../../core/services/production.service';
+import { ProductionService, OrderProductionProgress, OrderProductionStep } from '../../../core/services/production.service';
 import { UserManagementService, UserListItem } from '../../../core/services/user-management.service';
 import { environment } from '../../../../environments/environment';
 import {
@@ -19,6 +19,7 @@ import {
   PaymentStatusColors,
   UpdateOrderStatusRequest,
   UpdateDeliveryMethodRequest,
+  UpdateDepositCodeRequest,
   UpdatePaymentRequest
 } from '../../../core/models/order.model';
 
@@ -45,6 +46,12 @@ export class OrderDetailComponent implements OnInit {
   paymentAmount = 0;
   paymentMethod = '';
   paymentNotes = '';
+
+  // Deposit code inline edit
+  isEditingDepositCode = false;
+  editDepositCode = '';
+  isSavingDepositCode = false;
+  depositCodeError = '';
 
   // Delivery method update modal
   showDeliveryModal = false;
@@ -164,6 +171,41 @@ export class OrderDetailComponent implements OnInit {
     ];
     return editableStatuses.includes(this.order.status) &&
            this.authService.hasAnyRole(['Admin', 'SalesManager', 'SalesRep', 'DeliveryManager']);
+  }
+
+  // Mã cọc tiền: sale sửa được ở mọi trạng thái đơn
+  canEditDepositCode(): boolean {
+    return this.authService.hasAnyRole(['Admin', 'SalesManager', 'SalesRep']);
+  }
+
+  startEditDepositCode(): void {
+    this.editDepositCode = this.order?.depositCode || '';
+    this.depositCodeError = '';
+    this.isEditingDepositCode = true;
+  }
+
+  cancelEditDepositCode(): void {
+    this.isEditingDepositCode = false;
+    this.depositCodeError = '';
+  }
+
+  saveDepositCode(): void {
+    if (!this.order) return;
+    this.isSavingDepositCode = true;
+    this.depositCodeError = '';
+    const request: UpdateDepositCodeRequest = { depositCode: this.editDepositCode.trim() || undefined };
+    this.orderService.updateDepositCode(this.order.id, request).subscribe({
+      next: (updated) => {
+        this.order = updated;
+        this.isSavingDepositCode = false;
+        this.isEditingDepositCode = false;
+        this.toast.success('Đã cập nhật mã cọc tiền.');
+      },
+      error: (err) => {
+        this.isSavingDepositCode = false;
+        this.depositCodeError = err?.error?.message || 'Cập nhật mã cọc tiền thất bại.';
+      }
+    });
   }
 
   openDeliveryModal(): void {
@@ -389,8 +431,18 @@ export class OrderDetailComponent implements OnInit {
     return this.authService.hasAnyRole(['Admin', 'ProductionManager', 'ProductionStaff', 'QualityControl', 'QualityManager']);
   }
 
-  get nextProductionStep() {
-    return this.productionProgress?.steps?.find(s => !s.isCompleted) ?? null;
+  // Kiểm tra chất lượng & Đóng gói bắt buộc các khâu trước phải xong; các khâu khác tự do thứ tự
+  private static readonly STRICT_ORDER_ROLES = ['QualityControl', 'QualityManager', 'PackagingStaff'];
+
+  isStepBlockedBySequence(step: OrderProductionStep): boolean {
+    if (!step.responsibleRole || !OrderDetailComponent.STRICT_ORDER_ROLES.includes(step.responsibleRole)) {
+      return false;
+    }
+    return !!this.productionProgress?.steps?.some(s => !s.isCompleted && s.stageOrder < step.stageOrder);
+  }
+
+  canCompleteStepNow(step: OrderProductionStep): boolean {
+    return !step.isCompleted && this.canCompleteProductionStep() && !this.isStepBlockedBySequence(step);
   }
 
   openCompleteStepModal(stageId: string, stageName: string): void {

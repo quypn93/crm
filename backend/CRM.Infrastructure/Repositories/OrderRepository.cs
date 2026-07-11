@@ -186,21 +186,23 @@ public class OrderRepository : Repository<Order>, IOrderRepository
 
     public async Task<string> GenerateOrderNumberAsync()
     {
-        var today = DateTime.UtcNow;
-        var prefix = $"XA-{today:yyMMdd}";
+        // Format mới: XA-###### (6 chữ số, tăng dần toàn cục, bắt đầu 000001).
+        // Chỉ xét các mã đúng format mới — mã cũ XA-yyMMddNNN (9 chữ số) được bỏ qua.
+        const string prefix = "XA-";
 
-        var lastOrder = await _dbSet
-            .Where(o => o.OrderNumber.StartsWith(prefix))
-            .OrderByDescending(o => o.OrderNumber)
-            .FirstOrDefaultAsync();
+        var candidates = await _dbSet
+            .Where(o => o.OrderNumber.StartsWith(prefix) && o.OrderNumber.Length == prefix.Length + 6)
+            .Select(o => o.OrderNumber)
+            .ToListAsync();
 
-        if (lastOrder == null)
+        var max = 0;
+        foreach (var number in candidates)
         {
-            return $"{prefix}001";
+            if (int.TryParse(number.Substring(prefix.Length), out var value) && value > max)
+                max = value;
         }
 
-        var lastNumber = int.Parse(lastOrder.OrderNumber.Substring(prefix.Length));
-        return $"{prefix}{(lastNumber + 1):D3}";
+        return $"{prefix}{(max + 1):D6}";
     }
 
     public async Task<int> GetOrderCountByStatusAsync(OrderStatus status)

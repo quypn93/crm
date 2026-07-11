@@ -457,6 +457,24 @@ public class OrderService : IOrderService
         return await GetByIdAsync(id) ?? throw new InvalidOperationException("Không thể cập nhật hình thức vận chuyển.");
     }
 
+    public async Task<OrderDto> UpdateDepositCodeAsync(Guid id, UpdateDepositCodeDto dto, Guid userId)
+    {
+        var order = await _unitOfWork.Orders.GetByIdWithDetailsAsync(id);
+        if (order == null)
+            throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
+
+        // Mã cọc tiền sửa được ở mọi trạng thái — ApplyDeposit tự cộng/trả tiền khi đổi/xoá mã.
+        order.DepositCode = string.IsNullOrWhiteSpace(dto.DepositCode) ? null : dto.DepositCode.Trim();
+
+        _unitOfWork.Orders.Update(order);
+        await _unitOfWork.SaveChangesAsync();
+
+        await ApplyDepositToOrderAsync(order);
+        await _unitOfWork.SaveChangesAsync();
+
+        return await GetByIdAsync(id) ?? throw new InvalidOperationException("Không thể cập nhật mã cọc tiền.");
+    }
+
     public async Task<OrderDto> UpdatePaymentAsync(Guid id, UpdatePaymentDto dto, Guid userId)
     {
         var order = await _unitOfWork.Orders.GetByIdWithDetailsAsync(id);

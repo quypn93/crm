@@ -463,9 +463,25 @@
             <span>Thời gian SX</span>
             <span>{{ order.productionDaysOptionName }} ({{ order.productionDays }} ngày)</span>
           </div>
-          <div class="info-row" *ngIf="order.depositCode">
+          <div class="info-row deposit-code-row" *ngIf="order.depositCode || canEditDepositCode()">
             <span>Mã cọc tiền</span>
-            <span>{{ order.depositCode }}</span>
+            <span *ngIf="!isEditingDepositCode">
+              {{ order.depositCode || '-' }}
+              <button type="button" class="btn-edit-delivery" *ngIf="canEditDepositCode()" (click)="startEditDepositCode()">
+                ✏️ Sửa
+              </button>
+            </span>
+            <span class="deposit-code-edit" *ngIf="isEditingDepositCode">
+              <input type="text" [(ngModel)]="editDepositCode" placeholder="Mã giao dịch ngân hàng"
+                     [disabled]="isSavingDepositCode" (keyup.enter)="saveDepositCode()">
+              <button type="button" class="btn-deposit-save" (click)="saveDepositCode()" [disabled]="isSavingDepositCode">
+                {{ isSavingDepositCode ? '⏳' : '✓' }}
+              </button>
+              <button type="button" class="btn-deposit-cancel" (click)="cancelEditDepositCode()" [disabled]="isSavingDepositCode">✕</button>
+            </span>
+          </div>
+          <div class="info-row deposit-code-error" *ngIf="depositCodeError">
+            <span class="text-danger">{{ depositCodeError }}</span>
           </div>
         </div>
       </div>
@@ -510,15 +526,18 @@
               <span class="step-nm">{{ step.stageName }}</span>
               <span class="step-by" *ngIf="step.isCompleted">{{ step.completedByUserName }} · {{ step.completedAt | date:'dd/MM HH:mm' }}</span>
             </div>
+            <!-- Khâu thường: hoàn thành không cần theo thứ tự. QC/Đóng gói: chờ các khâu trước xong -->
+            <button
+              *ngIf="canCompleteStepNow(step)"
+              class="btn-step-done"
+              (click)="openCompleteStepModal(step.productionStageId, step.stageName)">
+              ✓ Xong
+            </button>
+            <span class="step-locked"
+                  *ngIf="!step.isCompleted && canCompleteProductionStep() && isStepBlockedBySequence(step)"
+                  title="Cần hoàn thành các khâu trước">🔒</span>
           </div>
         </div>
-        <!-- Nút hoàn thành khâu tiếp theo -->
-        <button
-          *ngIf="canCompleteProductionStep() && nextProductionStep"
-          class="btn-complete-step"
-          (click)="openCompleteStepModal(nextProductionStep!.productionStageId, nextProductionStep!.stageName)">
-          ✓ Hoàn thành: {{ nextProductionStep!.stageName }}
-        </button>
         <div class="prod-fully-done" *ngIf="productionProgress.isFullyCompleted">
           ✅ Đã hoàn thành tất cả các khâu sản xuất
         </div>

@@ -264,6 +264,10 @@ export interface UpdateDeliveryMethodRequest {
   shipperUserId?: string;
 }
 
+export interface UpdateDepositCodeRequest {
+  depositCode?: string;
+}
+
 export interface UpdatePaymentRequest {
   paidAmount: number;
   paymentMethod?: string;

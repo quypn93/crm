@@ -213,6 +213,48 @@
   }
 }
 
+.deposit-code-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  input {
+    width: 150px;
+    padding: 4px 8px;
+    font-size: 13px;
+    border: 1px solid var(--border-color, #cbd5e1);
+    border-radius: 6px;
+  }
+
+  .btn-deposit-save,
+  .btn-deposit-cancel {
+    padding: 3px 9px;
+    font-size: 13px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+
+    &:disabled { opacity: 0.6; cursor: default; }
+  }
+
+  .btn-deposit-save {
+    background: var(--success-soft, #dcfce7);
+    border-color: var(--success-soft-2, #bbf7d0);
+    color: var(--success-strong, #15803d);
+  }
+
+  .btn-deposit-cancel {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #b91c1c;
+  }
+}
+
+.deposit-code-error .text-danger {
+  font-size: 12px;
+  color: #dc2626;
+}
+
 .prod-shipping {
   margin-top: 14px;
   padding-top: 12px;
@@ -689,6 +731,29 @@
   opacity: 0.55;
 
   &.done { opacity: 1; }
+
+  .step-info { flex: 1; }
+
+  .btn-step-done {
+    flex-shrink: 0;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--success-soft, #dcfce7);
+    border: 1px solid var(--success-soft-2, #bbf7d0);
+    border-radius: 6px;
+    color: var(--success-strong, #15803d);
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover { background: var(--success-soft-2, #bbf7d0); }
+  }
+
+  .step-locked {
+    flex-shrink: 0;
+    font-size: 13px;
+    cursor: help;
+  }
 }
 
 .step-dot-sm {

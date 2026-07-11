@@ -57,6 +57,7 @@ public class OrderProductionService : IOrderProductionService
             throw new InvalidOperationException("Bước này đã được hoàn thành.");
 
         await EnsureUserAuthorizedForStageAsync(userId, step.ProductionStage);
+        await EnsurePreviousStepsCompletedAsync(orderId, step);
 
         step.IsCompleted = true;
         step.CompletedByUserId = userId;
@@ -101,6 +102,33 @@ public class OrderProductionService : IOrderProductionService
             result.Add(BuildProgressDto(order.Id, order.OrderNumber, order.Customer?.Name, (int)order.Status, steps));
         }
         return result;
+    }
+
+    // ---------------------------------------------------------------
+    // Các khâu sản xuất được phép hoàn thành KHÔNG theo thứ tự (vd. in/thêu trước khi may xong).
+    // Riêng Kiểm tra chất lượng và Đóng gói bắt buộc mọi khâu đứng trước phải xong.
+    private static readonly string[] StrictOrderRoles =
+    {
+        RoleNames.QualityControl, RoleNames.QualityManager, RoleNames.PackagingStaff
+    };
+
+    private async Task EnsurePreviousStepsCompletedAsync(Guid orderId, OrderProductionStep step)
+    {
+        var role = step.ProductionStage?.ResponsibleRole;
+        if (string.IsNullOrWhiteSpace(role) || !StrictOrderRoles.Contains(role, StringComparer.OrdinalIgnoreCase))
+            return;
+
+        var stageOrder = step.ProductionStage!.StageOrder;
+        var steps = await _unitOfWork.OrderProductionSteps.GetByOrderIdAsync(orderId);
+        var pendingBefore = steps
+            .Where(s => !s.IsCompleted && s.ProductionStage != null && s.ProductionStage.StageOrder < stageOrder)
+            .OrderBy(s => s.ProductionStage!.StageOrder)
+            .Select(s => s.ProductionStage!.StageName)
+            .ToList();
+
+        if (pendingBefore.Count > 0)
+            throw new InvalidOperationException(
+                $"Chưa thể hoàn thành khâu '{step.ProductionStage.StageName}'. Cần hoàn thành trước: {string.Join(", ", pendingBefore)}.");
     }
 
     // ---------------------------------------------------------------

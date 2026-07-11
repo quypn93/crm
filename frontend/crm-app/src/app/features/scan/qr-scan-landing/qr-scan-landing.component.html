@@ -70,6 +70,9 @@
             <div class="step-role" *ngIf="step.responsibleRole">
               {{ getRoleLabel(step.responsibleRole) }}
             </div>
+            <div class="step-blocked-hint" *ngIf="!step.isCompleted && isStepBlockedBySequence(step)">
+              🔒 Cần hoàn thành các khâu trước
+            </div>
             <div class="step-done-info" *ngIf="step.isCompleted">
               <span class="done-by">{{ step.completedByUserName }}</span>
               <span class="done-at">{{ step.completedAt | date:'dd/MM/yyyy HH:mm' }}</span>

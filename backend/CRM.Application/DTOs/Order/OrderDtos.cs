@@ -246,6 +246,11 @@ public class UpdateDeliveryMethodDto
     public Guid? ShipperUserId { get; set; }
 }
 
+public class UpdateDepositCodeDto
+{
+    public string? DepositCode { get; set; }
+}
+
 public class UpdatePaymentDto
 {
     public PaymentStatus PaymentStatus { get; set; }

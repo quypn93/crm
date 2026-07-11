@@ -12,6 +12,7 @@ import {
   UpdateOrderRequest,
   UpdateOrderStatusRequest,
   UpdateDeliveryMethodRequest,
+  UpdateDepositCodeRequest,
   UpdatePaymentRequest,
   OrderFilter,
   OrderSummary,
@@ -105,6 +106,10 @@ export class OrderService {
 
   updateDeliveryMethod(id: string, request: UpdateDeliveryMethodRequest): Observable<Order> {
     return this.api.put<Order>(`orders/${id}/delivery-method`, request);
+  }
+
+  updateDepositCode(id: string, request: UpdateDepositCodeRequest): Observable<Order> {
+    return this.api.put<Order>(`orders/${id}/deposit-code`, request);
   }
 
   createFromDeal(dealId: string): Observable<Order> {

@@ -292,6 +292,30 @@ public class OrdersController : ControllerBase
         }
     }
 
+    [HttpPut("{id}/deposit-code")]
+    public async Task<ActionResult<ApiResponse<OrderDto>>> UpdateDepositCode(Guid id, [FromBody] UpdateDepositCodeDto dto)
+    {
+        var userRoles = GetCurrentUserRoles();
+        var allowedRoles = new[] { RoleNames.Admin, RoleNames.SalesManager, RoleNames.SalesRep };
+        if (!userRoles.Any(r => allowedRoles.Contains(r)))
+            return StatusCode(403, ApiResponse<OrderDto>.Fail("Bạn không có quyền sửa mã cọc tiền."));
+
+        try
+        {
+            var userId = GetCurrentUserId();
+            var order = await _orderService.UpdateDepositCodeAsync(id, dto, userId);
+            return Ok(ApiResponse<OrderDto>.Ok(order, "Cập nhật mã cọc tiền thành công."));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<OrderDto>.Fail(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<OrderDto>.Fail(ex.Message));
+        }
+    }
+
     [HttpPut("{id}/payment")]
     [Authorize(Policy = Policies.CanUpdatePayment)]
     public async Task<ActionResult<ApiResponse<OrderDto>>> UpdatePayment(Guid id, [FromBody] UpdatePaymentDto dto)

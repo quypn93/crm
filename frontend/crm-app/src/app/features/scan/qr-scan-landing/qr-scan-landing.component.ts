@@ -84,11 +84,19 @@ export class QrScanLandingComponent implements OnInit {
     return environment.apiUrl.replace(/\/api\/?$/, '') + path;
   }
 
+  // Kiểm tra chất lượng & Đóng gói bắt buộc các khâu trước phải xong; các khâu khác tự do thứ tự
+  private static readonly STRICT_ORDER_ROLES = ['QualityControl', 'QualityManager', 'PackagingStaff'];
+
+  isStepBlockedBySequence(step: OrderProductionStep): boolean {
+    if (!step.responsibleRole || !QrScanLandingComponent.STRICT_ORDER_ROLES.includes(step.responsibleRole)) {
+      return false;
+    }
+    return !!this.progress?.steps.some(s => !s.isCompleted && s.stageOrder < step.stageOrder);
+  }
+
   canCompleteStep(step: OrderProductionStep): boolean {
     if (step.isCompleted) return false;
-    // Chỉ khâu đầu tiên chưa hoàn thành mới có thể confirm
-    const firstPending = this.progress?.steps.find(s => !s.isCompleted);
-    if (firstPending?.id !== step.id) return false;
+    if (this.isStepBlockedBySequence(step)) return false;
     if (!step.responsibleRole) return true;
     return this.currentUserRoles.includes(step.responsibleRole)
       || this.currentUserRoles.includes('Admin')

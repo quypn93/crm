@@ -16,6 +16,7 @@ public interface IOrderService
     Task<OrderDto> UpdateAsync(UpdateOrderDto dto, Guid userId);
     Task<OrderDto> UpdateStatusAsync(Guid id, UpdateOrderStatusDto dto, Guid userId);
     Task<OrderDto> UpdateDeliveryMethodAsync(Guid id, UpdateDeliveryMethodDto dto, Guid userId);
+    Task<OrderDto> UpdateDepositCodeAsync(Guid id, UpdateDepositCodeDto dto, Guid userId);
     Task<OrderDto> UpdatePaymentAsync(Guid id, UpdatePaymentDto dto, Guid userId);
     Task DeleteAsync(Guid id, Guid userId);
     Task<OrderDto> CreateFromDealAsync(Guid dealId, Guid userId);
