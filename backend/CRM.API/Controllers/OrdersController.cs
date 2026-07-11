@@ -261,7 +261,35 @@ public class OrdersController : ControllerBase
         var currentStatus = (OrderStatus)order.Status;
         var allowedStatuses = OrderStatusTransitionValidator.GetAllowedNextStatuses(currentStatus, userRoles);
 
+        // Chưa có thiết kế (ảnh hoặc file) thì không cho chuyển sang sản xuất
+        if (string.IsNullOrWhiteSpace(order.DesignImageUrl) && string.IsNullOrWhiteSpace(order.DesignFileUrl))
+            allowedStatuses = allowedStatuses.Where(s => s != OrderStatus.InProduction);
+
         return Ok(ApiResponse<IEnumerable<OrderStatus>>.Ok(allowedStatuses));
+    }
+
+    [HttpPut("{id}/delivery-method")]
+    public async Task<ActionResult<ApiResponse<OrderDto>>> UpdateDeliveryMethod(Guid id, [FromBody] UpdateDeliveryMethodDto dto)
+    {
+        var userRoles = GetCurrentUserRoles();
+        var allowedRoles = new[] { RoleNames.Admin, RoleNames.SalesManager, RoleNames.SalesRep, RoleNames.DeliveryManager };
+        if (!userRoles.Any(r => allowedRoles.Contains(r)))
+            return StatusCode(403, ApiResponse<OrderDto>.Fail("Bạn không có quyền đổi hình thức vận chuyển."));
+
+        try
+        {
+            var userId = GetCurrentUserId();
+            var order = await _orderService.UpdateDeliveryMethodAsync(id, dto, userId);
+            return Ok(ApiResponse<OrderDto>.Ok(order, "Cập nhật hình thức vận chuyển thành công."));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<OrderDto>.Fail(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<OrderDto>.Fail(ex.Message));
+        }
     }
 
     [HttpPut("{id}/payment")]

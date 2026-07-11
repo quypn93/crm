@@ -331,6 +331,14 @@ public class OrderService : IOrderService
         // Validate status transition
         ValidateStatusTransition(order.Status, dto.Status);
 
+        // Chưa có thiết kế (ảnh hoặc file) thì không thể chuyển sang sản xuất
+        if (dto.Status == OrderStatus.InProduction
+            && string.IsNullOrWhiteSpace(order.DesignImageUrl)
+            && string.IsNullOrWhiteSpace(order.DesignFileUrl))
+        {
+            throw new InvalidOperationException("Đơn hàng chưa có thiết kế. Cần upload ảnh hoặc file thiết kế trước khi chuyển sang sản xuất.");
+        }
+
         var previousStatus = order.Status;
         order.Status = dto.Status;
 
@@ -400,6 +408,53 @@ public class OrderService : IOrderService
         await _unitOfWork.SaveChangesAsync();
 
         return _mapper.Map<OrderDto>(order);
+    }
+
+    public async Task<OrderDto> UpdateDeliveryMethodAsync(Guid id, UpdateDeliveryMethodDto dto, Guid userId)
+    {
+        var order = await _unitOfWork.Orders.GetByIdWithDetailsAsync(id);
+        if (order == null)
+            throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
+
+        // Chỉ cho đổi hình thức vận chuyển khi đơn chưa vào khâu vận chuyển
+        if (order.Status is OrderStatus.Shipping or OrderStatus.Delivered or OrderStatus.Completed)
+            throw new InvalidOperationException("Đơn hàng đã vào khâu vận chuyển, không thể đổi hình thức vận chuyển.");
+        if (order.Status == OrderStatus.Cancelled)
+            throw new InvalidOperationException("Đơn hàng đã hủy, không thể đổi hình thức vận chuyển.");
+
+        var isChanged = order.DeliveryMethod != dto.DeliveryMethod;
+
+        // GHTK đã ngừng sử dụng — không nhận làm lựa chọn mới (đơn cũ giữ nguyên để truy vết)
+        if (isChanged && dto.DeliveryMethod == DeliveryMethod.GHTK)
+            throw new InvalidOperationException("Hình thức GHTK đã ngừng sử dụng.");
+
+        // Đã tạo vận đơn thì phải hủy vận đơn trước khi đổi hình thức
+        if (isChanged && !string.IsNullOrWhiteSpace(order.GhtkLabel))
+            throw new InvalidOperationException("Đơn đã có vận đơn GHTK. Hủy vận đơn GHTK trước khi đổi hình thức vận chuyển.");
+        if (isChanged && !string.IsNullOrWhiteSpace(order.ViettelPostLabel))
+            throw new InvalidOperationException("Đơn đã có vận đơn Viettel Post. Hủy vận đơn trước khi đổi hình thức vận chuyển.");
+
+        order.DeliveryMethod = dto.DeliveryMethod;
+        // NV giao hàng chỉ áp dụng cho hình thức Nhà giao
+        order.ShipperUserId = dto.DeliveryMethod == DeliveryMethod.InHouse ? dto.ShipperUserId : null;
+
+        if (isChanged)
+        {
+            var methodName = dto.DeliveryMethod switch
+            {
+                DeliveryMethod.InHouse => "Nhà giao",
+                DeliveryMethod.Vehicle => "Giao xe",
+                DeliveryMethod.GHTK => "Giao Hàng Tiết Kiệm",
+                DeliveryMethod.ViettelPost => "Viettel Post",
+                _ => dto.DeliveryMethod.ToString()
+            };
+            order.InternalNotes = $"{order.InternalNotes}\n[{DateTime.UtcNow:dd/MM/yyyy HH:mm}] Đổi hình thức vận chuyển sang: {methodName}".Trim();
+        }
+
+        _unitOfWork.Orders.Update(order);
+        await _unitOfWork.SaveChangesAsync();
+
+        return await GetByIdAsync(id) ?? throw new InvalidOperationException("Không thể cập nhật hình thức vận chuyển.");
     }
 
     public async Task<OrderDto> UpdatePaymentAsync(Guid id, UpdatePaymentDto dto, Guid userId)

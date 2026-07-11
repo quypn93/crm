@@ -133,6 +133,7 @@ public class OrderDto
         Core.Enums.DeliveryMethod.InHouse => "Nhà giao",
         Core.Enums.DeliveryMethod.Vehicle => "Giao xe",
         Core.Enums.DeliveryMethod.GHTK    => "Giao Hàng Tiết Kiệm",
+        Core.Enums.DeliveryMethod.ViettelPost => "Viettel Post",
         _ => null
     };
 
@@ -237,6 +238,12 @@ public class UpdateOrderStatusDto
 {
     public OrderStatus Status { get; set; }
     public string? Notes { get; set; }
+}
+
+public class UpdateDeliveryMethodDto
+{
+    public DeliveryMethod DeliveryMethod { get; set; }
+    public Guid? ShipperUserId { get; set; }
 }
 
 public class UpdatePaymentDto

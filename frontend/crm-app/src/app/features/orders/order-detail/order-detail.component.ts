@@ -5,6 +5,7 @@ import { OrderService } from '../../../core/services/order.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ProductionService, OrderProductionProgress } from '../../../core/services/production.service';
+import { UserManagementService, UserListItem } from '../../../core/services/user-management.service';
 import { environment } from '../../../../environments/environment';
 import {
   Order,
@@ -13,9 +14,11 @@ import {
   DeliveryMethod,
   OrderStatusLabels,
   PaymentStatusLabels,
+  DeliveryMethodLabels,
   OrderStatusColors,
   PaymentStatusColors,
   UpdateOrderStatusRequest,
+  UpdateDeliveryMethodRequest,
   UpdatePaymentRequest
 } from '../../../core/models/order.model';
 
@@ -43,6 +46,20 @@ export class OrderDetailComponent implements OnInit {
   paymentMethod = '';
   paymentNotes = '';
 
+  // Delivery method update modal
+  showDeliveryModal = false;
+  editDeliveryMethod: DeliveryMethod | null = null;
+  editShipperUserId = '';
+  isSavingDelivery = false;
+  deliveryError = '';
+  shippers: UserListItem[] = [];
+  // GHTK đã bỏ khỏi danh sách lựa chọn (khớp order-form) — chỉ giữ hiển thị cho đơn cũ
+  readonly deliveryMethodOptions: { value: DeliveryMethod; label: string }[] = [
+    { value: DeliveryMethod.InHouse, label: DeliveryMethodLabels[DeliveryMethod.InHouse] },
+    { value: DeliveryMethod.Vehicle, label: DeliveryMethodLabels[DeliveryMethod.Vehicle] },
+    { value: DeliveryMethod.ViettelPost, label: DeliveryMethodLabels[DeliveryMethod.ViettelPost] }
+  ];
+
   // Complete production step modal
   showCompleteStepModal = false;
   completingStageId = '';
@@ -55,6 +72,7 @@ export class OrderDetailComponent implements OnInit {
     private orderService: OrderService,
     private authService: AuthService,
     private productionService: ProductionService,
+    private userService: UserManagementService,
     private route: ActivatedRoute,
     private router: Router,
     private toast: ToastService
@@ -127,6 +145,68 @@ export class OrderDetailComponent implements OnInit {
            this.authService.hasAnyRole(['Admin', 'SalesManager', 'SalesRep']);
   }
 
+  // Đơn được coi là "có thiết kế" khi đã upload ảnh hoặc file thiết kế
+  hasDesign(): boolean {
+    return !!(this.order?.designImageUrl || this.order?.designFileUrl);
+  }
+
+  // Đơn Đã xác nhận nhưng chưa có thiết kế → chưa thể chuyển sang sản xuất
+  showMissingDesignWarning(): boolean {
+    return this.order?.status === OrderStatus.Confirmed && !this.hasDesign();
+  }
+
+  // Chưa đến khâu vận chuyển (Shipping) thì vẫn đổi được hình thức vận chuyển
+  canEditDeliveryMethod(): boolean {
+    if (!this.order) return false;
+    const editableStatuses = [
+      OrderStatus.Draft, OrderStatus.Confirmed, OrderStatus.InProduction,
+      OrderStatus.QualityCheck, OrderStatus.ReadyToShip
+    ];
+    return editableStatuses.includes(this.order.status) &&
+           this.authService.hasAnyRole(['Admin', 'SalesManager', 'SalesRep', 'DeliveryManager']);
+  }
+
+  openDeliveryModal(): void {
+    if (!this.order) return;
+    this.editDeliveryMethod = this.order.deliveryMethod ?? DeliveryMethod.InHouse;
+    this.editShipperUserId = this.order.shipperUserId || '';
+    this.deliveryError = '';
+    this.showDeliveryModal = true;
+    if (this.shippers.length === 0) {
+      this.userService.getUsers({ page: 1, pageSize: 200, isActive: true, role: 'DeliveryStaff' }).subscribe({
+        next: (res) => { this.shippers = res?.items || []; },
+        error: () => { /* not critical */ }
+      });
+    }
+  }
+
+  closeDeliveryModal(): void {
+    this.showDeliveryModal = false;
+    this.deliveryError = '';
+  }
+
+  saveDeliveryMethod(): void {
+    if (!this.order || this.editDeliveryMethod === null) return;
+    this.isSavingDelivery = true;
+    this.deliveryError = '';
+    const request: UpdateDeliveryMethodRequest = {
+      deliveryMethod: this.editDeliveryMethod,
+      shipperUserId: this.editDeliveryMethod === DeliveryMethod.InHouse ? (this.editShipperUserId || undefined) : undefined
+    };
+    this.orderService.updateDeliveryMethod(this.order.id, request).subscribe({
+      next: (updated) => {
+        this.order = updated;
+        this.isSavingDelivery = false;
+        this.closeDeliveryModal();
+        this.toast.success('Đã cập nhật hình thức vận chuyển.');
+      },
+      error: (err) => {
+        this.isSavingDelivery = false;
+        this.deliveryError = err?.error?.message || 'Cập nhật hình thức vận chuyển thất bại.';
+      }
+    });
+  }
+
   confirmOrder(): void {
     if (!this.order) return;
     const req: UpdateOrderStatusRequest = { status: OrderStatus.Confirmed, notes: 'Sale xác nhận đơn hàng' };
@@ -187,6 +267,12 @@ export class OrderDetailComponent implements OnInit {
 
   updateStatus(): void {
     if (!this.order || this.newStatus === null) return;
+
+    // Chưa có thiết kế thì không thể chuyển sang sản xuất (backend cũng chặn)
+    if (this.newStatus === OrderStatus.InProduction && !this.hasDesign()) {
+      this.toast.error('Đơn hàng chưa có thiết kế. Cần upload ảnh hoặc file thiết kế trước khi chuyển sang sản xuất.');
+      return;
+    }
 
     // Xác nhận trước khi chuyển sang InProduction — sau bước này không sửa được đơn nữa.
     if (this.newStatus === OrderStatus.InProduction) {
@@ -329,7 +415,8 @@ export class OrderDetailComponent implements OnInit {
       next: () => {
         this.isCompletingStep = false;
         this.closeCompleteStepModal();
-        this.loadProductionProgress(this.order!.id);
+        // Reload cả đơn hàng: hoàn thành khâu cuối sẽ tự chuyển trạng thái đơn (QualityCheck)
+        this.loadOrder(this.order!.id);
       },
       error: (err) => {
         this.isCompletingStep = false;

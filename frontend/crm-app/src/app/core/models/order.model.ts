@@ -259,6 +259,11 @@ export interface UpdateOrderStatusRequest {
   notes?: string;
 }
 
+export interface UpdateDeliveryMethodRequest {
+  deliveryMethod: DeliveryMethod;
+  shipperUserId?: string;
+}
+
 export interface UpdatePaymentRequest {
   paidAmount: number;
   paymentMethod?: string;

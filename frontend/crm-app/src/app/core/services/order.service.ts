@@ -11,6 +11,7 @@ import {
   CreateOrderRequest,
   UpdateOrderRequest,
   UpdateOrderStatusRequest,
+  UpdateDeliveryMethodRequest,
   UpdatePaymentRequest,
   OrderFilter,
   OrderSummary,
@@ -100,6 +101,10 @@ export class OrderService {
 
   updatePayment(id: string, request: UpdatePaymentRequest): Observable<Order> {
     return this.api.put<Order>(`orders/${id}/payment`, request);
+  }
+
+  updateDeliveryMethod(id: string, request: UpdateDeliveryMethodRequest): Observable<Order> {
+    return this.api.put<Order>(`orders/${id}/delivery-method`, request);
   }
 
   createFromDeal(dealId: string): Observable<Order> {

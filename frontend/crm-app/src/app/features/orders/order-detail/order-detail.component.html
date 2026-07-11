@@ -60,6 +60,15 @@
     </button>
   </div>
 
+  <!-- Cảnh báo: chưa có thiết kế → không thể chuyển sang sản xuất -->
+  <div class="missing-design-banner" *ngIf="showMissingDesignWarning()">
+    <div class="missing-design-icon">⚠️</div>
+    <div class="missing-design-text">
+      <strong>Đơn hàng chưa có thiết kế — chưa thể chuyển sang sản xuất</strong>
+      <span>Cần upload ảnh hoặc file thiết kế trước khi chuyển đơn sang trạng thái "Đang sản xuất".</span>
+    </div>
+  </div>
+
   <!-- Banner thông báo designer cần upload ảnh đơn hàng có thiết kế -->
   <div class="design-image-banner"
        *ngIf="order && order.designId && !order.designImageUrl"
@@ -128,7 +137,12 @@
         <div class="info-grid">
           <div class="info-item">
             <span class="label">Hình thức giao</span>
-            <span class="value">{{ order.deliveryMethodName || '-' }}</span>
+            <span class="value">
+              {{ order.deliveryMethodName || '-' }}
+              <button type="button" class="btn-edit-delivery" *ngIf="canEditDeliveryMethod()" (click)="openDeliveryModal()">
+                ✏️ Đổi
+              </button>
+            </span>
           </div>
           <div class="info-item" *ngIf="order.deliveryMethod === DeliveryMethod.InHouse">
             <span class="label">NV giao hàng</span>
@@ -508,6 +522,53 @@
         <div class="prod-fully-done" *ngIf="productionProgress.isFullyCompleted">
           ✅ Đã hoàn thành tất cả các khâu sản xuất
         </div>
+
+        <!-- Tình trạng vận chuyển — hiện sau khi xong khâu cuối cùng -->
+        <div class="prod-shipping" *ngIf="productionProgress.isFullyCompleted">
+          <h4>🚚 Tình trạng vận chuyển</h4>
+          <div class="ship-row">
+            <span class="label">Hình thức</span>
+            <span class="value">{{ order.deliveryMethodName || 'Chưa chọn' }}</span>
+          </div>
+          <div class="ship-row">
+            <span class="label">Trạng thái đơn</span>
+            <span class="value" [style.color]="getStatusColor(order.status)">{{ getStatusLabel(order.status) }}</span>
+          </div>
+          <div class="ship-row" *ngIf="order.deliveryMethod === DeliveryMethod.InHouse">
+            <span class="label">NV giao hàng</span>
+            <span class="value">{{ order.shipperUserName || 'Chưa gán' }}</span>
+          </div>
+          <ng-container *ngIf="isGhtkOrder()">
+            <div class="ship-row" *ngIf="order.ghtkLabel">
+              <span class="label">Vận đơn GHTK</span>
+              <span class="value">
+                <a *ngIf="order.ghtkTrackingUrl" [href]="order.ghtkTrackingUrl" target="_blank" rel="noopener">{{ order.ghtkLabel }}</a>
+                <ng-container *ngIf="!order.ghtkTrackingUrl">{{ order.ghtkLabel }}</ng-container>
+              </span>
+            </div>
+            <div class="ship-row">
+              <span class="label">Trạng thái GHTK</span>
+              <span class="value">{{ order.ghtkStatus || 'Chưa tạo vận đơn' }}</span>
+            </div>
+          </ng-container>
+          <ng-container *ngIf="isViettelPostOrder()">
+            <div class="ship-row" *ngIf="order.viettelPostLabel">
+              <span class="label">Vận đơn Viettel Post</span>
+              <span class="value">
+                <a *ngIf="order.viettelPostTrackingUrl" [href]="order.viettelPostTrackingUrl" target="_blank" rel="noopener">{{ order.viettelPostLabel }}</a>
+                <ng-container *ngIf="!order.viettelPostTrackingUrl">{{ order.viettelPostLabel }}</ng-container>
+              </span>
+            </div>
+            <div class="ship-row">
+              <span class="label">Trạng thái VTP</span>
+              <span class="value">{{ order.viettelPostStatus || 'Chưa tạo vận đơn' }}</span>
+            </div>
+          </ng-container>
+          <div class="ship-row" *ngIf="order.shippedDate">
+            <span class="label">Ngày đã giao</span>
+            <span class="value">{{ order.shippedDate | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
       </div>
 
       <!-- Hủy đơn (Confirmed / InProduction) -->
@@ -614,6 +675,43 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" (click)="closePaymentModal()">Hủy</button>
       <button class="btn btn-primary" (click)="updatePayment()">Xác nhận</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delivery Method Update Modal -->
+<div class="modal-overlay" *ngIf="showDeliveryModal" (click)="closeDeliveryModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Đổi hình thức vận chuyển</h3>
+      <button class="btn-close" (click)="closeDeliveryModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Hình thức vận chuyển</label>
+        <select [(ngModel)]="editDeliveryMethod">
+          <option *ngFor="let opt of deliveryMethodOptions" [ngValue]="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
+      <div class="form-group" *ngIf="editDeliveryMethod === DeliveryMethod.InHouse">
+        <label>NV giao hàng</label>
+        <select [(ngModel)]="editShipperUserId">
+          <option value="">Chưa gán</option>
+          <option *ngFor="let u of shippers" [value]="u.id">{{ u.fullName }}</option>
+        </select>
+      </div>
+      <div class="alert alert-danger" *ngIf="deliveryError">{{ deliveryError }}</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeDeliveryModal()" [disabled]="isSavingDelivery">Hủy</button>
+      <button class="btn btn-primary" (click)="saveDeliveryMethod()" [disabled]="isSavingDelivery">
+        {{ isSavingDelivery ? 'Đang lưu...' : 'Cập nhật' }}
+      </button>
     </div>
   </div>
 </div>
