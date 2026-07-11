@@ -219,11 +219,16 @@ public class ViettelPostShipmentService : IViettelPostShipmentService
             sa = await _uow.SenderAddresses.GetByIdAsync(order.SenderAddressId.Value);
         sa ??= (await _uow.SenderAddresses.FindAsync(x => x.IsDefault && x.IsActive)).FirstOrDefault();
 
-        if (sa != null)
-            return new ResolvedPick(sa.Name, sa.Phone, sa.Address, sa.ProvinceId, sa.DistrictId, sa.WardId);
+        var pick = sa != null
+            ? new ResolvedPick(sa.Name, sa.Phone, sa.Address, sa.ProvinceId, sa.DistrictId, sa.WardId)
+            : new ResolvedPick(_opts.Pick.Name, _opts.Pick.Tel, _opts.Pick.Address,
+                               _opts.Pick.ProvinceId, _opts.Pick.DistrictId, _opts.Pick.WardId);
 
-        var p = _opts.Pick;
-        return new ResolvedPick(p.Name, p.Tel, p.Address, p.ProvinceId, p.DistrictId, p.WardId);
+        if (pick.ProvinceId <= 0 || pick.DistrictId <= 0 || string.IsNullOrWhiteSpace(pick.Address))
+            throw new InvalidOperationException(
+                "Chưa có kho gửi ViettelPost. Vào Cài đặt → Địa chỉ gửi hàng để thêm kho và đặt mặc định.");
+
+        return pick;
     }
 
     private void ValidateAddress(Order order)

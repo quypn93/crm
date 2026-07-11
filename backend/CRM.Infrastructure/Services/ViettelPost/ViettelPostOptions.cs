@@ -15,12 +15,11 @@ public class ViettelPostOptions
     public ViettelPostPickOptions Pick { get; set; } = new();
     public ViettelPostDefaults Defaults { get; set; } = new();
 
-    // Có token + kho gửi tối thiểu (địa chỉ + ID tỉnh/huyện) mới coi là đã cấu hình.
+    // Chỉ cần có token (hoặc user/pass) là coi như đã cấu hình. Kho gửi lấy từ
+    // "Địa chỉ gửi hàng" (SenderAddress) lúc tạo vận đơn — không ràng buộc ở đây nữa.
     public bool IsConfigured =>
-        (!string.IsNullOrWhiteSpace(Token) || (!string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password)))
-        && !string.IsNullOrWhiteSpace(Pick.Address)
-        && Pick.ProvinceId > 0
-        && Pick.DistrictId > 0;
+        !string.IsNullOrWhiteSpace(Token)
+        || (!string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password));
 }
 
 public class ViettelPostPickOptions
