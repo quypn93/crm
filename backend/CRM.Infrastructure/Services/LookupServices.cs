@@ -104,6 +104,107 @@ public class CollectionService : ICollectionService
     };
 }
 
+public class SenderAddressService : ISenderAddressService
+{
+    private readonly CrmDbContext _db;
+
+    public SenderAddressService(CrmDbContext db)
+    {
+        _db = db;
+    }
+
+    public async Task<IEnumerable<SenderAddressDto>> GetAllAsync()
+    {
+        var list = await _db.SenderAddresses
+            .OrderByDescending(x => x.IsDefault).ThenBy(x => x.Name)
+            .ToListAsync();
+        return list.Select(ToDto);
+    }
+
+    public async Task<SenderAddressDto?> GetByIdAsync(Guid id)
+    {
+        var x = await _db.SenderAddresses.FindAsync(id);
+        return x == null ? null : ToDto(x);
+    }
+
+    public async Task<SenderAddressDto> CreateAsync(CreateSenderAddressDto dto)
+    {
+        var entity = new SenderAddress
+        {
+            Name = dto.Name.Trim(),
+            Phone = dto.Phone.Trim(),
+            Address = dto.Address.Trim(),
+            ProvinceId = dto.ProvinceId,
+            DistrictId = dto.DistrictId,
+            WardId = dto.WardId,
+            ProvinceName = dto.ProvinceName,
+            DistrictName = dto.DistrictName,
+            WardName = dto.WardName,
+            IsDefault = dto.IsDefault,
+            IsActive = dto.IsActive
+        };
+        _db.SenderAddresses.Add(entity);
+        await _db.SaveChangesAsync();
+        await EnsureSingleDefaultAsync(entity);
+        return ToDto(entity);
+    }
+
+    public async Task<SenderAddressDto> UpdateAsync(UpdateSenderAddressDto dto)
+    {
+        var entity = await _db.SenderAddresses.FindAsync(dto.Id)
+            ?? throw new KeyNotFoundException("Không tìm thấy địa chỉ gửi hàng.");
+
+        entity.Name = dto.Name.Trim();
+        entity.Phone = dto.Phone.Trim();
+        entity.Address = dto.Address.Trim();
+        entity.ProvinceId = dto.ProvinceId;
+        entity.DistrictId = dto.DistrictId;
+        entity.WardId = dto.WardId;
+        entity.ProvinceName = dto.ProvinceName;
+        entity.DistrictName = dto.DistrictName;
+        entity.WardName = dto.WardName;
+        entity.IsDefault = dto.IsDefault;
+        entity.IsActive = dto.IsActive;
+
+        await _db.SaveChangesAsync();
+        await EnsureSingleDefaultAsync(entity);
+        return ToDto(entity);
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        var entity = await _db.SenderAddresses.FindAsync(id) ?? throw new KeyNotFoundException();
+        _db.SenderAddresses.Remove(entity);
+        await _db.SaveChangesAsync();
+    }
+
+    // Chỉ 1 địa chỉ được đặt mặc định: nếu entity vừa lưu là default thì bỏ default các cái khác.
+    private async Task EnsureSingleDefaultAsync(SenderAddress entity)
+    {
+        if (!entity.IsDefault) return;
+        var others = await _db.SenderAddresses.Where(x => x.Id != entity.Id && x.IsDefault).ToListAsync();
+        if (others.Count == 0) return;
+        foreach (var o in others) o.IsDefault = false;
+        await _db.SaveChangesAsync();
+    }
+
+    private static SenderAddressDto ToDto(SenderAddress x) => new()
+    {
+        Id = x.Id,
+        Name = x.Name,
+        Phone = x.Phone,
+        Address = x.Address,
+        ProvinceId = x.ProvinceId,
+        DistrictId = x.DistrictId,
+        WardId = x.WardId,
+        ProvinceName = x.ProvinceName,
+        DistrictName = x.DistrictName,
+        WardName = x.WardName,
+        IsDefault = x.IsDefault,
+        IsActive = x.IsActive
+    };
+}
+
 public abstract class SimpleLookupServiceBase<TEntity> where TEntity : BaseEntity, new()
 {
     protected readonly CrmDbContext _db;

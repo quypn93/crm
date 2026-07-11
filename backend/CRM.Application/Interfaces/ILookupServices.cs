@@ -11,6 +11,15 @@ public interface ICollectionService
     Task DeleteAsync(Guid id);
 }
 
+public interface ISenderAddressService
+{
+    Task<IEnumerable<SenderAddressDto>> GetAllAsync();
+    Task<SenderAddressDto?> GetByIdAsync(Guid id);
+    Task<SenderAddressDto> CreateAsync(CreateSenderAddressDto dto);
+    Task<SenderAddressDto> UpdateAsync(UpdateSenderAddressDto dto);
+    Task DeleteAsync(Guid id);
+}
+
 public interface IMaterialService
 {
     Task<IEnumerable<LookupItemDto>> GetAllAsync();

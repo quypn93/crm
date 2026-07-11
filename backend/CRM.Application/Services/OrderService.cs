@@ -155,6 +155,7 @@ public class OrderService : IOrderService
         {
             OrderNumber = await _unitOfWork.Orders.GenerateOrderNumberAsync(),
             OrderTypeId = dto.OrderTypeId,
+            SenderAddressId = dto.SenderAddressId,
             OrderTypeName = orderType?.Name,
             CustomerId = dto.CustomerId,
             CustomerName = customer?.Name ?? dto.CustomerName,
@@ -252,6 +253,7 @@ public class OrderService : IOrderService
                 throw new KeyNotFoundException("Không tìm thấy dạng đơn.");
         }
         order.OrderTypeId = dto.OrderTypeId;
+        order.SenderAddressId = dto.SenderAddressId;
         order.OrderTypeName = orderType?.Name;
         order.DeliveryMethod = dto.DeliveryMethod;
         order.ShippingContactName = dto.ShippingContactName;

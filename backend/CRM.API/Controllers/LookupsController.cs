@@ -1,10 +1,53 @@
 using CRM.Application.DTOs.Common;
 using CRM.Application.DTOs.Lookup;
 using CRM.Application.Interfaces;
+using CRM.Core.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CRM.API.Controllers;
+
+// Địa chỉ gửi hàng — đọc cho mọi user đăng nhập (để chọn khi tạo đơn), ghi chỉ Admin.
+[ApiController]
+[Route("api/sender-addresses")]
+[Authorize]
+public class SenderAddressesController : ControllerBase
+{
+    private readonly ISenderAddressService _svc;
+    public SenderAddressesController(ISenderAddressService svc) { _svc = svc; }
+
+    [HttpGet]
+    public async Task<ActionResult<ApiResponse<IEnumerable<SenderAddressDto>>>> GetAll()
+        => Ok(ApiResponse<IEnumerable<SenderAddressDto>>.Ok(await _svc.GetAllAsync()));
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ApiResponse<SenderAddressDto>>> GetById(Guid id)
+    {
+        var x = await _svc.GetByIdAsync(id);
+        return x == null ? NotFound(ApiResponse<SenderAddressDto>.Fail("Không tìm thấy.")) : Ok(ApiResponse<SenderAddressDto>.Ok(x));
+    }
+
+    [HttpPost]
+    [Authorize(Roles = RoleNames.Admin)]
+    public async Task<ActionResult<ApiResponse<SenderAddressDto>>> Create([FromBody] CreateSenderAddressDto dto)
+        => Ok(ApiResponse<SenderAddressDto>.Ok(await _svc.CreateAsync(dto), "Tạo địa chỉ gửi hàng thành công."));
+
+    [HttpPut("{id}")]
+    [Authorize(Roles = RoleNames.Admin)]
+    public async Task<ActionResult<ApiResponse<SenderAddressDto>>> Update(Guid id, [FromBody] UpdateSenderAddressDto dto)
+    {
+        if (id != dto.Id) return BadRequest(ApiResponse<SenderAddressDto>.Fail("ID không khớp."));
+        return Ok(ApiResponse<SenderAddressDto>.Ok(await _svc.UpdateAsync(dto), "Cập nhật thành công."));
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize(Roles = RoleNames.Admin)]
+    public async Task<ActionResult<ApiResponse>> Delete(Guid id)
+    {
+        await _svc.DeleteAsync(id);
+        return Ok(ApiResponse.Ok("Xóa thành công."));
+    }
+}
 
 [ApiController]
 [Route("api/collections")]

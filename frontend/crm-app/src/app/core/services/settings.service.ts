@@ -7,7 +7,8 @@ import {
   LookupItem, CreateLookupItem,
   Collection, CreateCollection,
   ProductionDaysOption, CreateProductionDaysOption,
-  DepositTransaction, CreateDepositTransaction
+  DepositTransaction, CreateDepositTransaction,
+  SenderAddress, CreateSenderAddress, VtpCategory
 } from '../models/lookup.model';
 
 @Injectable({ providedIn: 'root' })
@@ -32,6 +33,31 @@ export class SettingsService {
   }
   deleteCollection(id: string): Observable<void> {
     return this.unwrap(this.http.delete<ApiResponse<void>>(`${this.base}/collections/${id}`));
+  }
+
+  // Sender addresses (địa chỉ gửi hàng — Viettel Post)
+  getSenderAddresses(): Observable<SenderAddress[]> {
+    return this.unwrap(this.http.get<ApiResponse<SenderAddress[]>>(`${this.base}/sender-addresses`));
+  }
+  createSenderAddress(dto: CreateSenderAddress): Observable<SenderAddress> {
+    return this.unwrap(this.http.post<ApiResponse<SenderAddress>>(`${this.base}/sender-addresses`, dto));
+  }
+  updateSenderAddress(id: string, dto: CreateSenderAddress & { id: string }): Observable<SenderAddress> {
+    return this.unwrap(this.http.put<ApiResponse<SenderAddress>>(`${this.base}/sender-addresses/${id}`, dto));
+  }
+  deleteSenderAddress(id: string): Observable<void> {
+    return this.unwrap(this.http.delete<ApiResponse<void>>(`${this.base}/sender-addresses/${id}`));
+  }
+
+  // Danh mục hành chính Viettel Post cho dropdown chọn kho gửi
+  getVtpProvinces(): Observable<VtpCategory[]> {
+    return this.unwrap(this.http.get<ApiResponse<VtpCategory[]>>(`${this.base}/viettelpost/provinces`));
+  }
+  getVtpDistricts(provinceId: number): Observable<VtpCategory[]> {
+    return this.unwrap(this.http.get<ApiResponse<VtpCategory[]>>(`${this.base}/viettelpost/districts?provinceId=${provinceId}`));
+  }
+  getVtpWards(districtId: number): Observable<VtpCategory[]> {
+    return this.unwrap(this.http.get<ApiResponse<VtpCategory[]>>(`${this.base}/viettelpost/wards?districtId=${districtId}`));
   }
 
   // Generic lookup helpers

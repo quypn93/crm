@@ -51,6 +51,8 @@ public class OrderDto
 
     public DeliveryMethod? DeliveryMethod { get; set; }
     public string? DeliveryMethodName => GetDeliveryMethodName(DeliveryMethod);
+    public Guid? SenderAddressId { get; set; }
+    public string? SenderAddressName { get; set; }
     public string? ShippingContactName { get; set; }
     public string? ShippingPhone { get; set; }
     public string? ShippingAddress { get; set; }
@@ -185,6 +187,7 @@ public class CreateOrderDto
     public string? DepositCode { get; set; }
     public Guid? OrderTypeId { get; set; }
     public DeliveryMethod? DeliveryMethod { get; set; }
+    public Guid? SenderAddressId { get; set; }
     public string? ShippingContactName { get; set; }
     public string? ShippingPhone { get; set; }
     public string? ShippingAddress { get; set; }

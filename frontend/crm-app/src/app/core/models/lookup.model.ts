@@ -32,6 +32,45 @@ export interface CreateCollection {
   specificationIds: string[];
 }
 
+export interface SenderAddress {
+  id: string;
+  name: string;
+  phone: string;
+  address: string;
+  provinceId: number;
+  districtId: number;
+  wardId: number;
+  provinceName?: string;
+  districtName?: string;
+  wardName?: string;
+  isDefault: boolean;
+  isActive: boolean;
+}
+
+export interface CreateSenderAddress {
+  name: string;
+  phone: string;
+  address: string;
+  provinceId: number;
+  districtId: number;
+  wardId: number;
+  provinceName?: string;
+  districtName?: string;
+  wardName?: string;
+  isDefault: boolean;
+  isActive?: boolean;
+}
+
+// Danh mục hành chính Viettel Post (PROVINCE_ID/DISTRICT_ID/WARDS_ID...).
+export interface VtpCategory {
+  PROVINCE_ID?: number;
+  DISTRICT_ID?: number;
+  WARDS_ID?: number;
+  PROVINCE_NAME?: string;
+  DISTRICT_NAME?: string;
+  WARDS_NAME?: string;
+}
+
 export interface ProductionDaysOption {
   id: string;
   name: string;

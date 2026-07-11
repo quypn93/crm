@@ -96,14 +96,14 @@
       <div class="form-card">
         <h2 class="card-title">Phân quyền</h2>
 
-        <!-- Trưởng phòng kinh doanh: vai trò cố định là Nhân viên kinh doanh -->
+        <!-- Trưởng phòng: chỉ được chọn vai trò nhân viên thuộc phòng mình -->
         <div class="field-hint" *ngIf="!isAdmin">
-          Tài khoản được tạo với vai trò <strong>Nhân viên kinh doanh (SalesRep)</strong>.
+          Chỉ tạo được tài khoản nhân viên thuộc phòng mình.
         </div>
 
-        <p class="card-subtitle" *ngIf="isAdmin">Chọn một hoặc nhiều vai trò cho người dùng</p>
+        <p class="card-subtitle">Chọn một hoặc nhiều vai trò cho người dùng</p>
 
-        <div class="roles-grid" *ngIf="isAdmin">
+        <div class="roles-grid">
           <div
             *ngFor="let role of roles"
             class="role-item"

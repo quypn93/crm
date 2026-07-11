@@ -320,15 +320,6 @@
           <div class="error-text" *ngIf="f['deliveryMethod'].invalid && f['deliveryMethod'].touched">
             Vui lòng chọn hình thức giao hàng.
           </div>
-          <ng-container *ngIf="orderForm.get('deliveryMethod')?.value === DeliveryMethod.GHTK">
-            <div class="hint" *ngIf="ghtkConfigured === true">
-              Vận đơn GHTK sẽ được tạo tự động khi đơn chuyển sang "Sẵn sàng giao".
-            </div>
-            <div class="hint hint-warning" *ngIf="ghtkConfigured === false">
-              ⚠ GHTK chưa cấu hình — đơn vẫn lưu nhãn "GHTK" nhưng không tạo vận đơn tự động.
-              Yêu cầu admin điền token + thông tin kho trong <code>appsettings.Ghtk</code>.
-            </div>
-          </ng-container>
           <ng-container *ngIf="orderForm.get('deliveryMethod')?.value === DeliveryMethod.ViettelPost">
             <div class="hint" *ngIf="viettelPostConfigured === true">
               Vận đơn Viettel Post sẽ được tạo tự động khi đơn chuyển sang "Sẵn sàng giao".
@@ -338,6 +329,19 @@
               Yêu cầu admin điền token + thông tin kho trong <code>appsettings.ViettelPost</code>.
             </div>
           </ng-container>
+        </div>
+
+        <!-- Địa chỉ gửi hàng — chỉ hiện khi chọn Viettel Post -->
+        <div class="form-grid" *ngIf="orderForm.get('deliveryMethod')?.value === DeliveryMethod.ViettelPost">
+          <div class="form-group">
+            <label>Địa chỉ gửi hàng</label>
+            <select formControlName="senderAddressId">
+              <option value="">-- Địa chỉ mặc định --</option>
+              <option *ngFor="let a of senderAddresses" [value]="a.id">
+                {{ a.name }} — {{ a.address }}{{ a.wardName ? ', ' + a.wardName : '' }}
+              </option>
+            </select>
+          </div>
         </div>
 
         <!-- NV giao hàng — chỉ hiện khi chọn "Nhà giao" -->

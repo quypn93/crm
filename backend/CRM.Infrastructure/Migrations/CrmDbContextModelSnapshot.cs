@@ -1108,6 +1108,9 @@ namespace CRM.Infrastructure.Migrations
                     b.Property<DateTime?>("ReturnDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("SenderAddressId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("ShipperUserId")
                         .HasColumnType("uuid");
 
@@ -1227,6 +1230,8 @@ namespace CRM.Infrastructure.Migrations
                     b.HasIndex("PaymentStatus");
 
                     b.HasIndex("ProductionDaysOptionId");
+
+                    b.HasIndex("SenderAddressId");
 
                     b.HasIndex("ShipperUserId");
 
@@ -1764,6 +1769,65 @@ namespace CRM.Infrastructure.Migrations
                             Description = "Media",
                             Name = "Media"
                         });
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.SenderAddress", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DistrictId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DistrictName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("ProvinceId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ProvinceName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("WardId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("WardName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SenderAddresses", (string)null);
                 });
 
             modelBuilder.Entity("CRM.Core.Entities.ShirtComponent", b =>
@@ -2346,6 +2410,10 @@ namespace CRM.Infrastructure.Migrations
                         .HasForeignKey("ProductionDaysOptionId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("CRM.Core.Entities.SenderAddress", "SenderAddress")
+                        .WithMany()
+                        .HasForeignKey("SenderAddressId");
+
                     b.HasOne("CRM.Core.Entities.User", "ShipperUser")
                         .WithMany()
                         .HasForeignKey("ShipperUserId")
@@ -2366,6 +2434,8 @@ namespace CRM.Infrastructure.Migrations
                     b.Navigation("OrderType");
 
                     b.Navigation("ProductionDaysOption");
+
+                    b.Navigation("SenderAddress");
 
                     b.Navigation("ShipperUser");
                 });

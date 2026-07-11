@@ -137,6 +137,10 @@ export interface Order {
   ghtkLastError?: string;
   ghtkSyncedAt?: Date;
 
+  // Địa chỉ gửi hàng đã chọn
+  senderAddressId?: string;
+  senderAddressName?: string;
+
   // Viettel Post tracking — chỉ có nếu deliveryMethod = ViettelPost
   viettelPostLabel?: string;
   viettelPostTrackingUrl?: string;
@@ -219,6 +223,7 @@ export interface CreateOrderRequest {
   completionDate?: Date;
   returnDate?: Date;
   deliveryMethod?: DeliveryMethod;
+  senderAddressId?: string;
   shippingContactName?: string;
   shippingPhone?: string;
   shippingAddress?: string;

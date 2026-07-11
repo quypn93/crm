@@ -23,8 +23,9 @@ export class UserFormComponent implements OnInit {
   errorMessage = '';
   roles: RoleItem[] = [];
   selectedRoles: Set<string> = new Set();
-  // Admin: chọn nhiều vai trò. Trưởng phòng kinh doanh: chỉ tạo được Nhân viên kinh doanh (SalesRep).
+  // Admin: chọn mọi vai trò. Trưởng phòng: chỉ chọn được staff role của phòng mình.
   isAdmin = false;
+  manageableRoles: string[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -48,8 +49,10 @@ export class UserFormComponent implements OnInit {
     if (this.isAdmin) {
       this.loadRoles(); // getRoles là API riêng của Admin
     } else {
-      // Trưởng phòng kinh doanh: khoá vai trò là SalesRep.
-      this.selectedRoles = new Set([RoleNames.SalesRep]);
+      // Trưởng phòng: chỉ hiển thị staff role của phòng mình; nếu chỉ 1 thì chọn sẵn.
+      this.manageableRoles = this.authService.getManageableStaffRoles();
+      this.roles = this.manageableRoles.map(r => ({ id: r, name: r } as RoleItem));
+      if (this.manageableRoles.length === 1) this.selectedRoles = new Set(this.manageableRoles);
     }
 
     const id = this.route.snapshot.paramMap.get('id');
@@ -81,7 +84,9 @@ export class UserFormComponent implements OnInit {
           phoneNumber: user.phoneNumber,
           isActive: user.isActive
         });
-        this.selectedRoles = this.isAdmin ? new Set(user.roles) : new Set([RoleNames.SalesRep]);
+        this.selectedRoles = this.isAdmin
+          ? new Set(user.roles)
+          : new Set(user.roles.filter(r => this.manageableRoles.includes(r)));
         this.isLoading = false;
       },
       error: () => {

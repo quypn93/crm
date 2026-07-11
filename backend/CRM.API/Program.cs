@@ -227,6 +227,7 @@ builder.Services.AddScoped<IColorFabricService, ColorFabricService>();
 builder.Services.AddScoped<IShirtComponentService, ShirtComponentService>();
 builder.Services.AddScoped<IDesignService, DesignService>();
 builder.Services.AddScoped<ICollectionService, CollectionService>();
+builder.Services.AddScoped<ISenderAddressService, SenderAddressService>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IProductFormService, ProductFormService>();
 builder.Services.AddScoped<IProductSpecificationService, ProductSpecificationService>();

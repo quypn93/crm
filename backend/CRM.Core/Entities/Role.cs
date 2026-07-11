@@ -84,4 +84,28 @@ public static class RoleNames
         QualityManager, QualityControl,
         DeliveryManager, DeliveryStaff
     };
+
+    // ── Quản lý tài khoản theo phòng ban ──────────────────────────────
+    // Mỗi trưởng phòng (manager) được tạo/quản lý các tài khoản nhân viên thuộc phòng mình.
+    public static readonly string[] AllManagerRoles = {
+        SalesManager, ProductionManager, DesignManager,
+        DeliveryManager, QualityManager, ContentManager, MarketingManager
+    };
+
+    // manager role → các staff role được phép tạo/quản lý.
+    public static readonly Dictionary<string, string[]> DepartmentStaff = new()
+    {
+        [SalesManager]      = new[] { SalesRep },
+        [ProductionManager] = new[] { ProductionStaff, CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff },
+        [DesignManager]     = new[] { Designer },
+        [DeliveryManager]   = new[] { DeliveryStaff },
+        [QualityManager]    = new[] { QualityControl },
+        [ContentManager]    = new[] { ContentStaff },
+        [MarketingManager]  = new[] { MediaMarketing, DigitalAds, Media },
+    };
+
+    // Cho [Authorize(Roles = ...)] — Admin + tất cả trưởng phòng.
+    public const string AdminAndManagers =
+        Admin + "," + SalesManager + "," + ProductionManager + "," + DesignManager + "," +
+        DeliveryManager + "," + QualityManager + "," + ContentManager + "," + MarketingManager;
 }

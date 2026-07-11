@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService, RoleNames, RoleGroups } from '../../core/services/auth.service';
+import { AuthService, RoleNames, RoleGroups, UserAdminRoles } from '../../core/services/auth.service';
 
 interface MenuItem {
   label: string;
@@ -34,12 +34,13 @@ export class SidebarComponent implements OnInit {
     { label: 'Báo cáo', icon: 'chart', route: '/reports', roles: RoleGroups.ManagerRoles },
     { label: 'Bộ sưu tập', icon: 'fabric', route: '/settings/collections', roles: [RoleNames.Admin], exact: true },
     { label: 'Dạng đơn', icon: 'list', route: '/settings/order-types', roles: [RoleNames.Admin], exact: true },
+    { label: 'Địa chỉ gửi', icon: 'list', route: '/settings/sender-addresses', roles: [RoleNames.Admin], exact: true },
     { label: 'Chất liệu', icon: 'fabric', route: '/settings/materials', roles: [RoleNames.Admin], exact: true },
     { label: 'Form áo', icon: 'list', route: '/settings/product-forms', roles: [RoleNames.Admin], exact: true },
     { label: 'Quy cách', icon: 'list', route: '/settings/product-specifications', roles: [RoleNames.Admin], exact: true },
     { label: 'Thời gian SX', icon: 'check-circle', route: '/settings/production-days', roles: [RoleNames.Admin], exact: true },
     { label: 'Lịch sử cộng tiền', icon: 'chart', route: '/settings/deposits', roles: RoleGroups.SalesRoles, exact: true },
-    { label: 'Người dùng', icon: 'user-manage', route: '/settings/users', roles: RoleGroups.ManagerRoles, exact: false },
+    { label: 'Người dùng', icon: 'user-manage', route: '/settings/users', roles: UserAdminRoles, exact: false },
     { label: 'Vai trò', icon: 'shield', route: '/settings/roles', roles: [RoleNames.Admin], exact: false },
     { label: 'Cấu hình thông báo', icon: 'bell', route: '/notifications/admin/preferences', roles: [RoleNames.Admin], exact: true },
     { label: 'Cài đặt', icon: 'settings', route: '/settings', roles: [RoleNames.Admin], exact: true }

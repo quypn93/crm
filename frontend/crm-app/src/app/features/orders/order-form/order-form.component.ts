@@ -11,7 +11,7 @@ import { UserManagementService, UserListItem } from '../../../core/services/user
 import { AuthService } from '../../../core/services/auth.service';
 import { LocationService } from '../../../core/services/location.service';
 import { CreateOrderItemRequest, DeliveryMethod, DeliveryMethodLabels } from '../../../core/models/order.model';
-import { Collection, LookupItem, ProductionDaysOption, DepositTransaction } from '../../../core/models/lookup.model';
+import { Collection, LookupItem, ProductionDaysOption, DepositTransaction, SenderAddress } from '../../../core/models/lookup.model';
 import { Province, Ward } from '../../../core/models/location.model';
 
 @Component({
@@ -37,6 +37,7 @@ export class OrderFormComponent implements OnInit {
   styleSpecs: LookupItem[] = [];
   orderTypes: LookupItem[] = [];
   collections: Collection[] = [];
+  senderAddresses: SenderAddress[] = [];
   productionDaysOptions: ProductionDaysOption[] = [];
 
   // Filtered by selected collection
@@ -65,7 +66,6 @@ export class OrderFormComponent implements OnInit {
   readonly deliveryMethodOptions = [
     { value: DeliveryMethod.InHouse, label: DeliveryMethodLabels[DeliveryMethod.InHouse] },
     { value: DeliveryMethod.Vehicle, label: DeliveryMethodLabels[DeliveryMethod.Vehicle] },
-    { value: DeliveryMethod.GHTK,    label: DeliveryMethodLabels[DeliveryMethod.GHTK] },
     { value: DeliveryMethod.ViettelPost, label: DeliveryMethodLabels[DeliveryMethod.ViettelPost] }
   ];
 
@@ -145,6 +145,7 @@ export class OrderFormComponent implements OnInit {
       shipperUserId: [''],
       designId: [''],
       deliveryMethod: ['', Validators.required],
+      senderAddressId: [''],
       shippingContactName: ['', Validators.required],
       shippingPhone: ['', Validators.required],
       shippingAddress: ['', Validators.required],
@@ -197,6 +198,7 @@ export class OrderFormComponent implements OnInit {
       styleSpecs: this.settingsService.getLookups('product-specifications'),
       orderTypes: this.settingsService.getLookups('order-types'),
       collections: this.settingsService.getCollections(),
+      senderAddresses: this.settingsService.getSenderAddresses(),
       productionDaysOptions: this.settingsService.getProductionDaysOptions(),
       users: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true }),
       designers: this.userService.getUsers({ page: 1, pageSize: 200, isActive: true, role: 'Designer' }),
@@ -213,6 +215,7 @@ export class OrderFormComponent implements OnInit {
         this.styleSpecs = res.styleSpecs || [];
         this.orderTypes = (res.orderTypes || []).filter(x => x.isActive);
         this.collections = res.collections || [];
+        this.senderAddresses = (res.senderAddresses || []).filter(a => a.isActive);
         this.productionDaysOptions = (res.productionDaysOptions || []).filter(o => o.isActive);
         this.users = res.users?.items || [];
         this.designers = res.designers?.items || [];
@@ -231,6 +234,9 @@ export class OrderFormComponent implements OnInit {
           if (currentUser) {
             this.orderForm.get('assignedToUserId')?.setValue(currentUser.id);
           }
+          // Chọn sẵn địa chỉ gửi mặc định.
+          const defaultSender = this.senderAddresses.find(a => a.isDefault);
+          if (defaultSender) this.orderForm.get('senderAddressId')?.setValue(defaultSender.id);
         }
 
         // Re-match deposit nếu đã có sẵn depositCode (edit mode hoặc form đã prefill).
@@ -500,6 +506,7 @@ export class OrderFormComponent implements OnInit {
           shipperUserId: order.shipperUserId || '',
           designId: order.designId || '',
           deliveryMethod: order.deliveryMethod ?? '',
+          senderAddressId: order.senderAddressId || '',
           shippingContactName: order.shippingContactName || '',
           shippingPhone: order.shippingPhone || '',
           shippingAddress: order.shippingAddress || '',
@@ -631,6 +638,7 @@ export class OrderFormComponent implements OnInit {
       deliveryMethod: f.deliveryMethod === '' || f.deliveryMethod === null || f.deliveryMethod === undefined
         ? undefined
         : Number(f.deliveryMethod) as DeliveryMethod,
+      senderAddressId: f.senderAddressId || undefined,
       shippingContactName: f.shippingContactName || undefined,
       shippingPhone: f.shippingPhone || undefined,
       shippingAddress: f.shippingAddress || undefined,

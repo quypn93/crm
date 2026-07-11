@@ -15,6 +15,9 @@ public static class DataSeeder
         // Đảm bảo các cột tracking Viettel Post trên Orders tồn tại (idempotent).
         await EnsureViettelPostColumnsAsync(context);
 
+        // Đảm bảo bảng SenderAddresses + cột Orders.SenderAddressId tồn tại (idempotent).
+        await EnsureSenderAddressSchemaAsync(context);
+
         await SeedDealStagesAsync(context);
         await context.SaveChangesAsync();
 
@@ -673,6 +676,45 @@ public static class DataSeeder
             }
         }
         if (addedColors) await context.SaveChangesAsync();
+    }
+
+    // Bảng địa chỉ gửi hàng + FK trên Orders (idempotent).
+    private static async Task EnsureSenderAddressSchemaAsync(CrmDbContext context)
+    {
+        await context.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS "SenderAddresses" (
+                "Id" uuid NOT NULL,
+                "Name" character varying(255) NOT NULL,
+                "Phone" character varying(30) NOT NULL,
+                "Address" character varying(500) NOT NULL,
+                "ProvinceId" integer NOT NULL DEFAULT 0,
+                "DistrictId" integer NOT NULL DEFAULT 0,
+                "WardId" integer NOT NULL DEFAULT 0,
+                "ProvinceName" character varying(150) NULL,
+                "DistrictName" character varying(150) NULL,
+                "WardName" character varying(150) NULL,
+                "IsDefault" boolean NOT NULL DEFAULT false,
+                "IsActive" boolean NOT NULL DEFAULT true,
+                "CreatedAt" timestamp with time zone NOT NULL DEFAULT now(),
+                "UpdatedAt" timestamp with time zone NULL,
+                CONSTRAINT "PK_SenderAddresses" PRIMARY KEY ("Id")
+            );
+
+            ALTER TABLE "Orders" ADD COLUMN IF NOT EXISTS "SenderAddressId" uuid NULL;
+            CREATE INDEX IF NOT EXISTS "IX_Orders_SenderAddressId" ON "Orders" ("SenderAddressId");
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint WHERE conname = 'FK_Orders_SenderAddresses_SenderAddressId'
+                ) THEN
+                    ALTER TABLE "Orders"
+                    ADD CONSTRAINT "FK_Orders_SenderAddresses_SenderAddressId"
+                    FOREIGN KEY ("SenderAddressId") REFERENCES "SenderAddresses" ("Id")
+                    ON DELETE SET NULL;
+                END IF;
+            END $$;
+            """);
     }
 
     // Thêm cột tracking Viettel Post trên Orders (idempotent) — mirror các cột Ghtk*.

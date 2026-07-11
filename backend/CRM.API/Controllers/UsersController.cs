@@ -19,9 +19,20 @@ public class UsersController : ControllerBase
         _userManagementService = userManagementService;
     }
 
-    // Tài khoản chỉ có đúng vai trò SalesRep (giới hạn thao tác của Trưởng phòng kinh doanh).
-    private static bool IsSalesRepOnly(IEnumerable<string> roles)
-        => roles != null && roles.Any() && roles.All(r => r == RoleNames.SalesRep);
+    // Các staff role mà user hiện tại (trưởng phòng) được quản lý. null = Admin (toàn quyền).
+    private HashSet<string>? ManageableStaffRoles()
+    {
+        if (User.IsInRole(RoleNames.Admin)) return null;
+        var set = new HashSet<string>();
+        foreach (var mgr in RoleNames.AllManagerRoles)
+            if (User.IsInRole(mgr) && RoleNames.DepartmentStaff.TryGetValue(mgr, out var staff))
+                foreach (var s in staff) set.Add(s);
+        return set;
+    }
+
+    // roles không rỗng và nằm trọn trong tập được phép.
+    private static bool RolesWithin(IEnumerable<string> roles, HashSet<string> allowed)
+        => roles != null && roles.Any() && roles.All(allowed.Contains);
 
     /// <summary>Lấy danh sách user (có phân trang, tìm kiếm, lọc)</summary>
     [HttpGet]
@@ -42,13 +53,14 @@ public class UsersController : ControllerBase
 
     /// <summary>Tạo user mới</summary>
     [HttpPost]
-    [Authorize(Roles = RoleNames.Admin + "," + RoleNames.SalesManager)]
+    [Authorize(Roles = RoleNames.AdminAndManagers)]
     public async Task<ActionResult<ApiResponse<UserListItemDto>>> CreateUser([FromBody] CreateUserDto dto)
     {
-        // Trưởng phòng kinh doanh chỉ được tạo tài khoản Nhân viên kinh doanh (SalesRep).
-        if (!User.IsInRole(RoleNames.Admin) && !IsSalesRepOnly(dto.Roles))
+        // Trưởng phòng chỉ được tạo tài khoản nhân viên thuộc phòng mình.
+        var allowed = ManageableStaffRoles();
+        if (allowed != null && !RolesWithin(dto.Roles, allowed))
             return StatusCode(403, ApiResponse<UserListItemDto>.Fail(
-                "Trưởng phòng kinh doanh chỉ được tạo tài khoản Nhân viên kinh doanh."));
+                "Bạn chỉ được tạo tài khoản nhân viên thuộc phòng mình."));
 
         try
         {
@@ -63,18 +75,19 @@ public class UsersController : ControllerBase
 
     /// <summary>Cập nhật thông tin user</summary>
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = RoleNames.Admin + "," + RoleNames.SalesManager)]
+    [Authorize(Roles = RoleNames.AdminAndManagers)]
     public async Task<ActionResult<ApiResponse<UserListItemDto>>> UpdateUser(Guid id, [FromBody] UpdateUserDto dto)
     {
-        // Trưởng phòng kinh doanh chỉ được sửa tài khoản SalesRep và không được đổi sang vai trò khác.
-        if (!User.IsInRole(RoleNames.Admin))
+        // Trưởng phòng chỉ được sửa tài khoản nhân viên phòng mình; không đổi vai trò (tránh leo thang quyền).
+        var allowed = ManageableStaffRoles();
+        if (allowed != null)
         {
             var target = await _userManagementService.GetUserByIdAsync(id);
             if (target == null) return NotFound(ApiResponse<UserListItemDto>.Fail("Không tìm thấy user."));
-            if (!IsSalesRepOnly(target.Roles))
+            if (!RolesWithin(target.Roles, allowed))
                 return StatusCode(403, ApiResponse<UserListItemDto>.Fail(
-                    "Trưởng phòng kinh doanh chỉ được sửa tài khoản Nhân viên kinh doanh."));
-            dto.Roles = new List<string> { RoleNames.SalesRep }; // khoá vai trò, tránh gỡ/leo thang quyền
+                    "Bạn chỉ được sửa tài khoản nhân viên thuộc phòng mình."));
+            dto.Roles = target.Roles.Where(allowed.Contains).ToList(); // giữ nguyên vai trò hiện tại
         }
 
         try
@@ -110,21 +123,22 @@ public class UsersController : ControllerBase
 
     /// <summary>Bật/tắt trạng thái hoạt động của user</summary>
     [HttpPut("{id:guid}/toggle-active")]
-    [Authorize(Roles = RoleNames.Admin + "," + RoleNames.SalesManager)]
+    [Authorize(Roles = RoleNames.AdminAndManagers)]
     public async Task<ActionResult<ApiResponse<UserListItemDto>>> ToggleActive(Guid id)
     {
         var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (currentUserId == id.ToString())
             return BadRequest(ApiResponse<UserListItemDto>.Fail("Không thể vô hiệu hóa tài khoản của chính mình."));
 
-        // Trưởng phòng kinh doanh chỉ được bật/tắt tài khoản SalesRep.
-        if (!User.IsInRole(RoleNames.Admin))
+        // Trưởng phòng chỉ được bật/tắt tài khoản nhân viên phòng mình.
+        var allowed = ManageableStaffRoles();
+        if (allowed != null)
         {
             var target = await _userManagementService.GetUserByIdAsync(id);
             if (target == null) return NotFound(ApiResponse<UserListItemDto>.Fail("Không tìm thấy user."));
-            if (!IsSalesRepOnly(target.Roles))
+            if (!RolesWithin(target.Roles, allowed))
                 return StatusCode(403, ApiResponse<UserListItemDto>.Fail(
-                    "Trưởng phòng kinh doanh chỉ được thao tác trên tài khoản Nhân viên kinh doanh."));
+                    "Bạn chỉ được thao tác trên tài khoản nhân viên thuộc phòng mình."));
         }
 
         try

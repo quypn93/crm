@@ -38,6 +38,10 @@ public class Order : BaseEntity
     public string? ShippingCity { get; set; }               // [Deprecated] giữ lại để tương thích dữ liệu cũ
     public string? ShippingNotes { get; set; }
 
+    // Địa chỉ gửi hàng (kho gửi) chọn cho đơn — dùng cho Viettel Post. Null = dùng địa chỉ mặc định.
+    public Guid? SenderAddressId { get; set; }
+    public virtual SenderAddress? SenderAddress { get; set; }
+
     // GHTK (Giao Hàng Tiết Kiệm) tracking — chỉ điền khi DeliveryMethod = GHTK
     public string? GhtkLabel { get; set; }              // Mã vận đơn trả về từ GHTK
     public string? GhtkTrackingUrl { get; set; }

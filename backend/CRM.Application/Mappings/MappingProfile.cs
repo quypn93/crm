@@ -77,6 +77,7 @@ public class MappingProfile : Profile
 
         // Order mappings
         CreateMap<Order, OrderDto>()
+            .ForMember(d => d.SenderAddressName, opt => opt.MapFrom(s => s.SenderAddress != null ? s.SenderAddress.Name : null))
             .ForMember(d => d.CustomerName, opt => opt.MapFrom(s => s.Customer != null ? s.Customer.Name : s.CustomerName))
             .ForMember(d => d.DealTitle, opt => opt.MapFrom(s => s.Deal != null ? s.Deal.Title : null))
             .ForMember(d => d.CreatedByUserName, opt => opt.MapFrom(s => s.CreatedByUser != null ? $"{s.CreatedByUser.FirstName} {s.CreatedByUser.LastName}" : null))

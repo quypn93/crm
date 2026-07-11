@@ -25,6 +25,7 @@ public class UnitOfWork : IUnitOfWork
     private IOrderProductionStepRepository? _orderProductionSteps;
     private IProvinceRepository? _provinces;
     private IWardRepository? _wards;
+    private IRepository<SenderAddress>? _senderAddresses;
     private IRepository<Collection>? _collections;
     private IRepository<Material>? _materials;
     private IRepository<ProductForm>? _productForms;
@@ -65,6 +66,7 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<ProductionDaysOption> ProductionDaysOptions => _productionDaysOptions ??= new Repository<ProductionDaysOption>(_context);
     public IRepository<OrderType> OrderTypes => _orderTypes ??= new Repository<OrderType>(_context);
     public IRepository<DepositTransaction> DepositTransactions => _depositTransactions ??= new Repository<DepositTransaction>(_context);
+    public IRepository<SenderAddress> SenderAddresses => _senderAddresses ??= new Repository<SenderAddress>(_context);
     public INotificationRepository Notifications => _notifications ??= new NotificationRepository(_context);
     public INotificationRolePreferenceRepository NotificationRolePreferences => _notificationRolePreferences ??= new NotificationRolePreferenceRepository(_context);
     public ITaskNotificationLogRepository TaskNotificationLogs => _taskNotificationLogs ??= new TaskNotificationLogRepository(_context);

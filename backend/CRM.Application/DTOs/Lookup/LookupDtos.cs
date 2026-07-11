@@ -48,6 +48,42 @@ public class UpdateCollectionDto : CreateCollectionDto
     public Guid Id { get; set; }
 }
 
+public class SenderAddressDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public int ProvinceId { get; set; }
+    public int DistrictId { get; set; }
+    public int WardId { get; set; }
+    public string? ProvinceName { get; set; }
+    public string? DistrictName { get; set; }
+    public string? WardName { get; set; }
+    public bool IsDefault { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public class CreateSenderAddressDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public int ProvinceId { get; set; }
+    public int DistrictId { get; set; }
+    public int WardId { get; set; }
+    public string? ProvinceName { get; set; }
+    public string? DistrictName { get; set; }
+    public string? WardName { get; set; }
+    public bool IsDefault { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public class UpdateSenderAddressDto : CreateSenderAddressDto
+{
+    public Guid Id { get; set; }
+}
+
 public class ProductionDaysOptionDto
 {
     public Guid Id { get; set; }

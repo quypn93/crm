@@ -47,6 +47,20 @@ export const RoleGroups = {
   ]
 };
 
+// Quản lý tài khoản theo phòng: trưởng phòng → các staff role được tạo/quản lý.
+export const DepartmentStaff: Record<string, string[]> = {
+  SalesManager: ['SalesRep'],
+  ProductionManager: ['ProductionStaff', 'CuttingStaff', 'SewingStaff', 'PrintingStaff', 'FinishingStaff', 'PackagingStaff'],
+  DesignManager: ['Designer'],
+  DeliveryManager: ['DeliveryStaff'],
+  QualityManager: ['QualityControl'],
+  ContentManager: ['ContentStaff'],
+  MarketingManager: ['MediaMarketing', 'DigitalAds', 'Media']
+};
+export const AllManagerRoles = Object.keys(DepartmentStaff);
+// Được phép vào trang quản lý người dùng: Admin + mọi trưởng phòng.
+export const UserAdminRoles = [RoleNames.Admin, ...AllManagerRoles];
+
 @Injectable({
   providedIn: 'root'
 })
@@ -173,6 +187,17 @@ export class AuthService {
   hasAnyRole(roles: string[]): boolean {
     const user = this.currentUserSubject.value;
     return roles.some(role => user?.roles?.includes(role)) ?? false;
+  }
+
+  // Các staff role mà user hiện tại (trưởng phòng) được tạo/quản lý. [] khi là Admin (toàn quyền).
+  getManageableStaffRoles(): string[] {
+    if (this.isAdmin()) return [];
+    const userRoles = this.currentUserSubject.value?.roles || [];
+    const set = new Set<string>();
+    for (const mgr of AllManagerRoles) {
+      if (userRoles.includes(mgr)) (DepartmentStaff[mgr] || []).forEach(r => set.add(r));
+    }
+    return [...set];
   }
 
   getFullName(): string {

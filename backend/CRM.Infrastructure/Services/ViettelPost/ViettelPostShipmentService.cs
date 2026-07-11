@@ -32,11 +32,12 @@ public class ViettelPostShipmentService : IViettelPostShipmentService
             ?? throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
         ValidateAddress(order);
 
+        var pick = await ResolvePickAsync(order, ct);
         var (provinceId, districtId, _) = await ResolveReceiverAsync(order, ct);
         var query = new VtpFeeQuery
         {
-            SenderProvince = _opts.Pick.ProvinceId,
-            SenderDistrict = _opts.Pick.DistrictId,
+            SenderProvince = pick.ProvinceId,
+            SenderDistrict = pick.DistrictId,
             ReceiverProvince = provinceId,
             ReceiverDistrict = districtId,
             WeightGram = EstimateWeightGram(order),
@@ -73,6 +74,7 @@ public class ViettelPostShipmentService : IViettelPostShipmentService
 
         ValidateAddress(order);
 
+        var pick = await ResolvePickAsync(order, ct);
         var (provinceId, districtId, wardId) = await ResolveReceiverAsync(order, ct);
         var cod = _opts.Defaults.UseCod ? Math.Max(0, order.TotalAmount - order.PaidAmount) : 0;
 
@@ -81,12 +83,12 @@ public class ViettelPostShipmentService : IViettelPostShipmentService
             OrderNumber = order.OrderNumber,
             GroupAddressId = _opts.Pick.GroupAddressId,
             CusId = _opts.Pick.CusId,
-            SenderFullname = _opts.Pick.Name,
-            SenderPhone = _opts.Pick.Tel,
-            SenderAddress = _opts.Pick.Address,
-            SenderProvince = _opts.Pick.ProvinceId,
-            SenderDistrict = _opts.Pick.DistrictId,
-            SenderWard = _opts.Pick.WardId,
+            SenderFullname = pick.Name,
+            SenderPhone = pick.Tel,
+            SenderAddress = pick.Address,
+            SenderProvince = pick.ProvinceId,
+            SenderDistrict = pick.DistrictId,
+            SenderWard = pick.WardId,
             ReceiverFullname = order.ShippingContactName ?? order.CustomerName ?? string.Empty,
             ReceiverPhone = order.ShippingPhone ?? string.Empty,
             ReceiverAddress = order.ShippingAddress ?? string.Empty,
@@ -207,6 +209,23 @@ public class ViettelPostShipmentService : IViettelPostShipmentService
 
     // ── Helpers ──────────────────────────────────────────────────────────
 
+    private sealed record ResolvedPick(string Name, string Tel, string Address, int ProvinceId, int DistrictId, int WardId);
+
+    // Kho gửi: ưu tiên địa chỉ chọn trên đơn → địa chỉ mặc định → cấu hình appsettings.
+    private async Task<ResolvedPick> ResolvePickAsync(Order order, CancellationToken ct)
+    {
+        SenderAddress? sa = null;
+        if (order.SenderAddressId.HasValue)
+            sa = await _uow.SenderAddresses.GetByIdAsync(order.SenderAddressId.Value);
+        sa ??= (await _uow.SenderAddresses.FindAsync(x => x.IsDefault && x.IsActive)).FirstOrDefault();
+
+        if (sa != null)
+            return new ResolvedPick(sa.Name, sa.Phone, sa.Address, sa.ProvinceId, sa.DistrictId, sa.WardId);
+
+        var p = _opts.Pick;
+        return new ResolvedPick(p.Name, p.Tel, p.Address, p.ProvinceId, p.DistrictId, p.WardId);
+    }
+
     private void ValidateAddress(Order order)
     {
         if (string.IsNullOrWhiteSpace(order.ShippingProvinceName))
@@ -269,19 +288,21 @@ public class ViettelPostShipmentService : IViettelPostShipmentService
         return string.Join(' ', v.Split(' ', StringSplitOptions.RemoveEmptyEntries));
     }
 
-    private int EstimateWeightGram(Order order)
+    // Khối lượng: 2 lạng = 1 áo → 200g/áo. Tổng = số áo × 200g.
+    private int TotalQty(Order order)
     {
         var totalQty = order.Items?.Sum(i => i.Quantity) ?? 0;
-        if (totalQty <= 0) totalQty = 1;
-        return Math.Max(_opts.Defaults.DefaultWeightGram, totalQty * _opts.Defaults.DefaultWeightGram);
+        return totalQty <= 0 ? 1 : totalQty;
     }
+
+    private int EstimateWeightGram(Order order) => TotalQty(order) * _opts.Defaults.WeightPerShirtGram;
 
     private List<VtpItem> BuildItems(Order order)
     {
         var result = new List<VtpItem>();
         if (order.Items == null || order.Items.Count == 0)
         {
-            result.Add(new VtpItem { ProductName = order.OrderNumber, ProductQuantity = 1, ProductWeight = _opts.Defaults.DefaultWeightGram });
+            result.Add(new VtpItem { ProductName = order.OrderNumber, ProductQuantity = 1, ProductWeight = _opts.Defaults.WeightPerShirtGram });
             return result;
         }
         foreach (var it in order.Items)
@@ -291,7 +312,7 @@ public class ViettelPostShipmentService : IViettelPostShipmentService
                 ProductName = BuildItemName(it),
                 ProductQuantity = it.Quantity,
                 ProductPrice = it.UnitPrice,
-                ProductWeight = _opts.Defaults.DefaultWeightGram
+                ProductWeight = Math.Max(1, it.Quantity) * _opts.Defaults.WeightPerShirtGram  // khối lượng theo số áo của dòng
             });
         }
         return result;

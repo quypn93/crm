@@ -28,6 +28,7 @@ public interface IUnitOfWork : IDisposable
     IRepository<ProductionDaysOption> ProductionDaysOptions { get; }
     IRepository<OrderType> OrderTypes { get; }
     IRepository<DepositTransaction> DepositTransactions { get; }
+    IRepository<SenderAddress> SenderAddresses { get; }
 
     INotificationRepository Notifications { get; }
     INotificationRolePreferenceRepository NotificationRolePreferences { get; }

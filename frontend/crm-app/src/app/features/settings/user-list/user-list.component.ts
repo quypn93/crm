@@ -17,8 +17,9 @@ export class UserListComponent implements OnInit {
   users: UserListItem[] = [];
   roles: RoleItem[] = [];
   isLoading = false;
-  // Admin: quản lý mọi user. Trưởng phòng kinh doanh: chỉ thấy/thao tác Nhân viên kinh doanh.
+  // Admin: quản lý mọi user. Trưởng phòng: chỉ thấy/thao tác nhân viên phòng mình.
   isAdmin = false;
+  manageableRoles: string[] = [];
 
   searchTerm = '';
   filterRole = '';
@@ -40,8 +41,8 @@ export class UserListComponent implements OnInit {
     if (this.isAdmin) {
       this.loadRoles(); // getRoles là API riêng của Admin
     } else {
-      // Trưởng phòng kinh doanh chỉ xem danh sách Nhân viên kinh doanh.
-      this.filterRole = RoleNames.SalesRep;
+      // Trưởng phòng chỉ xem nhân viên thuộc phòng mình (lọc phía client theo vai trò).
+      this.manageableRoles = this.authService.getManageableStaffRoles();
     }
     this.loadUsers();
   }
@@ -64,9 +65,13 @@ export class UserListComponent implements OnInit {
 
     this.userService.getUsers(params).subscribe({
       next: (result) => {
-        this.users = result.items;
-        this.totalItems = result.totalCount;
-        this.totalPages = result.totalPages;
+        let items = result.items;
+        if (!this.isAdmin) {
+          items = items.filter(u => (u.roles || []).some(r => this.manageableRoles.includes(r)));
+        }
+        this.users = items;
+        this.totalItems = this.isAdmin ? result.totalCount : items.length;
+        this.totalPages = this.isAdmin ? result.totalPages : 1;
         this.isLoading = false;
       },
       error: () => {

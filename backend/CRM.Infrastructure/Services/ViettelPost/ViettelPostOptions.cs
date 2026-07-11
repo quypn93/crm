@@ -49,7 +49,8 @@ public class ViettelPostDefaults
     public int OrderPayment { get; set; } = 3;            // 1=gửi trả trước, 2=gửi trả sau, 3=nhận trả, 4=...
     public string ProductType { get; set; } = "HH";       // HH=hàng hóa, TH=thư
     public int NationalType { get; set; } = 1;            // 1 = nội địa
-    public int DefaultWeightGram { get; set; } = 300;     // ViettelPost tính khối lượng theo gram
+    public int WeightPerShirtGram { get; set; } = 200;    // 2 lạng = 1 áo → 200g/áo (ViettelPost tính theo gram)
+    public int SkipDimensionUnderQty { get; set; } = 30;  // Dưới số áo này thì không gửi thông tin kích thước
     public bool UseCod { get; set; } = false;
     public string AutoCreateOnStatus { get; set; } = "ReadyToShip";  // hoặc "None" để tắt auto
     public bool AutoOverrideShippingFee { get; set; } = false;

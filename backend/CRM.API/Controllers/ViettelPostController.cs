@@ -12,12 +12,15 @@ namespace CRM.API.Controllers;
 public class ViettelPostController : ControllerBase
 {
     private readonly IViettelPostShipmentService _svc;
+    private readonly IViettelPostClient _client;
     private readonly ViettelPostOptions _opts;
     private readonly ILogger<ViettelPostController> _log;
 
-    public ViettelPostController(IViettelPostShipmentService svc, IOptions<ViettelPostOptions> opts, ILogger<ViettelPostController> log)
+    public ViettelPostController(IViettelPostShipmentService svc, IViettelPostClient client,
+        IOptions<ViettelPostOptions> opts, ILogger<ViettelPostController> log)
     {
         _svc = svc;
+        _client = client;
         _opts = opts.Value;
         _log = log;
     }
@@ -26,6 +29,22 @@ public class ViettelPostController : ControllerBase
     [Authorize]
     public ActionResult<ApiResponse<object>> GetStatus()
         => Ok(ApiResponse<object>.Ok(new { configured = _svc.IsConfigured }));
+
+    // Danh mục hành chính Viettel Post — cho dropdown chọn kho gửi ở admin.
+    [HttpGet("provinces")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<List<VtpCategory>>>> GetProvinces(CancellationToken ct)
+        => Ok(ApiResponse<List<VtpCategory>>.Ok(await _client.GetProvincesAsync(ct)));
+
+    [HttpGet("districts")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<List<VtpCategory>>>> GetDistricts([FromQuery] int provinceId, CancellationToken ct)
+        => Ok(ApiResponse<List<VtpCategory>>.Ok(await _client.GetDistrictsAsync(provinceId, ct)));
+
+    [HttpGet("wards")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<List<VtpCategory>>>> GetWards([FromQuery] int districtId, CancellationToken ct)
+        => Ok(ApiResponse<List<VtpCategory>>.Ok(await _client.GetWardsAsync(districtId, ct)));
 
     [HttpPost("orders/{orderId}/estimate-fee")]
     [Authorize]
