@@ -64,8 +64,8 @@
   <div class="missing-design-banner" *ngIf="showMissingDesignWarning()">
     <div class="missing-design-icon">⚠️</div>
     <div class="missing-design-text">
-      <strong>Đơn hàng chưa có thiết kế — chưa thể chuyển sang sản xuất</strong>
-      <span>Cần upload ảnh hoặc file thiết kế trước khi chuyển đơn sang trạng thái "Đang sản xuất".</span>
+      <strong>Đơn hàng chưa có {{ missingDesignText() }} — chưa thể gửi xưởng</strong>
+      <span>Thiết kế cần upload đủ <strong>cả ảnh và file</strong> thiết kế trước khi chuyển đơn sang "Đang sản xuất".</span>
     </div>
   </div>
 

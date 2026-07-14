@@ -337,12 +337,22 @@ public class OrderService : IOrderService
         // Validate status transition
         ValidateStatusTransition(order.Status, dto.Status);
 
-        // Chưa có thiết kế (ảnh hoặc file) thì không thể chuyển sang sản xuất
-        if (dto.Status == OrderStatus.InProduction
-            && string.IsNullOrWhiteSpace(order.DesignImageUrl)
-            && string.IsNullOrWhiteSpace(order.DesignFileUrl))
+        // Gửi xưởng: thiết kế phải upload ĐỦ CẢ ảnh VÀ file — thiếu bất kỳ cái nào đều chặn.
+        if (dto.Status == OrderStatus.InProduction)
         {
-            throw new InvalidOperationException("Đơn hàng chưa có thiết kế. Cần upload ảnh hoặc file thiết kế trước khi chuyển sang sản xuất.");
+            var missingImage = string.IsNullOrWhiteSpace(order.DesignImageUrl);
+            var missingFile = string.IsNullOrWhiteSpace(order.DesignFileUrl);
+            if (missingImage || missingFile)
+            {
+                var missing = (missingImage, missingFile) switch
+                {
+                    (true, true) => "ảnh và file thiết kế",
+                    (true, false) => "ảnh thiết kế",
+                    _ => "file thiết kế"
+                };
+                throw new InvalidOperationException(
+                    $"Đơn hàng chưa có {missing}. Thiết kế cần upload đủ cả ảnh và file trước khi gửi xưởng.");
+            }
         }
 
         var previousStatus = order.Status;

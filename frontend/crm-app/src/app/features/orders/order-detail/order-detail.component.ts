@@ -152,9 +152,17 @@ export class OrderDetailComponent implements OnInit {
            this.authService.hasAnyRole(['Admin', 'SalesManager', 'SalesRep']);
   }
 
-  // Đơn được coi là "có thiết kế" khi đã upload ảnh hoặc file thiết kế
+  // Đơn được coi là "có thiết kế" khi đã upload ĐỦ CẢ ảnh VÀ file thiết kế
   hasDesign(): boolean {
-    return !!(this.order?.designImageUrl || this.order?.designFileUrl);
+    return !!(this.order?.designImageUrl && this.order?.designFileUrl);
+  }
+
+  // Nêu rõ đang thiếu ảnh hay thiếu file, để sale biết bảo thiết kế bổ sung cái gì.
+  missingDesignText(): string {
+    const noImage = !this.order?.designImageUrl;
+    const noFile = !this.order?.designFileUrl;
+    if (noImage && noFile) return 'ảnh và file thiết kế';
+    return noImage ? 'ảnh thiết kế' : 'file thiết kế';
   }
 
   // Đơn Đã xác nhận nhưng chưa có thiết kế → chưa thể chuyển sang sản xuất
@@ -310,9 +318,9 @@ export class OrderDetailComponent implements OnInit {
   updateStatus(): void {
     if (!this.order || this.newStatus === null) return;
 
-    // Chưa có thiết kế thì không thể chuyển sang sản xuất (backend cũng chặn)
+    // Gửi xưởng: phải có đủ cả ảnh VÀ file thiết kế (backend cũng chặn)
     if (this.newStatus === OrderStatus.InProduction && !this.hasDesign()) {
-      this.toast.error('Đơn hàng chưa có thiết kế. Cần upload ảnh hoặc file thiết kế trước khi chuyển sang sản xuất.');
+      this.toast.error(`Đơn hàng chưa có ${this.missingDesignText()}. Thiết kế cần upload đủ cả ảnh và file trước khi gửi xưởng.`);
       return;
     }
 
