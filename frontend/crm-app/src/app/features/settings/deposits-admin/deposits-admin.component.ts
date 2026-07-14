@@ -26,7 +26,7 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
           <span>Đến ngày</span>
           <input type="date" [(ngModel)]="dateTo">
         </label>
-        <button class="btn btn-secondary btn-sm" *ngIf="searchText || dateFrom || dateTo" (click)="clearFilters()">Xóa lọc</button>
+        <button class="btn btn-secondary" *ngIf="searchText || dateFrom || dateTo" (click)="clearFilters()">Xóa lọc</button>
       </div>
 
       <div class="filter-summary" *ngIf="searchText || dateFrom || dateTo">
@@ -109,11 +109,11 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
     .page-container { max-width:1200px; margin:0 auto; }
     .page-header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; }
     .page-header h1 { margin:0; font-size:22px; font-weight:600; }
-    .filter-bar { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
-    .filter-search { flex:1; min-width:240px; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; }
-    .filter-date { display:flex; flex-direction:column; gap:4px; }
-    .filter-date span { font-size:12px; color:#64748b; }
-    .filter-date input { padding:7px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; }
+    .filter-bar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+    .filter-search { flex:1; min-width:240px; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; box-sizing:border-box; }
+    .filter-date { display:flex; align-items:center; gap:6px; }
+    .filter-date span { font-size:13px; color:#64748b; white-space:nowrap; }
+    .filter-date input { padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; box-sizing:border-box; }
     .filter-summary { margin-bottom:10px; font-size:13px; color:#475569; }
     .filter-summary strong { color:#16a34a; }
     .table { width:100%; border-collapse:collapse; font-size:14px; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.06); }
