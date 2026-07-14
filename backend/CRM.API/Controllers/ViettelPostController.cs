@@ -25,10 +25,22 @@ public class ViettelPostController : ControllerBase
         _log = log;
     }
 
+    // Trả kèm cấu hình mặc định để form đơn hiển thị "xem trước dữ liệu gửi VTP" đúng giá trị thật.
     [HttpGet("status")]
     [Authorize]
     public ActionResult<ApiResponse<object>> GetStatus()
-        => Ok(ApiResponse<object>.Ok(new { configured = _svc.IsConfigured }));
+        => Ok(ApiResponse<object>.Ok(new
+        {
+            configured = _svc.IsConfigured,
+            defaults = new
+            {
+                orderService = _opts.Defaults.OrderService,
+                orderPayment = _opts.Defaults.OrderPayment,
+                productType = _opts.Defaults.ProductType,
+                weightPerShirtGram = _opts.Defaults.WeightPerShirtGram,
+                useCod = _opts.Defaults.UseCod
+            }
+        }));
 
     // Danh mục hành chính Viettel Post — cho dropdown chọn kho gửi ở admin.
     [HttpGet("provinces")]

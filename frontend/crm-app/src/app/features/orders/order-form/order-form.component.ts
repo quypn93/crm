@@ -62,6 +62,8 @@ export class OrderFormComponent implements OnInit {
   vtpDistricts: VtpCategory[] = [];
   vtpWards: VtpCategory[] = [];
   isLoadingVtpAddr = false;
+  // Cấu hình mặc định VTP (dịch vụ, khối lượng/áo, COD...) — lấy từ /viettelpost/status.
+  vtpDefaults: any = null;
 
   // Deposit lookup theo mã giao dịch (sale gõ vào ô "Mã cọc tiền"):
   // null = chưa nhập mã, undefined = đã nhập nhưng không khớp, object = đã khớp.
@@ -196,8 +198,11 @@ export class OrderFormComponent implements OnInit {
       error: () => { this.ghtkConfigured = false; }
     });
     this.orderService.getViettelPostStatus().subscribe({
-      next: (s) => { this.viettelPostConfigured = !!s?.configured; },
-      error: () => { this.viettelPostConfigured = false; }
+      next: (s: any) => {
+        this.viettelPostConfigured = !!s?.configured;
+        this.vtpDefaults = s?.defaults || null;
+      },
+      error: () => { this.viettelPostConfigured = false; this.vtpDefaults = null; }
     });
 
     forkJoin({
@@ -384,6 +389,44 @@ export class OrderFormComponent implements OnInit {
       next: w => { this.vtpWards = w || []; this.isLoadingVtpAddr = false; },
       error: () => { this.vtpWards = []; this.isLoadingVtpAddr = false; }
     });
+  }
+
+  // ── Xem trước dữ liệu sẽ gửi lên Viettel Post ──────────────────────────
+  // Kho gửi: ưu tiên địa chỉ chọn trên đơn, không chọn thì lấy mặc định (đúng như backend resolve).
+  vtpSender(): SenderAddress | undefined {
+    const id = this.orderForm.get('senderAddressId')?.value;
+    return this.senderAddresses.find(a => a.id === id)
+        || this.senderAddresses.find(a => a.isDefault);
+  }
+
+  vtpSenderAddressLine(): string {
+    const s = this.vtpSender();
+    if (!s) return '';
+    return [s.address, s.wardName, s.districtName, s.provinceName].filter(Boolean).join(', ');
+  }
+
+  vtpReceiverAddressLine(): string {
+    const f = this.orderForm.getRawValue();
+    const w = this.vtpWards.find(x => x.WARDS_ID === Number(f.receiverWardId))?.WARDS_NAME;
+    const d = this.vtpDistricts.find(x => x.DISTRICT_ID === Number(f.receiverDistrictId))?.DISTRICT_NAME;
+    const p = this.vtpProvinces.find(x => x.PROVINCE_ID === Number(f.receiverProvinceId))?.PROVINCE_NAME;
+    return [f.shippingAddress, w, d, p].filter(Boolean).join(', ');
+  }
+
+  // Khối lượng VTP tính theo gram: số áo × khối lượng mỗi áo (lấy từ cấu hình backend).
+  vtpWeightGram(): number {
+    const per = Number(this.vtpDefaults?.weightPerShirtGram) || 200;
+    return this.getTotalQtyInput() * per;
+  }
+
+  vtpPaymentLabel(): string {
+    switch (Number(this.vtpDefaults?.orderPayment)) {
+      case 1: return 'Người gửi trả cước';
+      case 2: return 'Người nhận trả cước';
+      case 3: return 'Người nhận trả cước + COD';
+      case 4: return 'Người gửi trả cước + COD';
+      default: return '—';
+    }
   }
 
   private patchVtpReceiver(provId?: number, distId?: number, wardId?: number): void {

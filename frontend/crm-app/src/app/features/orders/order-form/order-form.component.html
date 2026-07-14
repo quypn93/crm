@@ -448,6 +448,57 @@
             <input type="text" formControlName="shippingNotes" placeholder="Giờ giao, lưu ý gọi trước...">
           </div>
         </div>
+
+        <!-- Xem trước dữ liệu sẽ đẩy lên Viettel Post -->
+        <div class="vtp-preview" *ngIf="isViettelPost()">
+          <div class="vtp-preview-title">Dữ liệu sẽ gửi lên Viettel Post</div>
+          <div class="vtp-preview-grid">
+            <div class="vtp-row">
+              <span>Người gửi (kho)</span>
+              <strong>
+                {{ vtpSender()?.name || '— chưa có kho gửi —' }}
+                <ng-container *ngIf="vtpSender()?.phone"> · {{ vtpSender()?.phone }}</ng-container>
+              </strong>
+            </div>
+            <div class="vtp-row wide">
+              <span>Địa chỉ gửi</span>
+              <strong>{{ vtpSenderAddressLine() || '—' }}</strong>
+            </div>
+            <div class="vtp-row">
+              <span>Người nhận</span>
+              <strong>
+                {{ orderForm.get('shippingContactName')?.value || '—' }}
+                <ng-container *ngIf="orderForm.get('shippingPhone')?.value"> · {{ orderForm.get('shippingPhone')?.value }}</ng-container>
+              </strong>
+            </div>
+            <div class="vtp-row wide">
+              <span>Địa chỉ nhận</span>
+              <strong>{{ vtpReceiverAddressLine() || '—' }}</strong>
+            </div>
+            <div class="vtp-row">
+              <span>Khối lượng</span>
+              <strong>
+                {{ vtpWeightGram() | number }} g
+                <em>({{ getTotalQtyInput() }} áo × {{ vtpDefaults?.weightPerShirtGram || 200 }}g)</em>
+              </strong>
+            </div>
+            <div class="vtp-row">
+              <span>Dịch vụ</span>
+              <strong>{{ vtpDefaults?.orderService || '—' }}</strong>
+            </div>
+            <div class="vtp-row">
+              <span>Thanh toán cước</span>
+              <strong>{{ vtpPaymentLabel() }}</strong>
+            </div>
+            <div class="vtp-row">
+              <span>Thu hộ (COD)</span>
+              <strong>{{ vtpDefaults?.useCod ? 'Có' : 'Không' }}</strong>
+            </div>
+          </div>
+          <div class="vtp-preview-note">
+            Phí vận chuyển chính xác hiện sau khi lưu đơn — bấm <strong>“Ước tính phí”</strong> ở màn chi tiết đơn.
+          </div>
+        </div>
       </div>
 
       <!-- ⑦ Thanh toán -->
