@@ -279,6 +279,21 @@ public static class DataSeeder
             await context.SaveChangesAsync();
         }
 
+        // 1b) Role WarehouseManager (Quản lý kho) — account gắn với mỗi địa chỉ gửi hàng.
+        var warehouseRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == RoleNames.WarehouseManager);
+        if (warehouseRole == null)
+        {
+            warehouseRole = new Role
+            {
+                Id = Guid.Parse("16161616-1616-1616-1616-161616161616"),
+                Name = RoleNames.WarehouseManager,
+                Description = "Quản lý kho (account gắn với địa chỉ gửi hàng)",
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            };
+            context.Roles.Add(warehouseRole);
+            await context.SaveChangesAsync();
+        }
+
         // 2) Khâu Vận đơn — tạo nếu thiếu, sửa role phụ trách về WaybillStaff nếu đang khác.
         var waybillStage = await context.ProductionStages.FirstOrDefaultAsync(s => s.StageName == "Vận đơn");
         if (waybillStage == null)
@@ -329,6 +344,16 @@ public static class DataSeeder
             context.Users.Add(u);
             await context.SaveChangesAsync();
             context.UserRoles.Add(new UserRole { UserId = u.Id, RoleId = waybillRole.Id });
+            await context.SaveChangesAsync();
+        }
+
+        // 5) User mẫu cho role quản lý kho (nếu chưa có).
+        if (!await context.Users.AnyAsync(u => u.Email == "quanlykho@crm.com"))
+        {
+            var u = MakeUser("quanlykho@crm.com", "Quanlykho@123", "Quan Ly", "Kho", "0978000002");
+            context.Users.Add(u);
+            await context.SaveChangesAsync();
+            context.UserRoles.Add(new UserRole { UserId = u.Id, RoleId = warehouseRole.Id });
             await context.SaveChangesAsync();
         }
     }

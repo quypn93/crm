@@ -29,6 +29,9 @@ public static class RoleNames
     public const string PackagingStaff  = "PackagingStaff";  // Đóng gói
     public const string WaybillStaff    = "WaybillStaff";    // Vận đơn (chọn kho, nhập địa chỉ nhận, tạo vận đơn)
 
+    // Kho
+    public const string WarehouseManager = "WarehouseManager"; // Quản lý kho (account gắn với mỗi địa chỉ gửi hàng)
+
     // Quality Control
     public const string QualityManager = "QualityManager";
     public const string QualityControl = "QualityControl"; // Kiểm tra chất lượng
@@ -57,6 +60,7 @@ public static class RoleNames
         SalesManager, SalesRep,
         ProductionManager, ProductionStaff,
         CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff, WaybillStaff,
+        WarehouseManager,
         QualityManager, QualityControl,
         DeliveryManager, DeliveryStaff,
         DesignManager, Designer,
