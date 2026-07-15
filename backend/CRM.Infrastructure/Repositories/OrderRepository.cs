@@ -116,11 +116,13 @@ public class OrderRepository : Repository<Order>, IOrderRepository
         if (paymentStatus.HasValue)
             query = query.Where(o => o.PaymentStatus == paymentStatus.Value);
 
+        // Lọc theo ngày tạo đơn (CreatedAt) — khớp cột "Ngày tạo" trên danh sách.
+        // Frontend gửi mốc UTC đã quy đổi từ ngày địa phương.
         if (orderDateFrom.HasValue)
-            query = query.Where(o => o.OrderDate >= orderDateFrom.Value);
+            query = query.Where(o => o.CreatedAt >= orderDateFrom.Value);
 
         if (orderDateTo.HasValue)
-            query = query.Where(o => o.OrderDate <= orderDateTo.Value);
+            query = query.Where(o => o.CreatedAt <= orderDateTo.Value);
 
         if (minAmount.HasValue)
             query = query.Where(o => o.TotalAmount >= minAmount.Value);

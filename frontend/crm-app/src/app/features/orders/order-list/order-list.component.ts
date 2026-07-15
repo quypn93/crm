@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import * as ExcelJS from 'exceljs';
 import { OrderService, OrderSearchParams } from '../../../core/services/order.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -55,8 +56,17 @@ export class OrderListComponent implements OnInit {
     this.canCreateOrder = this.authService.canCreateOrders();
     this.isManagerAccount = this.authService.hasAnyRole(['Admin', 'SalesManager']);
     if (this.isManagerAccount) {
-      this.userService.getUsers({ page: 1, pageSize: 200, isActive: true }).subscribe({
-        next: (res) => { this.creatorOptions = res?.items || []; },
+      // Chỉ liệt kê người có khả năng tạo đơn (Admin, SalesManager, SalesRep)
+      const creatorRoles = ['Admin', 'SalesManager', 'SalesRep'];
+      forkJoin(creatorRoles.map(role =>
+        this.userService.getUsers({ page: 1, pageSize: 200, isActive: true, role })
+      )).subscribe({
+        next: (results) => {
+          const byId = new Map<string, UserListItem>();
+          results.forEach(res => (res?.items || []).forEach(u => byId.set(u.id, u)));
+          this.creatorOptions = Array.from(byId.values())
+            .sort((a, b) => (a.fullName || '').localeCompare(b.fullName || '', 'vi'));
+        },
         error: () => { /* not critical */ }
       });
     }
@@ -68,8 +78,9 @@ export class OrderListComponent implements OnInit {
 
     if (this.selectedStatus !== null) params.status = this.selectedStatus;
     if (this.selectedPaymentStatus !== null) params.paymentStatus = this.selectedPaymentStatus;
-    if (this.dateFrom) params.orderDateFrom = this.dateFrom;
-    if (this.dateTo) params.orderDateTo = `${this.dateTo}T23:59:59`;
+    // Ngày chọn là ngày địa phương → quy đổi mốc đầu/cuối ngày sang UTC (CreatedAt lưu UTC)
+    if (this.dateFrom) params.orderDateFrom = new Date(`${this.dateFrom}T00:00:00`).toISOString();
+    if (this.dateTo) params.orderDateTo = new Date(`${this.dateTo}T23:59:59.999`).toISOString();
     if (this.customerNameFilter.trim()) params.customerName = this.customerNameFilter.trim();
     if (this.isManagerAccount && this.selectedCreatedBy) params.createdBy = this.selectedCreatedBy;
     if (this.minQuantity !== null && this.minQuantity !== undefined && String(this.minQuantity) !== '') params.minQuantity = this.minQuantity;
