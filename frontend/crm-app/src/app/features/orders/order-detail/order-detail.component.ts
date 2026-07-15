@@ -6,6 +6,9 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ProductionService, OrderProductionProgress, OrderProductionStep } from '../../../core/services/production.service';
 import { UserManagementService, UserListItem } from '../../../core/services/user-management.service';
+import { SettingsService } from '../../../core/services/settings.service';
+import { SenderAddress, VtpCategory } from '../../../core/models/lookup.model';
+import { ProcessWaybillPayload } from '../../../core/services/production.service';
 import { environment } from '../../../../environments/environment';
 import {
   Order,
@@ -80,6 +83,7 @@ export class OrderDetailComponent implements OnInit {
     private authService: AuthService,
     private productionService: ProductionService,
     private userService: UserManagementService,
+    private settingsService: SettingsService,
     private route: ActivatedRoute,
     private router: Router,
     private toast: ToastService
@@ -487,8 +491,115 @@ export class OrderDetailComponent implements OnInit {
 
   loadProductionProgress(orderId: string): void {
     this.productionService.getOrderProgress(orderId).subscribe({
-      next: (p) => { this.productionProgress = p; },
+      next: (p) => {
+        this.productionProgress = p;
+        if (this.isAtWaybillStage()) this.loadWaybillData();
+      },
       error: () => { /* not critical */ }
+    });
+  }
+
+  // ── Khâu Vận đơn (sau Đóng gói) ────────────────────────────────────
+  wbBusy = false;
+  wbError = '';
+  wbLoaded = false;
+  wbSenders: SenderAddress[] = [];
+  wbProvinces: VtpCategory[] = [];
+  wbDistricts: VtpCategory[] = [];
+  wbWards: VtpCategory[] = [];
+  wb = { senderAddressId: '', contactName: '', phone: '', address: '', provinceId: 0, districtId: 0, wardId: 0, notes: '' };
+
+  // Đơn đang ở khâu Vận đơn: bước "Vận đơn" chưa xong + mọi khâu trước đã xong.
+  isAtWaybillStage(): boolean {
+    const steps = this.productionProgress?.steps;
+    if (!steps?.length) return false;
+    const wb = steps.find(s => s.stageName === 'Vận đơn');
+    if (!wb || wb.isCompleted) return false;
+    return steps.filter(s => s.stageOrder < wb.stageOrder).every(s => s.isCompleted);
+  }
+
+  private loadWaybillData(): void {
+    if (this.wbLoaded) return;
+    this.wbLoaded = true;
+    this.wb.contactName = this.order?.shippingContactName || '';
+    this.wb.phone = this.order?.shippingPhone || '';
+    this.wb.address = this.order?.shippingAddress || '';
+    this.wb.notes = this.order?.shippingNotes || '';
+    this.wb.senderAddressId = this.order?.senderAddressId || '';
+
+    this.settingsService.getSenderAddresses().subscribe(a => {
+      this.wbSenders = (a || []).filter(x => x.isActive);
+      if (!this.wb.senderAddressId) {
+        const def = this.wbSenders.find(x => x.isDefault);
+        if (def) this.wb.senderAddressId = def.id;
+      }
+    });
+
+    if (this.isViettelPostOrder()) {
+      this.settingsService.getVtpProvinces().subscribe(p => this.wbProvinces = p || []);
+      if (this.order?.receiverProvinceId) {
+        this.wb.provinceId = this.order.receiverProvinceId;
+        this.settingsService.getVtpDistricts(this.order.receiverProvinceId).subscribe(d => {
+          this.wbDistricts = d || [];
+          if (this.order?.receiverDistrictId) {
+            this.wb.districtId = this.order.receiverDistrictId;
+            this.settingsService.getVtpWards(this.order.receiverDistrictId).subscribe(w => {
+              this.wbWards = w || [];
+              if (this.order?.receiverWardId) this.wb.wardId = this.order.receiverWardId;
+            });
+          }
+        });
+      }
+    }
+  }
+
+  onWbProvinceChange(): void {
+    this.wb.districtId = 0; this.wb.wardId = 0; this.wbDistricts = []; this.wbWards = [];
+    const pid = Number(this.wb.provinceId) || 0;
+    if (!pid) return;
+    this.settingsService.getVtpDistricts(pid).subscribe(d => this.wbDistricts = d || []);
+  }
+
+  onWbDistrictChange(): void {
+    this.wb.wardId = 0; this.wbWards = [];
+    const did = Number(this.wb.districtId) || 0;
+    if (!did) return;
+    this.settingsService.getVtpWards(did).subscribe(w => this.wbWards = w || []);
+  }
+
+  wbSenderLine(): string {
+    const s = this.wbSenders.find(x => x.id === this.wb.senderAddressId);
+    return s ? [s.address, s.wardName, s.districtName, s.provinceName].filter(Boolean).join(', ') : '';
+  }
+
+  processWaybill(): void {
+    if (!this.order) return;
+    const isVtp = this.isViettelPostOrder();
+    if (!this.wb.contactName || !this.wb.phone || !this.wb.address) {
+      this.wbError = 'Vui lòng nhập người nhận, số điện thoại và địa chỉ chi tiết.'; return;
+    }
+    if (isVtp && (!this.wb.provinceId || !this.wb.districtId || !this.wb.wardId)) {
+      this.wbError = 'Vui lòng chọn đủ Tỉnh / Quận-Huyện / Phường-Xã (theo danh mục VTP).'; return;
+    }
+    const prov = this.wbProvinces.find(x => x.PROVINCE_ID === Number(this.wb.provinceId));
+    const ward = this.wbWards.find(x => x.WARDS_ID === Number(this.wb.wardId));
+    const payload: ProcessWaybillPayload = {
+      senderAddressId: this.wb.senderAddressId || undefined,
+      shippingContactName: this.wb.contactName,
+      shippingPhone: this.wb.phone,
+      shippingAddress: this.wb.address,
+      shippingProvinceName: isVtp ? prov?.PROVINCE_NAME : undefined,
+      shippingWardName: isVtp ? ward?.WARDS_NAME : undefined,
+      receiverProvinceId: isVtp ? Number(this.wb.provinceId) : undefined,
+      receiverDistrictId: isVtp ? Number(this.wb.districtId) : undefined,
+      receiverWardId: isVtp ? Number(this.wb.wardId) : undefined,
+      shippingNotes: this.wb.notes || undefined,
+    };
+    if (!confirm(isVtp ? 'Tạo vận đơn Viettel Post và hoàn tất khâu Vận đơn?' : 'Hoàn tất khâu Vận đơn?')) return;
+    this.wbBusy = true; this.wbError = '';
+    this.productionService.processWaybill(this.order.id, payload).subscribe({
+      next: () => { this.wbBusy = false; this.toast.success('Đã xử lý vận đơn và hoàn tất khâu.'); this.wbLoaded = false; this.loadOrder(this.order!.id); },
+      error: (err) => { this.wbBusy = false; this.wbError = err?.error?.message || 'Xử lý vận đơn thất bại.'; }
     });
   }
 

@@ -1465,3 +1465,38 @@
     font-size: 13px;
   }
 }
+
+/* Khâu Vận đơn (sau Đóng gói) */
+.waybill-card {
+  border: 1px solid var(--primary-color);
+  border-left: 4px solid var(--primary-color);
+
+  .waybill-hint { color: var(--text-secondary); font-size: 13px; margin: 4px 0 14px; }
+
+  .wb-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 16px;
+  }
+  .wb-field {
+    display: flex; flex-direction: column; gap: 4px; min-width: 0;
+    &.wb-wide { grid-column: 1 / -1; }
+    label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+    .req { color: #ef4444; }
+    input, select {
+      width: 100%; padding: 8px 10px; font-size: 14px;
+      border: 1px solid var(--border-color); border-radius: var(--radius);
+      background: var(--bg-primary); color: var(--text-primary);
+    }
+    select:disabled { opacity: .55; }
+  }
+  .wb-preview {
+    margin: 12px 0; font-size: 13px; color: var(--text-secondary);
+    strong { color: var(--text-primary); }
+  }
+  .btn-primary { margin-top: 6px; }
+}
+
+@media (max-width: 640px) {
+  .waybill-card .wb-grid { grid-template-columns: 1fr; }
+}

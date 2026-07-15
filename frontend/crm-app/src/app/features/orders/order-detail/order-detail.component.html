@@ -131,6 +131,72 @@
         </div>
       </div>
 
+      <!-- ★ Khâu Vận đơn: nhập thông tin vận chuyển + tạo vận đơn (sau Đóng gói) -->
+      <div class="info-card waybill-card" *ngIf="isAtWaybillStage()">
+        <h3>🚚 Xử lý vận đơn</h3>
+        <p class="waybill-hint">Đơn đã đóng gói xong — chọn kho gửi, nhập địa chỉ người nhận rồi tạo vận đơn để gửi đi.</p>
+
+        <div class="wb-grid">
+          <div class="wb-field" *ngIf="isViettelPostOrder()">
+            <label>Kho gửi (địa chỉ gửi hàng)</label>
+            <select [(ngModel)]="wb.senderAddressId">
+              <option value="">-- Địa chỉ mặc định --</option>
+              <option *ngFor="let s of wbSenders" [value]="s.id">{{ s.name }} — {{ s.address }}</option>
+            </select>
+          </div>
+          <div class="wb-field">
+            <label>Người nhận <span class="req">*</span></label>
+            <input type="text" [(ngModel)]="wb.contactName" placeholder="Tên người nhận">
+          </div>
+          <div class="wb-field">
+            <label>Số điện thoại <span class="req">*</span></label>
+            <input type="text" [(ngModel)]="wb.phone" placeholder="SĐT người nhận">
+          </div>
+
+          <ng-container *ngIf="isViettelPostOrder()">
+            <div class="wb-field">
+              <label>Tỉnh/Thành (VTP) <span class="req">*</span></label>
+              <select [(ngModel)]="wb.provinceId" (ngModelChange)="onWbProvinceChange()">
+                <option [ngValue]="0">-- Chọn tỉnh/thành --</option>
+                <option *ngFor="let p of wbProvinces" [ngValue]="p.PROVINCE_ID">{{ p.PROVINCE_NAME }}</option>
+              </select>
+            </div>
+            <div class="wb-field">
+              <label>Quận/Huyện (VTP) <span class="req">*</span></label>
+              <select [(ngModel)]="wb.districtId" (ngModelChange)="onWbDistrictChange()" [disabled]="!wb.provinceId">
+                <option [ngValue]="0">-- Chọn quận/huyện --</option>
+                <option *ngFor="let d of wbDistricts" [ngValue]="d.DISTRICT_ID">{{ d.DISTRICT_NAME }}</option>
+              </select>
+            </div>
+            <div class="wb-field">
+              <label>Phường/Xã (VTP) <span class="req">*</span></label>
+              <select [(ngModel)]="wb.wardId" [disabled]="!wb.districtId">
+                <option [ngValue]="0">-- Chọn phường/xã --</option>
+                <option *ngFor="let w of wbWards" [ngValue]="w.WARDS_ID">{{ w.WARDS_NAME }}</option>
+              </select>
+            </div>
+          </ng-container>
+
+          <div class="wb-field wb-wide">
+            <label>Địa chỉ chi tiết <span class="req">*</span></label>
+            <input type="text" [(ngModel)]="wb.address" placeholder="Số nhà, đường, thôn/xóm...">
+          </div>
+          <div class="wb-field wb-wide">
+            <label>Ghi chú giao hàng</label>
+            <input type="text" [(ngModel)]="wb.notes" placeholder="Giờ giao, lưu ý gọi trước...">
+          </div>
+        </div>
+
+        <div class="wb-preview" *ngIf="isViettelPostOrder()">
+          <span>Gửi từ:</span> <strong>{{ wbSenderLine() || 'kho mặc định' }}</strong>
+        </div>
+
+        <div class="alert alert-danger" *ngIf="wbError">{{ wbError }}</div>
+        <button class="btn btn-primary" [disabled]="wbBusy" (click)="processWaybill()">
+          {{ wbBusy ? 'Đang xử lý...' : (isViettelPostOrder() ? 'Tạo vận đơn & hoàn tất khâu' : 'Hoàn tất khâu Vận đơn') }}
+        </button>
+      </div>
+
       <!-- Delivery Info -->
       <div class="info-card">
         <h3>Thông tin giao hàng</h3>

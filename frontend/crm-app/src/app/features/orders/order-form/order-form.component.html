@@ -320,27 +320,9 @@
           <div class="error-text" *ngIf="f['deliveryMethod'].invalid && f['deliveryMethod'].touched">
             Vui lòng chọn hình thức giao hàng.
           </div>
-          <ng-container *ngIf="orderForm.get('deliveryMethod')?.value === DeliveryMethod.ViettelPost">
-            <div class="hint" *ngIf="viettelPostConfigured === true">
-              Vận đơn Viettel Post sẽ được tạo tự động khi đơn chuyển sang "Sẵn sàng giao".
-            </div>
-            <div class="hint hint-warning" *ngIf="viettelPostConfigured === false">
-              ⚠ Viettel Post chưa cấu hình — đơn vẫn lưu nhãn "Viettel Post" nhưng không tạo vận đơn tự động.
-              Yêu cầu admin điền token + thông tin kho trong <code>appsettings.ViettelPost</code>.
-            </div>
-          </ng-container>
-        </div>
-
-        <!-- Địa chỉ gửi hàng — chỉ hiện khi chọn Viettel Post -->
-        <div class="form-grid" *ngIf="orderForm.get('deliveryMethod')?.value === DeliveryMethod.ViettelPost">
-          <div class="form-group">
-            <label>Địa chỉ gửi hàng</label>
-            <select formControlName="senderAddressId">
-              <option value="">-- Địa chỉ mặc định --</option>
-              <option *ngFor="let a of senderAddresses" [value]="a.id">
-                {{ a.name }} — {{ a.address }}{{ a.wardName ? ', ' + a.wardName : '' }}
-              </option>
-            </select>
+          <div class="hint" *ngIf="orderForm.get('deliveryMethod')?.value !== '' && orderForm.get('deliveryMethod')?.value !== null">
+            📦 Thông tin người nhận + kho gửi + tạo vận đơn sẽ được nhập ở <strong>khâu "Vận đơn"</strong>
+            trong quá trình sản xuất (sau Đóng gói). Lúc tạo đơn chỉ cần chọn đơn vị vận chuyển.
           </div>
         </div>
 
@@ -356,7 +338,8 @@
           </div>
         </div>
 
-        <div class="form-grid">
+        <!-- Địa chỉ người nhận + kho gửi đã chuyển sang khâu "Vận đơn" (order-detail) — ẩn ở form tạo đơn -->
+        <div class="form-grid" *ngIf="false">
           <div class="form-group">
             <label>Người nhận <span class="required">*</span></label>
             <input type="text" formControlName="shippingContactName" placeholder="Tên người nhận">
@@ -449,8 +432,8 @@
           </div>
         </div>
 
-        <!-- Xem trước dữ liệu sẽ đẩy lên Viettel Post -->
-        <div class="vtp-preview" *ngIf="isViettelPost()">
+        <!-- Xem trước dữ liệu VTP đã chuyển sang khâu "Vận đơn" — ẩn ở form tạo đơn -->
+        <div class="vtp-preview" *ngIf="false">
           <div class="vtp-preview-title">Dữ liệu sẽ gửi lên Viettel Post</div>
           <div class="vtp-preview-grid">
             <div class="vtp-row">

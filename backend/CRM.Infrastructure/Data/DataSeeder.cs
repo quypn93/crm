@@ -393,6 +393,7 @@ public static class DataSeeder
             new() { StageOrder = 4, StageName = "Hoàn thiện (vệ sinh, cắt chỉ)", Description = "Vệ sinh sản phẩm, cắt chỉ thừa, là phẳng",       ResponsibleRole = RoleNames.FinishingStaff, IsActive = true },
             new() { StageOrder = 5, StageName = "Kiểm tra chất lượng",            Description = "Kiểm tra chất lượng trước khi đóng gói",         ResponsibleRole = RoleNames.QualityControl, IsActive = true },
             new() { StageOrder = 6, StageName = "Đóng gói",                       Description = "Đóng gói sản phẩm, chuẩn bị giao hàng",          ResponsibleRole = RoleNames.PackagingStaff, IsActive = true },
+            new() { StageOrder = 7, StageName = "Vận đơn",                        Description = "Chọn kho gửi, nhập địa chỉ nhận, tạo vận đơn và gửi đi", ResponsibleRole = RoleNames.ProductionManager, IsActive = true },
         };
         context.ProductionStages.AddRange(stages);
     }

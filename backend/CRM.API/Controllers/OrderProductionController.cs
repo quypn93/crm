@@ -67,6 +67,23 @@ public class OrderProductionController : ControllerBase
         catch (UnauthorizedAccessException ex) { return StatusCode(403, ApiResponse<OrderProductionStepDto>.Fail(ex.Message)); }
     }
 
+    /// <summary>Khâu Vận đơn: chọn kho gửi + nhập địa chỉ nhận → tạo vận đơn → hoàn tất khâu</summary>
+    [HttpPost("api/orders/{orderId:guid}/production/waybill")]
+    [Authorize(Roles = $"{RoleNames.Admin},{RoleNames.ProductionManager}")]
+    public async Task<ActionResult<ApiResponse<OrderProductionStepDto>>> ProcessWaybill(
+        Guid orderId, [FromBody] ProcessWaybillDto dto)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var step = await _service.ProcessWaybillAsync(orderId, userId, dto);
+            return Ok(ApiResponse<OrderProductionStepDto>.Ok(step, "Đã tạo vận đơn và hoàn tất khâu Vận đơn."));
+        }
+        catch (KeyNotFoundException ex) { return NotFound(ApiResponse<OrderProductionStepDto>.Fail(ex.Message)); }
+        catch (InvalidOperationException ex) { return BadRequest(ApiResponse<OrderProductionStepDto>.Fail(ex.Message)); }
+        catch (UnauthorizedAccessException ex) { return StatusCode(403, ApiResponse<OrderProductionStepDto>.Fail(ex.Message)); }
+    }
+
     // ── Truy cập qua QR token (mobile) ───────────────────────────────
 
     /// <summary>Lấy tiến độ sản xuất qua QR token (mobile scan)</summary>

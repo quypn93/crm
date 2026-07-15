@@ -401,21 +401,8 @@ public class OrderService : IOrderService
             }
         }
 
-        // Auto-create Viettel Post shipment khi chuyển sang ReadyToShip và delivery method = ViettelPost.
-        if (dto.Status == OrderStatus.ReadyToShip
-            && order.DeliveryMethod == DeliveryMethod.ViettelPost
-            && string.IsNullOrWhiteSpace(order.ViettelPostLabel)
-            && _viettelPostService.IsConfigured)
-        {
-            try
-            {
-                await _viettelPostService.CreateShipmentAsync(order.Id);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Auto-create Viettel Post shipment failed for order {OrderId}", order.Id);
-            }
-        }
+        // Vận đơn Viettel Post giờ được tạo TAY ở khâu "Vận đơn" (ProcessWaybillAsync),
+        // không auto-create khi ReadyToShip nữa.
 
         if (!string.IsNullOrWhiteSpace(dto.Notes))
             order.InternalNotes = $"{order.InternalNotes}\n[{DateTime.UtcNow:dd/MM/yyyy HH:mm}] {dto.Notes}";

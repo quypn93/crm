@@ -154,12 +154,12 @@ export class OrderFormComponent implements OnInit {
       designId: [''],
       deliveryMethod: ['', Validators.required],
       senderAddressId: [''],
-      shippingContactName: ['', Validators.required],
-      shippingPhone: ['', Validators.required],
-      shippingAddress: ['', Validators.required],
-      shippingProvinceCode: ['', Validators.required],
-      shippingWardCode: ['', Validators.required],
-      // Địa chỉ người nhận theo danh mục Viettel Post (chỉ bắt buộc khi giao ViettelPost).
+      // Thông tin người nhận nhập ở khâu "Vận đơn" (sản xuất), không bắt buộc lúc tạo đơn.
+      shippingContactName: [''],
+      shippingPhone: [''],
+      shippingAddress: [''],
+      shippingProvinceCode: [''],
+      shippingWardCode: [''],
       receiverProvinceId: [0],
       receiverDistrictId: [0],
       receiverWardId: [0],
@@ -272,7 +272,6 @@ export class OrderFormComponent implements OnInit {
       if (Number(v) !== DeliveryMethod.InHouse) {
         this.orderForm.get('shipperUserId')?.setValue('', { emitEvent: false });
       }
-      this.applyDeliveryValidators(v);
     });
   }
 

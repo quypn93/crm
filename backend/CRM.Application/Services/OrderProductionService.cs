@@ -12,12 +12,47 @@ public class OrderProductionService : IOrderProductionService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IQrCodeService _qrCodeService;
+    private readonly IViettelPostShipmentService _viettelPostService;
 
-    public OrderProductionService(IUnitOfWork unitOfWork, IMapper mapper, IQrCodeService qrCodeService)
+    public const string WaybillStageName = "Vận đơn";
+
+    public OrderProductionService(IUnitOfWork unitOfWork, IMapper mapper, IQrCodeService qrCodeService,
+        IViettelPostShipmentService viettelPostService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _qrCodeService = qrCodeService;
+        _viettelPostService = viettelPostService;
+    }
+
+    // Khâu Vận đơn: người phụ trách chọn kho gửi + nhập địa chỉ nhận → tạo vận đơn (nếu VTP) → hoàn tất khâu.
+    public async Task<OrderProductionStepDto> ProcessWaybillAsync(Guid orderId, Guid userId, ProcessWaybillDto dto)
+    {
+        var order = await _unitOfWork.Orders.GetByIdAsync(orderId)
+            ?? throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
+
+        order.SenderAddressId = dto.SenderAddressId;
+        order.ShippingContactName = dto.ShippingContactName;
+        order.ShippingPhone = dto.ShippingPhone;
+        order.ShippingAddress = dto.ShippingAddress;
+        order.ShippingProvinceName = dto.ShippingProvinceName;
+        order.ShippingWardName = dto.ShippingWardName;
+        order.ReceiverProvinceId = dto.ReceiverProvinceId;
+        order.ReceiverDistrictId = dto.ReceiverDistrictId;
+        order.ReceiverWardId = dto.ReceiverWardId;
+        order.ShippingNotes = dto.ShippingNotes;
+        _unitOfWork.Orders.Update(order);
+        await _unitOfWork.SaveChangesAsync();
+
+        // Giao ViettelPost → đẩy vận đơn lên VTP (đọc lại order đã lưu ở trên).
+        if (order.DeliveryMethod == DeliveryMethod.ViettelPost)
+            await _viettelPostService.CreateShipmentAsync(orderId);
+
+        // Hoàn tất bước Vận đơn (CompleteStep tự kiểm quyền ProductionManager + các khâu trước đã xong).
+        var stages = await _unitOfWork.ProductionStages.GetActiveStagesOrderedAsync();
+        var waybillStage = stages.FirstOrDefault(s => s.StageName == WaybillStageName)
+            ?? throw new InvalidOperationException("Chưa cấu hình khâu Vận đơn.");
+        return await CompleteStepAsync(orderId, waybillStage.Id, userId, new CompleteProductionStepDto { Notes = dto.Notes });
     }
 
     public async Task InitializeStepsAsync(Guid orderId)

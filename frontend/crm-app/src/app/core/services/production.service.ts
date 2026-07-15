@@ -59,6 +59,20 @@ export interface CompleteProductionStepDto {
   notes?: string;
 }
 
+export interface ProcessWaybillPayload {
+  senderAddressId?: string;
+  shippingContactName?: string;
+  shippingPhone?: string;
+  shippingAddress?: string;
+  shippingProvinceName?: string;
+  shippingWardName?: string;
+  receiverProvinceId?: number;
+  receiverDistrictId?: number;
+  receiverWardId?: number;
+  shippingNotes?: string;
+  notes?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProductionService {
   constructor(private api: ApiService, private http: HttpClient) {}
@@ -100,6 +114,11 @@ export class ProductionService {
 
   completeStep(orderId: string, stageId: string, dto: CompleteProductionStepDto): Observable<OrderProductionStep> {
     return this.api.post<OrderProductionStep>(`orders/${orderId}/production/steps/${stageId}/complete`, dto);
+  }
+
+  // Khâu Vận đơn: chọn kho gửi + nhập địa chỉ nhận → tạo vận đơn → hoàn tất khâu.
+  processWaybill(orderId: string, dto: ProcessWaybillPayload): Observable<OrderProductionStep> {
+    return this.api.post<OrderProductionStep>(`orders/${orderId}/production/waybill`, dto);
   }
 
   // ── QR scan (mobile) ───────────────────────────────────────────────
