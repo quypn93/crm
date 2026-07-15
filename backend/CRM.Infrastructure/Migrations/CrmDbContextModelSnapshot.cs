@@ -1791,6 +1791,9 @@ namespace CRM.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<Guid?>("AssignedUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1835,6 +1838,8 @@ namespace CRM.Infrastructure.Migrations
                         .HasColumnType("character varying(150)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AssignedUserId");
 
                     b.ToTable("SenderAddresses", (string)null);
                 });
@@ -2491,6 +2496,15 @@ namespace CRM.Infrastructure.Migrations
                     b.Navigation("Order");
 
                     b.Navigation("ProductionStage");
+                });
+
+            modelBuilder.Entity("CRM.Core.Entities.SenderAddress", b =>
+                {
+                    b.HasOne("CRM.Core.Entities.User", "AssignedUser")
+                        .WithMany()
+                        .HasForeignKey("AssignedUserId");
+
+                    b.Navigation("AssignedUser");
                 });
 
             modelBuilder.Entity("CRM.Core.Entities.ShirtComponent", b =>
