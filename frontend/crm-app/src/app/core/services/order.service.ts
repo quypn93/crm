@@ -84,6 +84,11 @@ export class OrderService {
     return this.api.get<Order>(`orders/${id}`);
   }
 
+  // Đơn thuộc kho mà mình (Quản lý kho) phụ trách.
+  getMyWarehouseOrders(): Observable<Order[]> {
+    return this.api.get<Order[]>('orders/my-warehouse');
+  }
+
   createOrder(order: CreateOrderRequest): Observable<Order> {
     return this.api.post<Order>('orders', order);
   }

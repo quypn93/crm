@@ -45,6 +45,8 @@ export interface SenderAddress {
   wardName?: string;
   isDefault: boolean;
   isActive: boolean;
+  assignedUserId?: string;
+  assignedUserName?: string;
 }
 
 export interface CreateSenderAddress {
@@ -59,6 +61,7 @@ export interface CreateSenderAddress {
   wardName?: string;
   isDefault: boolean;
   isActive?: boolean;
+  assignedUserId?: string;
 }
 
 // Danh mục hành chính Viettel Post (PROVINCE_ID/DISTRICT_ID/WARDS_ID...).

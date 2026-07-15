@@ -17,4 +17,8 @@ public class SenderAddress : BaseEntity
 
     public bool IsDefault { get; set; }
     public bool IsActive { get; set; } = true;
+
+    // Tài khoản Quản lý kho (WarehouseManager) phụ trách kho này — để lọc "đơn của mình".
+    public Guid? AssignedUserId { get; set; }
+    public virtual User? AssignedUser { get; set; }
 }

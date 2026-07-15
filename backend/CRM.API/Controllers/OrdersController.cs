@@ -129,6 +129,15 @@ public class OrdersController : ControllerBase
         return Ok(ApiResponse<IEnumerable<OrderDto>>.Ok(orders));
     }
 
+    // Đơn thuộc kho mà mình (Quản lý kho) phụ trách — hiện sau khi khâu Vận đơn gắn kho.
+    [HttpGet("my-warehouse")]
+    public async Task<ActionResult<ApiResponse<IEnumerable<OrderDto>>>> GetMyWarehouseOrders()
+    {
+        var userId = GetCurrentUserId();
+        var orders = await _orderService.GetMyWarehouseOrdersAsync(userId);
+        return Ok(ApiResponse<IEnumerable<OrderDto>>.Ok(orders));
+    }
+
     [HttpGet("summary")]
     [Authorize(Policy = Policies.CanViewOrderSummary)]
     public async Task<ActionResult<ApiResponse<OrderSummaryDto>>> GetSummary()

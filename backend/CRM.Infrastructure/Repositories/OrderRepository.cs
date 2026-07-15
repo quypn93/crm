@@ -184,6 +184,18 @@ public class OrderRepository : Repository<Order>, IOrderRepository
             .ToListAsync();
     }
 
+    // Đơn thuộc kho mà user là Quản lý kho phụ trách (đã gắn kho ở khâu Vận đơn).
+    public async Task<IEnumerable<Order>> GetByWarehouseManagerAsync(Guid userId)
+    {
+        return await _dbSet
+            .Include(o => o.Customer)
+            .Include(o => o.Items)
+            .Include(o => o.SenderAddress)
+            .Where(o => o.SenderAddress != null && o.SenderAddress.AssignedUserId == userId)
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync();
+    }
+
     public async Task<string> GenerateOrderNumberAsync()
     {
         // Format mới: XA-###### (6 chữ số, tăng dần toàn cục, bắt đầu 000001).

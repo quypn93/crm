@@ -12,6 +12,7 @@ public interface IOrderService
     Task<IEnumerable<OrderDto>> GetByCustomerAsync(Guid customerId);
     Task<IEnumerable<OrderDto>> GetByDealAsync(Guid dealId);
     Task<IEnumerable<OrderDto>> GetMyOrdersAsync(Guid userId);
+    Task<IEnumerable<OrderDto>> GetMyWarehouseOrdersAsync(Guid userId);
     Task<OrderDto> CreateAsync(CreateOrderDto dto, Guid userId);
     Task<OrderDto> UpdateAsync(UpdateOrderDto dto, Guid userId);
     Task<OrderDto> UpdateStatusAsync(Guid id, UpdateOrderStatusDto dto, Guid userId);

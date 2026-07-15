@@ -803,6 +803,9 @@ public static class DataSeeder
                 CONSTRAINT "PK_SenderAddresses" PRIMARY KEY ("Id")
             );
 
+            ALTER TABLE "SenderAddresses" ADD COLUMN IF NOT EXISTS "AssignedUserId" uuid NULL;
+            CREATE INDEX IF NOT EXISTS "IX_SenderAddresses_AssignedUserId" ON "SenderAddresses" ("AssignedUserId");
+
             ALTER TABLE "Orders" ADD COLUMN IF NOT EXISTS "SenderAddressId" uuid NULL;
             CREATE INDEX IF NOT EXISTS "IX_Orders_SenderAddressId" ON "Orders" ("SenderAddressId");
 

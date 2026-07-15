@@ -116,6 +116,7 @@ public class SenderAddressService : ISenderAddressService
     public async Task<IEnumerable<SenderAddressDto>> GetAllAsync()
     {
         var list = await _db.SenderAddresses
+            .Include(x => x.AssignedUser)
             .OrderByDescending(x => x.IsDefault).ThenBy(x => x.Name)
             .ToListAsync();
         return list.Select(ToDto);
@@ -123,7 +124,7 @@ public class SenderAddressService : ISenderAddressService
 
     public async Task<SenderAddressDto?> GetByIdAsync(Guid id)
     {
-        var x = await _db.SenderAddresses.FindAsync(id);
+        var x = await _db.SenderAddresses.Include(a => a.AssignedUser).FirstOrDefaultAsync(a => a.Id == id);
         return x == null ? null : ToDto(x);
     }
 
@@ -141,7 +142,8 @@ public class SenderAddressService : ISenderAddressService
             DistrictName = dto.DistrictName,
             WardName = dto.WardName,
             IsDefault = dto.IsDefault,
-            IsActive = dto.IsActive
+            IsActive = dto.IsActive,
+            AssignedUserId = dto.AssignedUserId
         };
         _db.SenderAddresses.Add(entity);
         await _db.SaveChangesAsync();
@@ -165,10 +167,13 @@ public class SenderAddressService : ISenderAddressService
         entity.WardName = dto.WardName;
         entity.IsDefault = dto.IsDefault;
         entity.IsActive = dto.IsActive;
+        entity.AssignedUserId = dto.AssignedUserId;
 
         await _db.SaveChangesAsync();
         await EnsureSingleDefaultAsync(entity);
-        return ToDto(entity);
+        // Reload navigation để trả AssignedUserName mới.
+        var reloaded = await _db.SenderAddresses.Include(a => a.AssignedUser).FirstOrDefaultAsync(a => a.Id == entity.Id);
+        return ToDto(reloaded ?? entity);
     }
 
     public async Task DeleteAsync(Guid id)
@@ -201,7 +206,9 @@ public class SenderAddressService : ISenderAddressService
         DistrictName = x.DistrictName,
         WardName = x.WardName,
         IsDefault = x.IsDefault,
-        IsActive = x.IsActive
+        IsActive = x.IsActive,
+        AssignedUserId = x.AssignedUserId,
+        AssignedUserName = x.AssignedUser != null ? $"{x.AssignedUser.FirstName} {x.AssignedUser.LastName}".Trim() : null
     };
 }
 

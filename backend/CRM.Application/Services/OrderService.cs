@@ -103,6 +103,14 @@ public class OrderService : IOrderService
         return dtos;
     }
 
+    public async Task<IEnumerable<OrderDto>> GetMyWarehouseOrdersAsync(Guid userId)
+    {
+        var orders = await _unitOfWork.Orders.GetByWarehouseManagerAsync(userId);
+        var dtos = _mapper.Map<List<OrderDto>>(orders);
+        await EnrichManagerNamesAsync(dtos);
+        return dtos;
+    }
+
     public async Task<OrderDto> CreateAsync(CreateOrderDto dto, Guid userId)
     {
         // Verify customer if provided

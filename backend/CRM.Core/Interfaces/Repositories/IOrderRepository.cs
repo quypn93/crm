@@ -30,6 +30,7 @@ public interface IOrderRepository : IRepository<Order>
     Task<IEnumerable<Order>> GetByCustomerAsync(Guid customerId);
     Task<IEnumerable<Order>> GetByDealAsync(Guid dealId);
     Task<IEnumerable<Order>> GetByAssignedUserAsync(Guid userId);
+    Task<IEnumerable<Order>> GetByWarehouseManagerAsync(Guid userId);
     Task<string> GenerateOrderNumberAsync();
     Task<int> GetOrderCountByStatusAsync(OrderStatus status);
     Task<decimal> GetTotalRevenueAsync(DateTime? from = null, DateTime? to = null);

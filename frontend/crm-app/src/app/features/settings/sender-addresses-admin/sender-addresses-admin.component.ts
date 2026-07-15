@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { SettingsService } from '../../../core/services/settings.service';
 import { SenderAddress, VtpCategory } from '../../../core/models/lookup.model';
+import { UserManagementService, UserListItem } from '../../../core/services/user-management.service';
 
 @Component({
   selector: 'app-sender-addresses-admin',
@@ -18,7 +19,7 @@ import { SenderAddress, VtpCategory } from '../../../core/models/lookup.model';
 
     <table class="data-table" *ngIf="!isLoading">
       <thead>
-        <tr><th>Tên</th><th>SĐT</th><th>Địa chỉ</th><th>Tỉnh/Huyện/Xã</th><th>Mặc định</th><th>Trạng thái</th><th></th></tr>
+        <tr><th>Tên</th><th>SĐT</th><th>Địa chỉ</th><th>Tỉnh/Huyện/Xã</th><th>Quản lý kho</th><th>Mặc định</th><th>Trạng thái</th><th></th></tr>
       </thead>
       <tbody>
         <tr *ngFor="let a of items">
@@ -26,6 +27,7 @@ import { SenderAddress, VtpCategory } from '../../../core/models/lookup.model';
           <td>{{ a.phone }}</td>
           <td>{{ a.address }}</td>
           <td>{{ [a.wardName, a.districtName, a.provinceName] | json }}</td>
+          <td>{{ a.assignedUserName || '—' }}</td>
           <td>{{ a.isDefault ? '✓' : '' }}</td>
           <td>{{ a.isActive ? 'Hoạt động' : 'Tắt' }}</td>
           <td class="actions">
@@ -33,7 +35,7 @@ import { SenderAddress, VtpCategory } from '../../../core/models/lookup.model';
             <button class="btn-icon btn-danger" (click)="remove(a)">🗑️</button>
           </td>
         </tr>
-        <tr *ngIf="items.length === 0"><td colspan="7" class="no-data">Chưa có địa chỉ gửi hàng</td></tr>
+        <tr *ngIf="items.length === 0"><td colspan="8" class="no-data">Chưa có địa chỉ gửi hàng</td></tr>
       </tbody>
     </table>
 
@@ -72,6 +74,14 @@ import { SenderAddress, VtpCategory } from '../../../core/models/lookup.model';
             <option [ngValue]="0">-- Chọn phường/xã --</option>
             <option *ngFor="let w of wards" [ngValue]="w.WARDS_ID">{{ w.WARDS_NAME }}</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label>Quản lý kho phụ trách</label>
+          <select [(ngModel)]="formData.assignedUserId">
+            <option value="">-- Chưa gán --</option>
+            <option *ngFor="let u of warehouseUsers" [value]="u.id">{{ u.firstName }} {{ u.lastName }} ({{ u.email }})</option>
+          </select>
+          <small style="color:#9ca3af;font-size:12px;">Tài khoản Quản lý kho này sẽ thấy các đơn thuộc kho ở mục "Đơn kho của tôi".</small>
         </div>
         <div class="form-row">
           <label class="chk"><input type="checkbox" [(ngModel)]="formData.isDefault"> Đặt mặc định</label>
@@ -119,18 +129,24 @@ export class SenderAddressesAdminComponent implements OnInit {
   saving = false;
   editing: SenderAddress | null = null;
   error = '';
+  warehouseUsers: UserListItem[] = [];
   formData = this.empty();
 
-  constructor(private settings: SettingsService) {}
+  constructor(private settings: SettingsService, private users: UserManagementService) {}
 
   ngOnInit(): void {
     this.load();
     this.settings.getVtpProvinces().subscribe({ next: p => this.provinces = p || [], error: () => this.provinces = [] });
+    // Danh sách tài khoản Quản lý kho để gán phụ trách kho.
+    this.users.getUsers({ page: 1, pageSize: 200, isActive: true, role: 'WarehouseManager' }).subscribe({
+      next: r => this.warehouseUsers = r?.items || [],
+      error: () => this.warehouseUsers = []
+    });
   }
 
   private empty() {
     return { name: '', phone: '', address: '', provinceId: 0, districtId: 0, wardId: 0,
-      provinceName: '', districtName: '', wardName: '', isDefault: false, isActive: true };
+      provinceName: '', districtName: '', wardName: '', isDefault: false, isActive: true, assignedUserId: '' };
   }
 
   load(): void {
@@ -151,7 +167,7 @@ export class SenderAddressesAdminComponent implements OnInit {
 
   edit(a: SenderAddress): void {
     this.editing = a;
-    this.formData = { ...this.empty(), ...a };
+    this.formData = { ...this.empty(), ...a, assignedUserId: a.assignedUserId || '' };
     this.error = '';
     this.showForm = true;
     // Nạp lại danh sách huyện/xã để hiển thị đúng lựa chọn đang lưu.

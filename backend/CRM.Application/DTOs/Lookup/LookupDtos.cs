@@ -62,6 +62,8 @@ public class SenderAddressDto
     public string? WardName { get; set; }
     public bool IsDefault { get; set; }
     public bool IsActive { get; set; } = true;
+    public Guid? AssignedUserId { get; set; }
+    public string? AssignedUserName { get; set; }
 }
 
 public class CreateSenderAddressDto
@@ -77,6 +79,7 @@ public class CreateSenderAddressDto
     public string? WardName { get; set; }
     public bool IsDefault { get; set; }
     public bool IsActive { get; set; } = true;
+    public Guid? AssignedUserId { get; set; }
 }
 
 public class UpdateSenderAddressDto : CreateSenderAddressDto
