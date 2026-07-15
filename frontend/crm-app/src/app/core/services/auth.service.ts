@@ -50,7 +50,7 @@ export const RoleGroups = {
 // Quản lý tài khoản theo phòng: trưởng phòng → các staff role được tạo/quản lý.
 export const DepartmentStaff: Record<string, string[]> = {
   SalesManager: ['SalesRep'],
-  ProductionManager: ['ProductionStaff', 'CuttingStaff', 'SewingStaff', 'PrintingStaff', 'FinishingStaff', 'PackagingStaff'],
+  ProductionManager: ['ProductionStaff', 'CuttingStaff', 'SewingStaff', 'PrintingStaff', 'FinishingStaff', 'PackagingStaff', 'WaybillStaff'],
   DesignManager: ['Designer'],
   DeliveryManager: ['DeliveryStaff'],
   QualityManager: ['QualityControl'],

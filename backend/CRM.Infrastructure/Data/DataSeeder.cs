@@ -27,6 +27,10 @@ public static class DataSeeder
         await EnsureContentStaffAsync(context);
         await context.SaveChangesAsync();
 
+        // Role Vận đơn mới + khâu Vận đơn (idempotent, cho DB đã tạo trước đó).
+        await EnsureWaybillStageAndRoleAsync(context);
+        await context.SaveChangesAsync();
+
         await SeedSampleDataAsync(context);
         await context.SaveChangesAsync();
 
@@ -256,6 +260,79 @@ public static class DataSeeder
         await AddIfMissing("content2@crm.com", MakeUser("content2@crm.com", "Content@123", "Content", "2", "0967001002"), contentStaffRole);
     }
 
+    // Idempotent: role "Vận đơn" (WaybillStaff) + khâu Vận đơn dùng role này + backfill bước
+    // cho đơn đang sản xuất + 1 user mẫu. Chạy mỗi startup nên áp cho cả DB đã tồn tại.
+    private static async Task EnsureWaybillStageAndRoleAsync(CrmDbContext context)
+    {
+        // 1) Role WaybillStaff
+        var waybillRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == RoleNames.WaybillStaff);
+        if (waybillRole == null)
+        {
+            waybillRole = new Role
+            {
+                Id = Guid.Parse("15151515-1515-1515-1515-151515151515"),
+                Name = RoleNames.WaybillStaff,
+                Description = "Nhân viên vận đơn (chọn kho, nhập địa chỉ nhận, tạo vận đơn)",
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            };
+            context.Roles.Add(waybillRole);
+            await context.SaveChangesAsync();
+        }
+
+        // 2) Khâu Vận đơn — tạo nếu thiếu, sửa role phụ trách về WaybillStaff nếu đang khác.
+        var waybillStage = await context.ProductionStages.FirstOrDefaultAsync(s => s.StageName == "Vận đơn");
+        if (waybillStage == null)
+        {
+            var maxOrder = await context.ProductionStages.AnyAsync()
+                ? await context.ProductionStages.MaxAsync(s => s.StageOrder) : 6;
+            waybillStage = new ProductionStage
+            {
+                StageOrder = maxOrder + 1,
+                StageName = "Vận đơn",
+                Description = "Chọn kho gửi, nhập địa chỉ nhận, tạo vận đơn và gửi đi",
+                ResponsibleRole = RoleNames.WaybillStaff,
+                IsActive = true
+            };
+            context.ProductionStages.Add(waybillStage);
+            await context.SaveChangesAsync();
+        }
+        else if (waybillStage.ResponsibleRole != RoleNames.WaybillStaff)
+        {
+            waybillStage.ResponsibleRole = RoleNames.WaybillStaff;
+            await context.SaveChangesAsync();
+        }
+
+        // 3) Backfill bước Vận đơn cho đơn đang sản xuất chưa có bước này.
+        var inProdOrderIds = await context.Orders
+            .Where(o => o.Status == CRM.Core.Enums.OrderStatus.InProduction)
+            .Select(o => o.Id).ToListAsync();
+        if (inProdOrderIds.Count > 0)
+        {
+            var haveStep = await context.OrderProductionSteps
+                .Where(s => s.ProductionStageId == waybillStage.Id && inProdOrderIds.Contains(s.OrderId))
+                .Select(s => s.OrderId).ToListAsync();
+            var missing = inProdOrderIds.Except(haveStep).ToList();
+            foreach (var oid in missing)
+                context.OrderProductionSteps.Add(new OrderProductionStep
+                {
+                    OrderId = oid,
+                    ProductionStageId = waybillStage.Id,
+                    IsCompleted = false
+                });
+            if (missing.Count > 0) await context.SaveChangesAsync();
+        }
+
+        // 4) User mẫu cho role vận đơn (nếu chưa có).
+        if (!await context.Users.AnyAsync(u => u.Email == "vandon@crm.com"))
+        {
+            var u = MakeUser("vandon@crm.com", "Vandon@123", "Nhan Vien", "Van Don", "0978000001");
+            context.Users.Add(u);
+            await context.SaveChangesAsync();
+            context.UserRoles.Add(new UserRole { UserId = u.Id, RoleId = waybillRole.Id });
+            await context.SaveChangesAsync();
+        }
+    }
+
     private static async Task SeedSampleDataAsync(CrmDbContext context)
     {
         if (await context.Customers.AnyAsync()) return;
@@ -393,7 +470,7 @@ public static class DataSeeder
             new() { StageOrder = 4, StageName = "Hoàn thiện (vệ sinh, cắt chỉ)", Description = "Vệ sinh sản phẩm, cắt chỉ thừa, là phẳng",       ResponsibleRole = RoleNames.FinishingStaff, IsActive = true },
             new() { StageOrder = 5, StageName = "Kiểm tra chất lượng",            Description = "Kiểm tra chất lượng trước khi đóng gói",         ResponsibleRole = RoleNames.QualityControl, IsActive = true },
             new() { StageOrder = 6, StageName = "Đóng gói",                       Description = "Đóng gói sản phẩm, chuẩn bị giao hàng",          ResponsibleRole = RoleNames.PackagingStaff, IsActive = true },
-            new() { StageOrder = 7, StageName = "Vận đơn",                        Description = "Chọn kho gửi, nhập địa chỉ nhận, tạo vận đơn và gửi đi", ResponsibleRole = RoleNames.ProductionManager, IsActive = true },
+            new() { StageOrder = 7, StageName = "Vận đơn",                        Description = "Chọn kho gửi, nhập địa chỉ nhận, tạo vận đơn và gửi đi", ResponsibleRole = RoleNames.WaybillStaff, IsActive = true },
         };
         context.ProductionStages.AddRange(stages);
     }

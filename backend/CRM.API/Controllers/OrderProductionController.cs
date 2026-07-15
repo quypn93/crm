@@ -23,7 +23,7 @@ public class OrderProductionController : ControllerBase
 
     /// <summary>Danh sách tất cả đơn đang sản xuất kèm tiến độ</summary>
     [HttpGet("api/production/dashboard")]
-    [Authorize(Roles = $"{RoleNames.Admin},{RoleNames.ProductionManager},{RoleNames.QualityControl}")]
+    [Authorize(Roles = $"{RoleNames.Admin},{RoleNames.ProductionManager},{RoleNames.QualityControl},{RoleNames.WaybillStaff}")]
     public async Task<ActionResult<ApiResponse<IEnumerable<OrderProductionProgressDto>>>> GetDashboard()
     {
         var list = await _service.GetAllInProductionAsync();
@@ -51,7 +51,7 @@ public class OrderProductionController : ControllerBase
     [HttpPost("api/orders/{orderId:guid}/production/steps/{stageId:guid}/complete")]
     [Authorize(Roles = $"{RoleNames.Admin},{RoleNames.ProductionManager},{RoleNames.ProductionStaff}," +
                        $"{RoleNames.CuttingStaff},{RoleNames.SewingStaff},{RoleNames.PrintingStaff}," +
-                       $"{RoleNames.FinishingStaff},{RoleNames.PackagingStaff}," +
+                       $"{RoleNames.FinishingStaff},{RoleNames.PackagingStaff},{RoleNames.WaybillStaff}," +
                        $"{RoleNames.QualityControl},{RoleNames.QualityManager}")]
     public async Task<ActionResult<ApiResponse<OrderProductionStepDto>>> CompleteStep(
         Guid orderId, Guid stageId, [FromBody] CompleteProductionStepDto dto)
@@ -69,7 +69,7 @@ public class OrderProductionController : ControllerBase
 
     /// <summary>Khâu Vận đơn: chọn kho gửi + nhập địa chỉ nhận → tạo vận đơn → hoàn tất khâu</summary>
     [HttpPost("api/orders/{orderId:guid}/production/waybill")]
-    [Authorize(Roles = $"{RoleNames.Admin},{RoleNames.ProductionManager}")]
+    [Authorize(Roles = $"{RoleNames.Admin},{RoleNames.ProductionManager},{RoleNames.WaybillStaff}")]
     public async Task<ActionResult<ApiResponse<OrderProductionStepDto>>> ProcessWaybill(
         Guid orderId, [FromBody] ProcessWaybillDto dto)
     {
@@ -105,7 +105,7 @@ public class OrderProductionController : ControllerBase
     [HttpPost("api/production/scan/{token}/steps/{stageId:guid}/complete")]
     [Authorize(Roles = $"{RoleNames.Admin},{RoleNames.ProductionManager},{RoleNames.ProductionStaff}," +
                        $"{RoleNames.CuttingStaff},{RoleNames.SewingStaff},{RoleNames.PrintingStaff}," +
-                       $"{RoleNames.FinishingStaff},{RoleNames.PackagingStaff}," +
+                       $"{RoleNames.FinishingStaff},{RoleNames.PackagingStaff},{RoleNames.WaybillStaff}," +
                        $"{RoleNames.QualityControl},{RoleNames.QualityManager}")]
     public async Task<ActionResult<ApiResponse<OrderProductionStepDto>>> CompleteStepByToken(
         string token, Guid stageId, [FromBody] CompleteProductionStepDto dto)

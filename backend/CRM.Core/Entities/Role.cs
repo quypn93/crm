@@ -27,6 +27,7 @@ public static class RoleNames
     public const string PrintingStaff   = "PrintingStaff";   // In / Thêu logo
     public const string FinishingStaff  = "FinishingStaff";  // Hoàn thiện (vệ sinh, cắt chỉ)
     public const string PackagingStaff  = "PackagingStaff";  // Đóng gói
+    public const string WaybillStaff    = "WaybillStaff";    // Vận đơn (chọn kho, nhập địa chỉ nhận, tạo vận đơn)
 
     // Quality Control
     public const string QualityManager = "QualityManager";
@@ -55,7 +56,7 @@ public static class RoleNames
         Admin,
         SalesManager, SalesRep,
         ProductionManager, ProductionStaff,
-        CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff,
+        CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff, WaybillStaff,
         QualityManager, QualityControl,
         DeliveryManager, DeliveryStaff,
         DesignManager, Designer,
@@ -66,7 +67,7 @@ public static class RoleNames
     public static readonly string[] ManagerRoles = { Admin, SalesManager };
     public static readonly string[] ProductionRoles = {
         Admin, ProductionManager, ProductionStaff,
-        CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff
+        CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff, WaybillStaff
     };
     // Các role chuyên môn hóa cho từng khâu sản xuất
     public static readonly string[] ProductionStageRoles = {
@@ -80,7 +81,7 @@ public static class RoleNames
     };
     public static readonly string[] OperationalRoles = {
         Admin, ProductionManager, ProductionStaff,
-        CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff,
+        CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff, WaybillStaff,
         QualityManager, QualityControl,
         DeliveryManager, DeliveryStaff
     };
@@ -96,7 +97,7 @@ public static class RoleNames
     public static readonly Dictionary<string, string[]> DepartmentStaff = new()
     {
         [SalesManager]      = new[] { SalesRep },
-        [ProductionManager] = new[] { ProductionStaff, CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff },
+        [ProductionManager] = new[] { ProductionStaff, CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff, WaybillStaff },
         [DesignManager]     = new[] { Designer },
         [DeliveryManager]   = new[] { DeliveryStaff },
         [QualityManager]    = new[] { QualityControl },
