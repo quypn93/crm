@@ -60,10 +60,14 @@ export interface OrderSearchParams {
   status?: OrderStatus;
   paymentStatus?: PaymentStatus;
   assignedToUserId?: string;
+  createdBy?: string;
+  customerName?: string;
   orderDateFrom?: string;
   orderDateTo?: string;
   minAmount?: number;
   maxAmount?: number;
+  minQuantity?: number;
+  maxQuantity?: number;
   page?: number;
   pageSize?: number;
   sortBy?: string;

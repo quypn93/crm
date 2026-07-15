@@ -57,6 +57,37 @@
     <button class="btn btn-outline" (click)="clearFilters()">Xóa bộ lọc</button>
   </div>
 
+  <div class="filters-bar filters-bar-secondary">
+    <div class="filter-field">
+      <span class="filter-label">Từ ngày</span>
+      <input type="date" [(ngModel)]="dateFrom" (change)="onFilterChange()">
+    </div>
+    <div class="filter-field">
+      <span class="filter-label">Đến ngày</span>
+      <input type="date" [(ngModel)]="dateTo" (change)="onFilterChange()">
+    </div>
+    <div class="filter-field">
+      <span class="filter-label">Khách hàng</span>
+      <input type="text" [(ngModel)]="customerNameFilter" (keyup.enter)="onFilterChange()" (blur)="onFilterChange()"
+             placeholder="Tên khách hàng...">
+    </div>
+    <div class="filter-field" *ngIf="isManagerAccount">
+      <span class="filter-label">Nhân viên tạo đơn</span>
+      <select [(ngModel)]="selectedCreatedBy" (change)="onFilterChange()">
+        <option value="">Tất cả nhân viên</option>
+        <option *ngFor="let u of creatorOptions" [value]="u.id">{{ u.fullName }}</option>
+      </select>
+    </div>
+    <div class="filter-field">
+      <span class="filter-label">Số lượng SP</span>
+      <div class="filter-range">
+        <input type="number" [(ngModel)]="minQuantity" (change)="onFilterChange()" placeholder="Từ" min="0">
+        <span>–</span>
+        <input type="number" [(ngModel)]="maxQuantity" (change)="onFilterChange()" placeholder="Đến" min="0">
+      </div>
+    </div>
+  </div>
+
   <div class="table-container">
     <div class="loading-overlay" *ngIf="isLoading">
       <div class="spinner"></div>

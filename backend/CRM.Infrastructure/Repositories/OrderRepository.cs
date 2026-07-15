@@ -66,6 +66,9 @@ public class OrderRepository : Repository<Order>, IOrderRepository
         DateTime? orderDateTo,
         decimal? minAmount,
         decimal? maxAmount,
+        string? customerName,
+        int? minQuantity,
+        int? maxQuantity,
         int page,
         int pageSize,
         string? sortBy,
@@ -124,6 +127,22 @@ public class OrderRepository : Repository<Order>, IOrderRepository
 
         if (maxAmount.HasValue)
             query = query.Where(o => o.TotalAmount <= maxAmount.Value);
+
+        // Lọc theo tên khách hàng — khớp cả KH trong danh bạ lẫn tên nhập tay trên đơn
+        if (!string.IsNullOrWhiteSpace(customerName))
+        {
+            var name = customerName.Trim().ToLower();
+            query = query.Where(o =>
+                (o.Customer != null && o.Customer.Name.ToLower().Contains(name)) ||
+                (o.CustomerName != null && o.CustomerName.ToLower().Contains(name)));
+        }
+
+        // Lọc theo tổng số lượng sản phẩm trong đơn (sum quantity các items)
+        if (minQuantity.HasValue)
+            query = query.Where(o => o.Items.Sum(i => i.Quantity) >= minQuantity.Value);
+
+        if (maxQuantity.HasValue)
+            query = query.Where(o => o.Items.Sum(i => i.Quantity) <= maxQuantity.Value);
 
         var totalCount = await query.CountAsync();
 

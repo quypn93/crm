@@ -4,6 +4,7 @@ import * as ExcelJS from 'exceljs';
 import { OrderService, OrderSearchParams } from '../../../core/services/order.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { UserManagementService, UserListItem } from '../../../core/services/user-management.service';
 import { Order, OrderStatus, PaymentStatus, OrderStatusLabels, PaymentStatusLabels, OrderStatusColors, PaymentStatusColors, UpdateOrderStatusRequest } from '../../../core/models/order.model';
 
 @Component({
@@ -25,40 +26,65 @@ export class OrderListComponent implements OnInit {
   // Filters
   selectedStatus: OrderStatus | null = null;
   selectedPaymentStatus: PaymentStatus | null = null;
+  dateFrom = '';
+  dateTo = '';
+  customerNameFilter = '';
+  selectedCreatedBy = '';
+  minQuantity: number | null = null;
+  maxQuantity: number | null = null;
 
   statusOptions = this.orderService.getStatusOptions();
   paymentStatusOptions = this.orderService.getPaymentStatusOptions();
+  creatorOptions: UserListItem[] = [];
 
   readonly OrderStatus = OrderStatus;
 
   canCreateOrder = false;
+  // "Tài khoản tổng" (Admin/SalesManager) mới thấy filter Nhân viên tạo đơn
+  isManagerAccount = false;
 
   constructor(
     private orderService: OrderService,
     private authService: AuthService,
+    private userService: UserManagementService,
     private router: Router,
     private toast: ToastService
   ) {}
 
   ngOnInit(): void {
     this.canCreateOrder = this.authService.canCreateOrders();
+    this.isManagerAccount = this.authService.hasAnyRole(['Admin', 'SalesManager']);
+    if (this.isManagerAccount) {
+      this.userService.getUsers({ page: 1, pageSize: 200, isActive: true }).subscribe({
+        next: (res) => { this.creatorOptions = res?.items || []; },
+        error: () => { /* not critical */ }
+      });
+    }
     this.loadOrders();
+  }
+
+  private buildFilterParams(): OrderSearchParams {
+    const params: OrderSearchParams = { search: this.searchTerm };
+
+    if (this.selectedStatus !== null) params.status = this.selectedStatus;
+    if (this.selectedPaymentStatus !== null) params.paymentStatus = this.selectedPaymentStatus;
+    if (this.dateFrom) params.orderDateFrom = this.dateFrom;
+    if (this.dateTo) params.orderDateTo = `${this.dateTo}T23:59:59`;
+    if (this.customerNameFilter.trim()) params.customerName = this.customerNameFilter.trim();
+    if (this.isManagerAccount && this.selectedCreatedBy) params.createdBy = this.selectedCreatedBy;
+    if (this.minQuantity !== null && this.minQuantity !== undefined && String(this.minQuantity) !== '') params.minQuantity = this.minQuantity;
+    if (this.maxQuantity !== null && this.maxQuantity !== undefined && String(this.maxQuantity) !== '') params.maxQuantity = this.maxQuantity;
+
+    return params;
   }
 
   loadOrders(): void {
     this.isLoading = true;
     const params: OrderSearchParams = {
-      search: this.searchTerm,
+      ...this.buildFilterParams(),
       page: this.currentPage,
       pageSize: this.pageSize
     };
-
-    if (this.selectedStatus !== null) {
-      params.status = this.selectedStatus;
-    }
-    if (this.selectedPaymentStatus !== null) {
-      params.paymentStatus = this.selectedPaymentStatus;
-    }
 
     this.orderService.getOrders(params).subscribe({
       next: (response) => {
@@ -88,6 +114,12 @@ export class OrderListComponent implements OnInit {
     this.searchTerm = '';
     this.selectedStatus = null;
     this.selectedPaymentStatus = null;
+    this.dateFrom = '';
+    this.dateTo = '';
+    this.customerNameFilter = '';
+    this.selectedCreatedBy = '';
+    this.minQuantity = null;
+    this.maxQuantity = null;
     this.currentPage = 1;
     this.loadOrders();
   }
@@ -108,12 +140,10 @@ export class OrderListComponent implements OnInit {
 
     // Lấy toàn bộ đơn theo bộ lọc hiện tại (không chỉ trang đang xem).
     const params: OrderSearchParams = {
-      search: this.searchTerm,
+      ...this.buildFilterParams(),
       page: 1,
       pageSize: 100000
     };
-    if (this.selectedStatus !== null) params.status = this.selectedStatus;
-    if (this.selectedPaymentStatus !== null) params.paymentStatus = this.selectedPaymentStatus;
 
     this.orderService.getOrders(params).subscribe({
       next: (response) => {

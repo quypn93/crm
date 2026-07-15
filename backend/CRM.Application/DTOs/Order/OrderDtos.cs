@@ -280,6 +280,9 @@ public class OrderFilterDto
     public DateTime? OrderDateTo { get; set; }
     public decimal? MinAmount { get; set; }
     public decimal? MaxAmount { get; set; }
+    public string? CustomerName { get; set; }     // Lọc theo tên khách hàng
+    public int? MinQuantity { get; set; }         // Tổng số lượng sản phẩm trong đơn
+    public int? MaxQuantity { get; set; }
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 20;
     public string? SortBy { get; set; }
