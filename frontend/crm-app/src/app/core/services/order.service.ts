@@ -117,6 +117,10 @@ export class OrderService {
     return this.api.put<Order>(`orders/${id}/delivery-method`, request);
   }
 
+  updateShippingAddress(id: string, request: any): Observable<Order> {
+    return this.api.put<Order>(`orders/${id}/shipping-address`, request);
+  }
+
   updateDepositCode(id: string, request: UpdateDepositCodeRequest): Observable<Order> {
     return this.api.put<Order>(`orders/${id}/deposit-code`, request);
   }

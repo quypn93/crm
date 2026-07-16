@@ -257,6 +257,22 @@ public class UpdateDepositCodeDto
     public string? DepositCode { get; set; }
 }
 
+// Sửa riêng địa chỉ giao hàng (cho phép cả sau khi gửi xưởng, tới trước khâu vận chuyển).
+public class UpdateShippingAddressDto
+{
+    public string? ShippingContactName { get; set; }
+    public string? ShippingPhone { get; set; }
+    public string? ShippingAddress { get; set; }
+    public string? ShippingProvinceCode { get; set; }
+    public string? ShippingProvinceName { get; set; }
+    public string? ShippingWardCode { get; set; }
+    public string? ShippingWardName { get; set; }
+    public int? ReceiverProvinceId { get; set; }
+    public int? ReceiverDistrictId { get; set; }
+    public int? ReceiverWardId { get; set; }
+    public string? ShippingNotes { get; set; }
+}
+
 public class UpdatePaymentDto
 {
     public PaymentStatus PaymentStatus { get; set; }

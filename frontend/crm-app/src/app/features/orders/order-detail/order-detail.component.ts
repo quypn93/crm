@@ -7,7 +7,9 @@ import { ToastService } from '../../../core/services/toast.service';
 import { ProductionService, OrderProductionProgress, OrderProductionStep } from '../../../core/services/production.service';
 import { UserManagementService, UserListItem } from '../../../core/services/user-management.service';
 import { SettingsService } from '../../../core/services/settings.service';
-import { SenderAddress } from '../../../core/models/lookup.model';
+import { LocationService } from '../../../core/services/location.service';
+import { SenderAddress, VtpCategory } from '../../../core/models/lookup.model';
+import { Province, Ward } from '../../../core/models/location.model';
 import { ProcessWaybillPayload } from '../../../core/services/production.service';
 import { environment } from '../../../../environments/environment';
 import {
@@ -84,6 +86,7 @@ export class OrderDetailComponent implements OnInit {
     private productionService: ProductionService,
     private userService: UserManagementService,
     private settingsService: SettingsService,
+    private locationService: LocationService,
     private route: ActivatedRoute,
     private router: Router,
     private toast: ToastService
@@ -555,6 +558,97 @@ export class OrderDetailComponent implements OnInit {
     this.productionService.processWaybill(this.order.id, payload).subscribe({
       next: () => { this.wbBusy = false; this.toast.success('Đã xử lý vận đơn và hoàn tất khâu.'); this.wbLoaded = false; this.loadOrder(this.order!.id); },
       error: (err) => { this.wbBusy = false; this.wbError = err?.error?.message || 'Xử lý vận đơn thất bại.'; }
+    });
+  }
+
+  // ── Sửa địa chỉ giao hàng (cho tới trước khâu vận chuyển, kể cả đang SX) ──
+  showShippingModal = false;
+  saBusy = false;
+  saError = '';
+  saProvinces: VtpCategory[] = [];
+  saDistricts: VtpCategory[] = [];
+  saWards: VtpCategory[] = [];
+  saCrmProvinces: Province[] = [];
+  saCrmWards: Ward[] = [];
+  sa = { contactName: '', phone: '', address: '', provinceCode: '', wardCode: '', provinceId: 0, districtId: 0, wardId: 0, notes: '' };
+
+  canEditShippingAddress(): boolean {
+    if (!this.order) return false;
+    const editable = [OrderStatus.Draft, OrderStatus.Confirmed, OrderStatus.InProduction, OrderStatus.QualityCheck, OrderStatus.ReadyToShip];
+    return editable.includes(this.order.status) &&
+           this.authService.hasAnyRole(['Admin', 'SalesManager', 'SalesRep', 'DeliveryManager']);
+  }
+
+  openEditShipping(): void {
+    if (!this.order) return;
+    this.saError = '';
+    this.sa = {
+      contactName: this.order.shippingContactName || '',
+      phone: this.order.shippingPhone || '',
+      address: this.order.shippingAddress || '',
+      provinceCode: this.order.shippingProvinceCode || '',
+      wardCode: this.order.shippingWardCode || '',
+      provinceId: this.order.receiverProvinceId || 0,
+      districtId: this.order.receiverDistrictId || 0,
+      wardId: this.order.receiverWardId || 0,
+      notes: this.order.shippingNotes || ''
+    };
+    if (this.isViettelPostOrder()) {
+      this.settingsService.getVtpProvinces().subscribe(p => this.saProvinces = p || []);
+      if (this.sa.provinceId) this.settingsService.getVtpDistricts(this.sa.provinceId).subscribe(d => this.saDistricts = d || []);
+      if (this.sa.districtId) this.settingsService.getVtpWards(this.sa.districtId).subscribe(w => this.saWards = w || []);
+    } else {
+      this.locationService.getProvinces().subscribe(p => this.saCrmProvinces = p || []);
+      if (this.sa.provinceCode) this.locationService.getWardsByProvince(this.sa.provinceCode).subscribe(w => this.saCrmWards = w || []);
+    }
+    this.showShippingModal = true;
+  }
+
+  onSaVtpProvince(): void {
+    this.sa.districtId = 0; this.sa.wardId = 0; this.saDistricts = []; this.saWards = [];
+    if (this.sa.provinceId) this.settingsService.getVtpDistricts(Number(this.sa.provinceId)).subscribe(d => this.saDistricts = d || []);
+  }
+  onSaVtpDistrict(): void {
+    this.sa.wardId = 0; this.saWards = [];
+    if (this.sa.districtId) this.settingsService.getVtpWards(Number(this.sa.districtId)).subscribe(w => this.saWards = w || []);
+  }
+  onSaCrmProvince(): void {
+    this.sa.wardCode = ''; this.saCrmWards = [];
+    if (this.sa.provinceCode) this.locationService.getWardsByProvince(this.sa.provinceCode).subscribe(w => this.saCrmWards = w || []);
+  }
+
+  saveShippingAddress(): void {
+    if (!this.order) return;
+    const isVtp = this.isViettelPostOrder();
+    if (!this.sa.contactName || !this.sa.phone || !this.sa.address) { this.saError = 'Nhập đủ người nhận, số điện thoại, địa chỉ.'; return; }
+    let payload: any = {
+      shippingContactName: this.sa.contactName,
+      shippingPhone: this.sa.phone,
+      shippingAddress: this.sa.address,
+      shippingNotes: this.sa.notes || undefined
+    };
+    if (isVtp) {
+      if (!this.sa.provinceId || !this.sa.districtId || !this.sa.wardId) { this.saError = 'Chọn đủ Tỉnh / Quận-Huyện / Phường-Xã (VTP).'; return; }
+      const p = this.saProvinces.find(x => x.PROVINCE_ID === Number(this.sa.provinceId));
+      const w = this.saWards.find(x => x.WARDS_ID === Number(this.sa.wardId));
+      payload.shippingProvinceName = p?.PROVINCE_NAME;
+      payload.shippingWardName = w?.WARDS_NAME;
+      payload.receiverProvinceId = Number(this.sa.provinceId);
+      payload.receiverDistrictId = Number(this.sa.districtId);
+      payload.receiverWardId = Number(this.sa.wardId);
+    } else {
+      if (!this.sa.provinceCode || !this.sa.wardCode) { this.saError = 'Chọn Tỉnh/Thành và Phường/Xã.'; return; }
+      const p = this.saCrmProvinces.find(x => x.code === this.sa.provinceCode);
+      const w = this.saCrmWards.find(x => x.code === this.sa.wardCode);
+      payload.shippingProvinceCode = this.sa.provinceCode;
+      payload.shippingProvinceName = p?.fullName;
+      payload.shippingWardCode = this.sa.wardCode;
+      payload.shippingWardName = w?.name;
+    }
+    this.saBusy = true; this.saError = '';
+    this.orderService.updateShippingAddress(this.order.id, payload).subscribe({
+      next: (o) => { this.saBusy = false; this.order = o; this.showShippingModal = false; this.toast.success('Đã cập nhật địa chỉ giao hàng.'); },
+      error: (err) => { this.saBusy = false; this.saError = err?.error?.message || 'Cập nhật địa chỉ thất bại.'; }
     });
   }
 

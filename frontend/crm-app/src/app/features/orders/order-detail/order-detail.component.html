@@ -164,7 +164,9 @@
 
       <!-- Delivery Info -->
       <div class="info-card">
-        <h3>Thông tin giao hàng</h3>
+        <h3>Thông tin giao hàng
+          <button type="button" class="btn-edit-delivery" *ngIf="canEditShippingAddress()" (click)="openEditShipping()">✏️ Sửa địa chỉ</button>
+        </h3>
         <div class="info-grid">
           <div class="info-item">
             <span class="label">Hình thức giao</span>
@@ -761,6 +763,87 @@
       <button class="btn btn-secondary" (click)="closeDeliveryModal()" [disabled]="isSavingDelivery">Hủy</button>
       <button class="btn btn-primary" (click)="saveDeliveryMethod()" [disabled]="isSavingDelivery">
         {{ isSavingDelivery ? 'Đang lưu...' : 'Cập nhật' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Sửa địa chỉ giao hàng Modal -->
+<div class="modal-overlay" *ngIf="showShippingModal" (click)="showShippingModal=false">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Sửa địa chỉ giao hàng</h3>
+      <button class="btn-close" (click)="showShippingModal=false">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Người nhận</label>
+        <input type="text" [(ngModel)]="sa.contactName" placeholder="Tên người nhận">
+      </div>
+      <div class="form-group">
+        <label>Số điện thoại</label>
+        <input type="text" [(ngModel)]="sa.phone" placeholder="SĐT người nhận">
+      </div>
+
+      <ng-container *ngIf="isViettelPostOrder()">
+        <div class="form-group">
+          <label>Tỉnh/Thành (VTP)</label>
+          <select [(ngModel)]="sa.provinceId" (ngModelChange)="onSaVtpProvince()">
+            <option [ngValue]="0">-- Chọn tỉnh/thành --</option>
+            <option *ngFor="let p of saProvinces" [ngValue]="p.PROVINCE_ID">{{ p.PROVINCE_NAME }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Quận/Huyện (VTP)</label>
+          <select [(ngModel)]="sa.districtId" (ngModelChange)="onSaVtpDistrict()" [disabled]="!sa.provinceId">
+            <option [ngValue]="0">-- Chọn quận/huyện --</option>
+            <option *ngFor="let d of saDistricts" [ngValue]="d.DISTRICT_ID">{{ d.DISTRICT_NAME }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Phường/Xã (VTP)</label>
+          <select [(ngModel)]="sa.wardId" [disabled]="!sa.districtId">
+            <option [ngValue]="0">-- Chọn phường/xã --</option>
+            <option *ngFor="let w of saWards" [ngValue]="w.WARDS_ID">{{ w.WARDS_NAME }}</option>
+          </select>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="!isViettelPostOrder()">
+        <div class="form-group">
+          <label>Tỉnh/Thành phố</label>
+          <select [(ngModel)]="sa.provinceCode" (ngModelChange)="onSaCrmProvince()">
+            <option value="">-- Chọn tỉnh/thành --</option>
+            <option *ngFor="let p of saCrmProvinces" [value]="p.code">{{ p.fullName }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Phường/Xã</label>
+          <select [(ngModel)]="sa.wardCode" [disabled]="!sa.provinceCode">
+            <option value="">-- Chọn phường/xã --</option>
+            <option *ngFor="let w of saCrmWards" [value]="w.code">{{ w.name }}</option>
+          </select>
+        </div>
+      </ng-container>
+
+      <div class="form-group">
+        <label>Địa chỉ chi tiết</label>
+        <input type="text" [(ngModel)]="sa.address" placeholder="Số nhà, đường, thôn/xóm...">
+      </div>
+      <div class="form-group">
+        <label>Ghi chú giao hàng</label>
+        <input type="text" [(ngModel)]="sa.notes" placeholder="Giờ giao, lưu ý gọi trước...">
+      </div>
+      <div class="alert alert-danger" *ngIf="saError">{{ saError }}</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="showShippingModal=false" [disabled]="saBusy">Hủy</button>
+      <button class="btn btn-primary" (click)="saveShippingAddress()" [disabled]="saBusy">
+        {{ saBusy ? 'Đang lưu...' : 'Lưu địa chỉ' }}
       </button>
     </div>
   </div>

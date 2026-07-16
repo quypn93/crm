@@ -233,9 +233,14 @@ public class OrdersController : ControllerBase
             }
 
             // Get user roles and validate transition permission
-            var userRoles = GetCurrentUserRoles();
+            var userRoles = GetCurrentUserRoles().ToList();
             var currentStatus = (OrderStatus)currentOrder.Status;
             var newStatus = dto.Status;
+
+            // Sau khi gửi xưởng (InProduction trở đi), chỉ Admin được hủy đơn — sale không hủy được.
+            var postProduction = currentStatus is OrderStatus.InProduction or OrderStatus.QualityCheck or OrderStatus.ReadyToShip;
+            if (newStatus == OrderStatus.Cancelled && postProduction && !userRoles.Contains(RoleNames.Admin))
+                return StatusCode(403, ApiResponse<OrderDto>.Fail("Đơn đã gửi xưởng — chỉ Admin mới được hủy."));
 
             if (!OrderStatusTransitionValidator.CanTransition(currentStatus, newStatus, userRoles))
             {
@@ -314,6 +319,31 @@ public class OrdersController : ControllerBase
             var userId = GetCurrentUserId();
             var order = await _orderService.UpdateDepositCodeAsync(id, dto, userId);
             return Ok(ApiResponse<OrderDto>.Ok(order, "Cập nhật mã cọc tiền thành công."));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<OrderDto>.Fail(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<OrderDto>.Fail(ex.Message));
+        }
+    }
+
+    // Sửa riêng địa chỉ giao hàng — cho phép cả sau khi gửi xưởng (tới trước khâu vận chuyển).
+    [HttpPut("{id}/shipping-address")]
+    public async Task<ActionResult<ApiResponse<OrderDto>>> UpdateShippingAddress(Guid id, [FromBody] UpdateShippingAddressDto dto)
+    {
+        var userRoles = GetCurrentUserRoles();
+        var allowedRoles = new[] { RoleNames.Admin, RoleNames.SalesManager, RoleNames.SalesRep, RoleNames.DeliveryManager };
+        if (!userRoles.Any(r => allowedRoles.Contains(r)))
+            return StatusCode(403, ApiResponse<OrderDto>.Fail("Bạn không có quyền sửa địa chỉ giao hàng."));
+
+        try
+        {
+            var userId = GetCurrentUserId();
+            var order = await _orderService.UpdateShippingAddressAsync(id, dto, userId);
+            return Ok(ApiResponse<OrderDto>.Ok(order, "Cập nhật địa chỉ giao hàng thành công."));
         }
         catch (KeyNotFoundException ex)
         {

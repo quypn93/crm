@@ -471,6 +471,33 @@ public class OrderService : IOrderService
         return await GetByIdAsync(id) ?? throw new InvalidOperationException("Không thể cập nhật hình thức vận chuyển.");
     }
 
+    public async Task<OrderDto> UpdateShippingAddressAsync(Guid id, UpdateShippingAddressDto dto, Guid userId)
+    {
+        var order = await _unitOfWork.Orders.GetByIdWithDetailsAsync(id);
+        if (order == null)
+            throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
+
+        // Cho sửa địa chỉ tới trước khi đơn vào khâu vận chuyển (kể cả đang sản xuất).
+        if (order.Status is OrderStatus.Shipping or OrderStatus.Delivered or OrderStatus.Completed or OrderStatus.Cancelled)
+            throw new InvalidOperationException("Đơn đã vào khâu vận chuyển/đã đóng — không sửa được địa chỉ giao.");
+
+        order.ShippingContactName = dto.ShippingContactName;
+        order.ShippingPhone = dto.ShippingPhone;
+        order.ShippingAddress = dto.ShippingAddress;
+        order.ShippingProvinceCode = dto.ShippingProvinceCode;
+        order.ShippingProvinceName = dto.ShippingProvinceName;
+        order.ShippingWardCode = dto.ShippingWardCode;
+        order.ShippingWardName = dto.ShippingWardName;
+        order.ReceiverProvinceId = dto.ReceiverProvinceId;
+        order.ReceiverDistrictId = dto.ReceiverDistrictId;
+        order.ReceiverWardId = dto.ReceiverWardId;
+        order.ShippingNotes = dto.ShippingNotes;
+
+        _unitOfWork.Orders.Update(order);
+        await _unitOfWork.SaveChangesAsync();
+        return await GetByIdAsync(id) ?? throw new InvalidOperationException("Không thể cập nhật địa chỉ giao hàng.");
+    }
+
     public async Task<OrderDto> UpdateDepositCodeAsync(Guid id, UpdateDepositCodeDto dto, Guid userId)
     {
         var order = await _unitOfWork.Orders.GetByIdWithDetailsAsync(id);
@@ -725,6 +752,8 @@ public class OrderService : IOrderService
     {
         var order = await _unitOfWork.Orders.GetByIdAsync(id)
             ?? throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
+        if (order.Status != OrderStatus.Draft && order.Status != OrderStatus.Confirmed)
+            throw new InvalidOperationException("Đơn đã gửi xưởng — không thay đổi thiết kế được.");
         order.DesignImageUrl = imageUrl;
         _unitOfWork.Orders.Update(order);
         await _unitOfWork.SaveChangesAsync();
@@ -735,6 +764,8 @@ public class OrderService : IOrderService
     {
         var order = await _unitOfWork.Orders.GetByIdAsync(id)
             ?? throw new KeyNotFoundException("KhÃ´ng tÃ¬m tháº¥y Ä‘Æ¡n hÃ ng.");
+        if (order.Status != OrderStatus.Draft && order.Status != OrderStatus.Confirmed)
+            throw new InvalidOperationException("Đơn đã gửi xưởng — không thay đổi thiết kế được.");
         order.DesignFileUrl = fileUrl;
         order.DesignFileName = fileName;
         _unitOfWork.Orders.Update(order);
