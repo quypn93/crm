@@ -7,7 +7,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { ProductionService, OrderProductionProgress, OrderProductionStep } from '../../../core/services/production.service';
 import { UserManagementService, UserListItem } from '../../../core/services/user-management.service';
 import { SettingsService } from '../../../core/services/settings.service';
-import { SenderAddress, VtpCategory } from '../../../core/models/lookup.model';
+import { SenderAddress } from '../../../core/models/lookup.model';
 import { ProcessWaybillPayload } from '../../../core/services/production.service';
 import { environment } from '../../../../environments/environment';
 import {
@@ -499,15 +499,12 @@ export class OrderDetailComponent implements OnInit {
     });
   }
 
-  // ── Khâu Vận đơn (sau Đóng gói) ────────────────────────────────────
+  // ── Khâu Vận đơn (sau Đóng gói) — chỉ chọn KHO GỬI rồi tạo vận đơn ──
   wbBusy = false;
   wbError = '';
   wbLoaded = false;
   wbSenders: SenderAddress[] = [];
-  wbProvinces: VtpCategory[] = [];
-  wbDistricts: VtpCategory[] = [];
-  wbWards: VtpCategory[] = [];
-  wb = { senderAddressId: '', contactName: '', phone: '', address: '', provinceId: 0, districtId: 0, wardId: 0, notes: '' };
+  wb = { senderAddressId: '', notes: '' };
 
   // Đơn đang ở khâu Vận đơn: bước "Vận đơn" chưa xong + mọi khâu trước đã xong.
   isAtWaybillStage(): boolean {
@@ -521,12 +518,7 @@ export class OrderDetailComponent implements OnInit {
   private loadWaybillData(): void {
     if (this.wbLoaded) return;
     this.wbLoaded = true;
-    this.wb.contactName = this.order?.shippingContactName || '';
-    this.wb.phone = this.order?.shippingPhone || '';
-    this.wb.address = this.order?.shippingAddress || '';
-    this.wb.notes = this.order?.shippingNotes || '';
     this.wb.senderAddressId = this.order?.senderAddressId || '';
-
     this.settingsService.getSenderAddresses().subscribe(a => {
       this.wbSenders = (a || []).filter(x => x.isActive);
       if (!this.wb.senderAddressId) {
@@ -534,37 +526,6 @@ export class OrderDetailComponent implements OnInit {
         if (def) this.wb.senderAddressId = def.id;
       }
     });
-
-    if (this.isViettelPostOrder()) {
-      this.settingsService.getVtpProvinces().subscribe(p => this.wbProvinces = p || []);
-      if (this.order?.receiverProvinceId) {
-        this.wb.provinceId = this.order.receiverProvinceId;
-        this.settingsService.getVtpDistricts(this.order.receiverProvinceId).subscribe(d => {
-          this.wbDistricts = d || [];
-          if (this.order?.receiverDistrictId) {
-            this.wb.districtId = this.order.receiverDistrictId;
-            this.settingsService.getVtpWards(this.order.receiverDistrictId).subscribe(w => {
-              this.wbWards = w || [];
-              if (this.order?.receiverWardId) this.wb.wardId = this.order.receiverWardId;
-            });
-          }
-        });
-      }
-    }
-  }
-
-  onWbProvinceChange(): void {
-    this.wb.districtId = 0; this.wb.wardId = 0; this.wbDistricts = []; this.wbWards = [];
-    const pid = Number(this.wb.provinceId) || 0;
-    if (!pid) return;
-    this.settingsService.getVtpDistricts(pid).subscribe(d => this.wbDistricts = d || []);
-  }
-
-  onWbDistrictChange(): void {
-    this.wb.wardId = 0; this.wbWards = [];
-    const did = Number(this.wb.districtId) || 0;
-    if (!did) return;
-    this.settingsService.getVtpWards(did).subscribe(w => this.wbWards = w || []);
   }
 
   wbSenderLine(): string {
@@ -572,28 +533,22 @@ export class OrderDetailComponent implements OnInit {
     return s ? [s.address, s.wardName, s.districtName, s.provinceName].filter(Boolean).join(', ') : '';
   }
 
+  // Địa chỉ người nhận (đã nhập lúc tạo đơn) — hiển thị để đối chiếu.
+  wbReceiverLine(): string {
+    if (!this.order) return '';
+    return [this.order.shippingAddress, this.order.shippingWardName, this.order.shippingProvinceName]
+      .filter(Boolean).join(', ');
+  }
+
   processWaybill(): void {
     if (!this.order) return;
     const isVtp = this.isViettelPostOrder();
-    if (!this.wb.contactName || !this.wb.phone || !this.wb.address) {
-      this.wbError = 'Vui lòng nhập người nhận, số điện thoại và địa chỉ chi tiết.'; return;
+    if (isVtp && !this.wb.senderAddressId) {
+      this.wbError = 'Vui lòng chọn kho gửi.'; return;
     }
-    if (isVtp && (!this.wb.provinceId || !this.wb.districtId || !this.wb.wardId)) {
-      this.wbError = 'Vui lòng chọn đủ Tỉnh / Quận-Huyện / Phường-Xã (theo danh mục VTP).'; return;
-    }
-    const prov = this.wbProvinces.find(x => x.PROVINCE_ID === Number(this.wb.provinceId));
-    const ward = this.wbWards.find(x => x.WARDS_ID === Number(this.wb.wardId));
     const payload: ProcessWaybillPayload = {
       senderAddressId: this.wb.senderAddressId || undefined,
-      shippingContactName: this.wb.contactName,
-      shippingPhone: this.wb.phone,
-      shippingAddress: this.wb.address,
-      shippingProvinceName: isVtp ? prov?.PROVINCE_NAME : undefined,
-      shippingWardName: isVtp ? ward?.WARDS_NAME : undefined,
-      receiverProvinceId: isVtp ? Number(this.wb.provinceId) : undefined,
-      receiverDistrictId: isVtp ? Number(this.wb.districtId) : undefined,
-      receiverWardId: isVtp ? Number(this.wb.wardId) : undefined,
-      shippingNotes: this.wb.notes || undefined,
+      notes: this.wb.notes || undefined,
     };
     if (!confirm(isVtp ? 'Tạo vận đơn Viettel Post và hoàn tất khâu Vận đơn?' : 'Hoàn tất khâu Vận đơn?')) return;
     this.wbBusy = true; this.wbError = '';

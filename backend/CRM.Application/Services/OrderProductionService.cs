@@ -31,16 +31,8 @@ public class OrderProductionService : IOrderProductionService
         var order = await _unitOfWork.Orders.GetByIdAsync(orderId)
             ?? throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
 
+        // Khâu Vận đơn chỉ gán KHO GỬI. Địa chỉ người nhận giữ nguyên như lúc tạo đơn.
         order.SenderAddressId = dto.SenderAddressId;
-        order.ShippingContactName = dto.ShippingContactName;
-        order.ShippingPhone = dto.ShippingPhone;
-        order.ShippingAddress = dto.ShippingAddress;
-        order.ShippingProvinceName = dto.ShippingProvinceName;
-        order.ShippingWardName = dto.ShippingWardName;
-        order.ReceiverProvinceId = dto.ReceiverProvinceId;
-        order.ReceiverDistrictId = dto.ReceiverDistrictId;
-        order.ReceiverWardId = dto.ReceiverWardId;
-        order.ShippingNotes = dto.ShippingNotes;
         _unitOfWork.Orders.Update(order);
         await _unitOfWork.SaveChangesAsync();
 
@@ -48,11 +40,13 @@ public class OrderProductionService : IOrderProductionService
         if (order.DeliveryMethod == DeliveryMethod.ViettelPost)
             await _viettelPostService.CreateShipmentAsync(orderId);
 
-        // Hoàn tất bước Vận đơn (CompleteStep tự kiểm quyền ProductionManager + các khâu trước đã xong).
+        // Hoàn tất bước Vận đơn qua lõi (bỏ qua guard tên khâu; core tự kiểm quyền + khâu trước).
         var stages = await _unitOfWork.ProductionStages.GetActiveStagesOrderedAsync();
         var waybillStage = stages.FirstOrDefault(s => s.StageName == WaybillStageName)
             ?? throw new InvalidOperationException("Chưa cấu hình khâu Vận đơn.");
-        return await CompleteStepAsync(orderId, waybillStage.Id, userId, new CompleteProductionStepDto { Notes = dto.Notes });
+        var step = await _unitOfWork.OrderProductionSteps.GetByOrderAndStageAsync(orderId, waybillStage.Id)
+            ?? throw new InvalidOperationException("Đơn chưa có bước Vận đơn.");
+        return await CompleteStepCoreAsync(orderId, step, userId, new CompleteProductionStepDto { Notes = dto.Notes });
     }
 
     public async Task InitializeStepsAsync(Guid orderId)
@@ -88,6 +82,17 @@ public class OrderProductionService : IOrderProductionService
         var step = await _unitOfWork.OrderProductionSteps.GetByOrderAndStageAsync(orderId, stageId)
             ?? throw new KeyNotFoundException("Không tìm thấy bước sản xuất.");
 
+        // Khâu Vận đơn không hoàn tất bằng nút xác nhận thường — phải qua "Xử lý vận đơn" (chọn kho gửi).
+        if (string.Equals(step.ProductionStage?.StageName, WaybillStageName, StringComparison.Ordinal))
+            throw new InvalidOperationException(
+                "Khâu Vận đơn: dùng \"Xử lý vận đơn\" (chọn kho gửi) ở màn chi tiết đơn để hoàn tất.");
+
+        return await CompleteStepCoreAsync(orderId, step, userId, dto);
+    }
+
+    // Lõi hoàn tất 1 bước (dùng chung cho CompleteStep + ProcessWaybill). Không guard tên khâu.
+    private async Task<OrderProductionStepDto> CompleteStepCoreAsync(Guid orderId, OrderProductionStep step, Guid userId, CompleteProductionStepDto dto)
+    {
         if (step.IsCompleted)
             throw new InvalidOperationException("Bước này đã được hoàn thành.");
 
@@ -102,8 +107,7 @@ public class OrderProductionService : IOrderProductionService
         _unitOfWork.OrderProductionSteps.Update(step);
         await _unitOfWork.SaveChangesAsync();
 
-        // QC giờ là khâu 5 trong flow production (không phải giai đoạn riêng).
-        // Khi xong hết tất cả 6 khâu (bao gồm QC + Đóng gói) → đơn hàng đã sẵn sàng giao.
+        // Xong hết tất cả khâu → đơn hàng sẵn sàng giao.
         if (await _unitOfWork.OrderProductionSteps.AreAllStepsCompletedAsync(orderId))
         {
             var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
@@ -115,8 +119,7 @@ public class OrderProductionService : IOrderProductionService
             }
         }
 
-        // Reload để có navigation properties
-        var updated = await _unitOfWork.OrderProductionSteps.GetByOrderAndStageAsync(orderId, stageId);
+        var updated = await _unitOfWork.OrderProductionSteps.GetByOrderAndStageAsync(orderId, step.ProductionStageId);
         return _mapper.Map<OrderProductionStepDto>(updated!);
     }
 

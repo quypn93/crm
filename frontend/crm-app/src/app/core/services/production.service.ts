@@ -61,15 +61,6 @@ export interface CompleteProductionStepDto {
 
 export interface ProcessWaybillPayload {
   senderAddressId?: string;
-  shippingContactName?: string;
-  shippingPhone?: string;
-  shippingAddress?: string;
-  shippingProvinceName?: string;
-  shippingWardName?: string;
-  receiverProvinceId?: number;
-  receiverDistrictId?: number;
-  receiverWardId?: number;
-  shippingNotes?: string;
   notes?: string;
 }
 
