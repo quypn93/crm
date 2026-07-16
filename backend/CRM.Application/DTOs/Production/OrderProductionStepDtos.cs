@@ -34,18 +34,10 @@ public class CompleteProductionStepDto
     public string? Notes { get; set; }
 }
 
-// Xử lý khâu Vận đơn: người phụ trách chọn kho gửi + nhập địa chỉ nhận rồi tạo vận đơn.
+// Xử lý khâu Vận đơn: người phụ trách chỉ CHỌN KHO GỬI rồi tạo vận đơn.
+// Địa chỉ người nhận đã nhập lúc tạo đơn — không sửa ở đây.
 public class ProcessWaybillDto
 {
     public Guid? SenderAddressId { get; set; }          // Kho gửi (địa chỉ gửi hàng)
-    public string? ShippingContactName { get; set; }
-    public string? ShippingPhone { get; set; }
-    public string? ShippingAddress { get; set; }
-    public string? ShippingProvinceName { get; set; }
-    public string? ShippingWardName { get; set; }
-    public int? ReceiverProvinceId { get; set; }        // ID danh mục VTP người nhận
-    public int? ReceiverDistrictId { get; set; }
-    public int? ReceiverWardId { get; set; }
-    public string? ShippingNotes { get; set; }
     public string? Notes { get; set; }                  // ghi chú hoàn tất khâu
 }

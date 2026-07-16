@@ -142,7 +142,7 @@ public class DashboardService : IDashboardService
         }).OrderBy(r => r.Period);
     }
 
-    public async Task<IEnumerable<DealsByStageReportDto>> GetDealsByStageReportAsync()
+    public async Task<IEnumerable<DealsByStageReportDto>> GetDealsByStageReportAsync(ReportFilterDto filter)
     {
         var workflowStages = new[]
         {
@@ -160,8 +160,16 @@ public class DashboardService : IDashboardService
         var rows = new List<DealsByStageReportDto>();
         foreach (var s in workflowStages)
         {
-            var count = await _unitOfWork.Orders.GetOrderCountByStatusAsync(s.Status);
-            var totalValue = await _unitOfWork.Orders.GetTotalAmountByStatusAsync(s.Status);
+            // Lọc theo ngày tạo đơn (CreatedAt) — khớp filter ngày ở trang Đơn hàng
+            var count = await _unitOfWork.Orders.CountAsync(o =>
+                o.Status == s.Status &&
+                (!filter.DateFrom.HasValue || o.CreatedAt >= filter.DateFrom.Value) &&
+                (!filter.DateTo.HasValue || o.CreatedAt <= filter.DateTo.Value));
+            var totalValue = await _unitOfWork.Orders.SumAsync(o =>
+                o.Status == s.Status &&
+                (!filter.DateFrom.HasValue || o.CreatedAt >= filter.DateFrom.Value) &&
+                (!filter.DateTo.HasValue || o.CreatedAt <= filter.DateTo.Value),
+                o => o.TotalAmount);
             rows.Add(new DealsByStageReportDto
             {
                 StageName = s.Name,
@@ -183,10 +191,16 @@ public class DashboardService : IDashboardService
         return rows;
     }
 
-    public async Task<IEnumerable<CustomersByIndustryReportDto>> GetCustomersByIndustryReportAsync()
+    public async Task<IEnumerable<CustomersByIndustryReportDto>> GetCustomersByIndustryReportAsync(ReportFilterDto filter)
     {
         var customers = await _unitOfWork.Customers.GetAllWithOrdersAsync();
         var revenueStatuses = new[] { OrderStatus.Delivered, OrderStatus.Completed };
+
+        // Lọc khách hàng theo ngày tạo
+        if (filter.DateFrom.HasValue)
+            customers = customers.Where(c => c.CreatedAt >= filter.DateFrom.Value).ToList();
+        if (filter.DateTo.HasValue)
+            customers = customers.Where(c => c.CreatedAt <= filter.DateTo.Value).ToList();
 
         var grouped = customers
             .GroupBy(c => string.IsNullOrWhiteSpace(c.Industry) ? CustomerIndustries.Other : c.Industry!)

@@ -43,16 +43,16 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("deals-by-stage")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<DealsByStageReportDto>>>> GetDealsByStage()
+    public async Task<ActionResult<ApiResponse<IEnumerable<DealsByStageReportDto>>>> GetDealsByStage([FromQuery] ReportFilterDto filter)
     {
-        var report = await _dashboardService.GetDealsByStageReportAsync();
+        var report = await _dashboardService.GetDealsByStageReportAsync(filter);
         return Ok(ApiResponse<IEnumerable<DealsByStageReportDto>>.Ok(report));
     }
 
     [HttpGet("customers-by-industry")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<CustomersByIndustryReportDto>>>> GetCustomersByIndustry()
+    public async Task<ActionResult<ApiResponse<IEnumerable<CustomersByIndustryReportDto>>>> GetCustomersByIndustry([FromQuery] ReportFilterDto filter)
     {
-        var report = await _dashboardService.GetCustomersByIndustryReportAsync();
+        var report = await _dashboardService.GetCustomersByIndustryReportAsync(filter);
         return Ok(ApiResponse<IEnumerable<CustomersByIndustryReportDto>>.Ok(report));
     }
 

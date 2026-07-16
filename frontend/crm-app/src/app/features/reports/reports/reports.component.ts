@@ -34,6 +34,10 @@ export class ReportsComponent implements OnInit {
   customersByIndustry: CustomersByIndustry[] = [];
   isLoading = true;
 
+  // Lọc theo ngày (ngày tạo đơn / ngày tạo khách hàng)
+  dateFrom = '';
+  dateTo = '';
+
   // Fallback palette for industries (which have no server-provided color)
   private readonly industryPalette = [
     '#6366f1', '#8b5cf6', '#06b6d4', '#10b981',
@@ -47,11 +51,21 @@ export class ReportsComponent implements OnInit {
     this.loadReportData();
   }
 
+  // Ngày chọn là ngày địa phương → quy đổi mốc đầu/cuối ngày sang UTC
+  private dateFilterParams(): { [key: string]: any } {
+    const params: { [key: string]: any } = {};
+    if (this.dateFrom) params['dateFrom'] = new Date(`${this.dateFrom}T00:00:00`).toISOString();
+    if (this.dateTo) params['dateTo'] = new Date(`${this.dateTo}T23:59:59.999`).toISOString();
+    return params;
+  }
+
   loadReportData(): void {
+    this.isLoading = true;
+    const params = this.api.buildParams(this.dateFilterParams());
     forkJoin({
-      dealsByStage: this.api.get<DealsByStageReport[]>('dashboard/deals-by-stage'),
-      revenue: this.api.get<RevenueReport[]>('dashboard/revenue'),
-      customersByIndustry: this.api.get<CustomersByIndustry[]>('dashboard/customers-by-industry')
+      dealsByStage: this.api.get<DealsByStageReport[]>('dashboard/deals-by-stage', params),
+      revenue: this.api.get<RevenueReport[]>('dashboard/revenue', params),
+      customersByIndustry: this.api.get<CustomersByIndustry[]>('dashboard/customers-by-industry', params)
     }).subscribe({
       next: (data) => {
         this.dealsByStage = data.dealsByStage || [];
@@ -63,6 +77,16 @@ export class ReportsComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  onDateFilterChange(): void {
+    this.loadReportData();
+  }
+
+  clearDateFilter(): void {
+    this.dateFrom = '';
+    this.dateTo = '';
+    this.loadReportData();
   }
 
   formatCurrency(value: number): string {

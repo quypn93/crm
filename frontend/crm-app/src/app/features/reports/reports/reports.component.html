@@ -4,6 +4,17 @@
       <h1>Báo cáo</h1>
       <p class="subtitle">Thống kê và phân tích dữ liệu</p>
     </div>
+    <div class="date-filter-bar">
+      <label class="date-field">
+        <span>Từ ngày</span>
+        <input type="date" [(ngModel)]="dateFrom" (change)="onDateFilterChange()">
+      </label>
+      <label class="date-field">
+        <span>Đến ngày</span>
+        <input type="date" [(ngModel)]="dateTo" (change)="onDateFilterChange()">
+      </label>
+      <button type="button" class="btn-clear-dates" *ngIf="dateFrom || dateTo" (click)="clearDateFilter()">Xóa lọc</button>
+    </div>
   </div>
 
   <div class="loading-container" *ngIf="isLoading">

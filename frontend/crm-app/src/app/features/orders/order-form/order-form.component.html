@@ -320,9 +320,8 @@
           <div class="error-text" *ngIf="f['deliveryMethod'].invalid && f['deliveryMethod'].touched">
             Vui lòng chọn hình thức giao hàng.
           </div>
-          <div class="hint" *ngIf="orderForm.get('deliveryMethod')?.value !== '' && orderForm.get('deliveryMethod')?.value !== null">
-            📦 Thông tin người nhận + kho gửi + tạo vận đơn sẽ được nhập ở <strong>khâu "Vận đơn"</strong>
-            trong quá trình sản xuất (sau Đóng gói). Lúc tạo đơn chỉ cần chọn đơn vị vận chuyển.
+          <div class="hint" *ngIf="isViettelPost()">
+            📦 Kho gửi + tạo vận đơn sẽ chọn ở <strong>khâu "Vận đơn"</strong> (sau Đóng gói). Ở đây chỉ nhập địa chỉ người nhận.
           </div>
         </div>
 
@@ -338,8 +337,8 @@
           </div>
         </div>
 
-        <!-- Địa chỉ người nhận + kho gửi đã chuyển sang khâu "Vận đơn" (order-detail) — ẩn ở form tạo đơn -->
-        <div class="form-grid" *ngIf="false">
+        <!-- Địa chỉ người nhận — nhập khi tạo đơn (kho gửi chọn ở khâu Vận đơn) -->
+        <div class="form-grid">
           <div class="form-group">
             <label>Người nhận <span class="required">*</span></label>
             <input type="text" formControlName="shippingContactName" placeholder="Tên người nhận">
@@ -493,6 +492,13 @@
             <input type="number" formControlName="discountPercent" min="0" max="100">
           </div>
           <div class="form-group">
+            <label>VAT</label>
+            <select formControlName="taxPercent">
+              <option [ngValue]="0">0%</option>
+              <option [ngValue]="8">8%</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label>Phí vận chuyển</label>
             <input type="number" formControlName="shippingFee" min="0">
           </div>
@@ -511,6 +517,9 @@
           <div class="summary-row"><span>Tạm tính</span><span>{{ formatCurrency(calculateSubTotal()) }}</span></div>
           <div class="summary-row" *ngIf="calculateDiscountAmount() > 0">
             <span>Giảm giá</span><span class="discount">-{{ formatCurrency(calculateDiscountAmount()) }}</span>
+          </div>
+          <div class="summary-row" *ngIf="calculateTaxAmount() > 0">
+            <span>VAT ({{ orderForm.get('taxPercent')?.value }}%)</span><span>{{ formatCurrency(calculateTaxAmount()) }}</span>
           </div>
           <div class="summary-row" *ngIf="(orderForm.get('shippingFee')?.value || 0) > 0">
             <span>Vận chuyển</span><span>{{ formatCurrency(orderForm.get('shippingFee')?.value || 0) }}</span>

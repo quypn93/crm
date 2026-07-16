@@ -338,11 +338,23 @@ export class OrderListComponent implements OnInit {
   confirmOrder(order: Order): void {
     const req: UpdateOrderStatusRequest = { status: OrderStatus.Confirmed, notes: '' };
     this.orderService.updateOrderStatus(order.id, req).subscribe({
-      next: () => this.loadOrders()
+      next: () => this.loadOrders(),
+      error: (err) => {
+        this.toast.error(err?.error?.message || 'Xác nhận đơn thất bại.');
+      }
     });
   }
 
   moveToProduction(order: Order): void {
+    // Gửi xưởng: phải có đủ cả ảnh VÀ file thiết kế (backend cũng chặn)
+    if (!order.designImageUrl || !order.designFileUrl) {
+      const noImage = !order.designImageUrl;
+      const noFile = !order.designFileUrl;
+      const missing = noImage && noFile ? 'ảnh và file thiết kế' : (noImage ? 'ảnh thiết kế' : 'file thiết kế');
+      this.toast.error(`Đơn ${order.orderNumber} còn thiếu ${missing}. Thiết kế cần upload đủ cả ảnh và file trước khi gửi xưởng.`);
+      return;
+    }
+
     const confirmed = confirm(
       `Chuyển đơn ${order.orderNumber} sang trạng thái "Đang sản xuất"?\n\n` +
       `Sau khi chuyển, đơn hàng sẽ KHÔNG thể chỉnh sửa được nữa.`
@@ -351,7 +363,13 @@ export class OrderListComponent implements OnInit {
 
     const req: UpdateOrderStatusRequest = { status: OrderStatus.InProduction, notes: '' };
     this.orderService.updateOrderStatus(order.id, req).subscribe({
-      next: () => this.loadOrders()
+      next: () => {
+        this.toast.success(`Đơn ${order.orderNumber} đã chuyển sang sản xuất.`);
+        this.loadOrders();
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.message || 'Chuyển sang sản xuất thất bại.');
+      }
     });
   }
 

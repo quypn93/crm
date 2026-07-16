@@ -205,7 +205,7 @@ public class CreateOrderDto
     public int? ReceiverDistrictId { get; set; }
     public int? ReceiverWardId { get; set; }
     public decimal DiscountPercent { get; set; }
-    public decimal TaxPercent { get; set; } = 10;
+    public decimal TaxPercent { get; set; } = 0;   // VAT: 0% hoặc 8%
     public string? Notes { get; set; }
     public string? InternalNotes { get; set; }
     public string? CustomerNotes { get; set; }

@@ -6,8 +6,8 @@ public interface IDashboardService
 {
     Task<DashboardStatsDto> GetDashboardStatsAsync(Guid? userId = null);
     Task<IEnumerable<RevenueReportDto>> GetRevenueReportAsync(ReportFilterDto filter);
-    Task<IEnumerable<DealsByStageReportDto>> GetDealsByStageReportAsync();
-    Task<IEnumerable<CustomersByIndustryReportDto>> GetCustomersByIndustryReportAsync();
+    Task<IEnumerable<DealsByStageReportDto>> GetDealsByStageReportAsync(ReportFilterDto filter);
+    Task<IEnumerable<CustomersByIndustryReportDto>> GetCustomersByIndustryReportAsync(ReportFilterDto filter);
     Task<IEnumerable<SalesPerformanceDto>> GetSalesPerformanceAsync(ReportFilterDto filter);
     Task<IEnumerable<ActivityLogDto>> GetRecentActivitiesAsync(int count = 10);
 

@@ -270,8 +270,8 @@ public class OrdersController : ControllerBase
         var currentStatus = (OrderStatus)order.Status;
         var allowedStatuses = OrderStatusTransitionValidator.GetAllowedNextStatuses(currentStatus, userRoles);
 
-        // Chưa có thiết kế (ảnh hoặc file) thì không cho chuyển sang sản xuất
-        if (string.IsNullOrWhiteSpace(order.DesignImageUrl) && string.IsNullOrWhiteSpace(order.DesignFileUrl))
+        // Phải có đủ ảnh thiết kế VÀ file thiết kế mới cho chuyển sang sản xuất
+        if (string.IsNullOrWhiteSpace(order.DesignImageUrl) || string.IsNullOrWhiteSpace(order.DesignFileUrl))
             allowedStatuses = allowedStatuses.Where(s => s != OrderStatus.InProduction);
 
         return Ok(ApiResponse<IEnumerable<OrderStatus>>.Ok(allowedStatuses));

@@ -14,7 +14,7 @@ public class Order : BaseEntity
     public decimal SubTotal { get; set; }
     public decimal DiscountPercent { get; set; }
     public decimal DiscountAmount { get; set; }
-    public decimal TaxPercent { get; set; } = 10; // VAT 10%
+    public decimal TaxPercent { get; set; } = 0; // VAT: 0% hoặc 8%
     public decimal TaxAmount { get; set; }
     public decimal TotalAmount { get; set; }
     public string Currency { get; set; } = "VND";

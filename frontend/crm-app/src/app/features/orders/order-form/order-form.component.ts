@@ -154,10 +154,10 @@ export class OrderFormComponent implements OnInit {
       designId: [''],
       deliveryMethod: ['', Validators.required],
       senderAddressId: [''],
-      // Thông tin người nhận nhập ở khâu "Vận đơn" (sản xuất), không bắt buộc lúc tạo đơn.
-      shippingContactName: [''],
-      shippingPhone: [''],
-      shippingAddress: [''],
+      // Địa chỉ người nhận nhập khi tạo đơn. Kho gửi chọn sau ở khâu "Vận đơn".
+      shippingContactName: ['', Validators.required],
+      shippingPhone: ['', Validators.required],
+      shippingAddress: ['', Validators.required],
       shippingProvinceCode: [''],
       shippingWardCode: [''],
       receiverProvinceId: [0],
@@ -272,7 +272,10 @@ export class OrderFormComponent implements OnInit {
       if (Number(v) !== DeliveryMethod.InHouse) {
         this.orderForm.get('shipperUserId')?.setValue('', { emitEvent: false });
       }
+      this.applyDeliveryValidators(v);
     });
+    // Áp validator địa chỉ nhận theo hình thức giao hiện tại (mặc định non-VTP).
+    this.applyDeliveryValidators(this.orderForm.get('deliveryMethod')?.value);
   }
 
   isInHouseDelivery(): boolean {
@@ -725,8 +728,15 @@ export class OrderFormComponent implements OnInit {
     return this.calculateSubTotal() * ((this.orderForm.get('discountPercent')?.value || 0) / 100);
   }
 
+  // VAT tính trên giá trị sau giảm giá (khớp cách backend tính TaxAmount)
+  calculateTaxAmount(): number {
+    const afterDiscount = this.calculateSubTotal() - this.calculateDiscountAmount();
+    return afterDiscount * ((this.orderForm.get('taxPercent')?.value || 0) / 100);
+  }
+
   calculateTotal(): number {
-    return this.calculateSubTotal() - this.calculateDiscountAmount() + (this.orderForm.get('shippingFee')?.value || 0);
+    return this.calculateSubTotal() - this.calculateDiscountAmount() + this.calculateTaxAmount()
+      + (this.orderForm.get('shippingFee')?.value || 0);
   }
 
   // Còn phải thu sau khi đã trừ tiền cọc (nếu mã cọc khớp).

@@ -12,6 +12,52 @@
   gap: 24px;
 }
 
+/* -------- Date filter -------- */
+.date-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  .date-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    span {
+      font-size: 13px;
+      color: var(--text-secondary, #64748b);
+      white-space: nowrap;
+    }
+
+    input {
+      padding: 8px 10px;
+      border: 1px solid var(--border-color, #cbd5e1);
+      border-radius: var(--radius, 8px);
+      font-size: 13px;
+      background: var(--bg-primary, #fff);
+      color: var(--text-primary, #1e293b);
+
+      &:focus {
+        outline: none;
+        border-color: var(--primary-color, #6366f1);
+      }
+    }
+  }
+
+  .btn-clear-dates {
+    padding: 8px 14px;
+    border: 1px solid var(--border-color, #cbd5e1);
+    border-radius: var(--radius, 8px);
+    background: var(--bg-primary, #fff);
+    color: var(--text-secondary, #475569);
+    font-size: 13px;
+    cursor: pointer;
+
+    &:hover { background: var(--gray-50, #f8fafc); }
+  }
+}
+
 /* -------- KPI summary row -------- */
 .kpi-grid {
   grid-column: span 2;
