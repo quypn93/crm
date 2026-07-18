@@ -99,7 +99,8 @@ public class DashboardService : IDashboardService
         var orders = await _unitOfWork.Orders.FindAsync(o =>
             revenueStatuses.Contains(o.Status) &&
             (!filter.DateFrom.HasValue || o.OrderDate >= filter.DateFrom.Value) &&
-            (!filter.DateTo.HasValue || o.OrderDate <= filter.DateTo.Value));
+            (!filter.DateTo.HasValue || o.OrderDate <= filter.DateTo.Value) &&
+            (!filter.UserId.HasValue || o.CreatedByUserId == filter.UserId.Value));
 
         if (!orders.Any()) return Enumerable.Empty<RevenueReportDto>();
 
@@ -160,15 +161,17 @@ public class DashboardService : IDashboardService
         var rows = new List<DealsByStageReportDto>();
         foreach (var s in workflowStages)
         {
-            // Lọc theo ngày tạo đơn (CreatedAt) — khớp filter ngày ở trang Đơn hàng
+            // Lọc theo ngày tạo đơn (CreatedAt) và NV tạo đơn — khớp filter ở trang Đơn hàng
             var count = await _unitOfWork.Orders.CountAsync(o =>
                 o.Status == s.Status &&
                 (!filter.DateFrom.HasValue || o.CreatedAt >= filter.DateFrom.Value) &&
-                (!filter.DateTo.HasValue || o.CreatedAt <= filter.DateTo.Value));
+                (!filter.DateTo.HasValue || o.CreatedAt <= filter.DateTo.Value) &&
+                (!filter.UserId.HasValue || o.CreatedByUserId == filter.UserId.Value));
             var totalValue = await _unitOfWork.Orders.SumAsync(o =>
                 o.Status == s.Status &&
                 (!filter.DateFrom.HasValue || o.CreatedAt >= filter.DateFrom.Value) &&
-                (!filter.DateTo.HasValue || o.CreatedAt <= filter.DateTo.Value),
+                (!filter.DateTo.HasValue || o.CreatedAt <= filter.DateTo.Value) &&
+                (!filter.UserId.HasValue || o.CreatedByUserId == filter.UserId.Value),
                 o => o.TotalAmount);
             rows.Add(new DealsByStageReportDto
             {
@@ -201,6 +204,9 @@ public class DashboardService : IDashboardService
             customers = customers.Where(c => c.CreatedAt >= filter.DateFrom.Value).ToList();
         if (filter.DateTo.HasValue)
             customers = customers.Where(c => c.CreatedAt <= filter.DateTo.Value).ToList();
+        // Lọc theo NV tạo đơn: chỉ tính khách có đơn do NV này tạo
+        if (filter.UserId.HasValue)
+            customers = customers.Where(c => c.Orders.Any(o => o.CreatedByUserId == filter.UserId.Value)).ToList();
 
         var grouped = customers
             .GroupBy(c => string.IsNullOrWhiteSpace(c.Industry) ? CustomerIndustries.Other : c.Industry!)
@@ -209,7 +215,8 @@ public class DashboardService : IDashboardService
                 Industry = g.Key,
                 Count = g.Count(),
                 TotalRevenue = g.SelectMany(c => c.Orders)
-                    .Where(o => revenueStatuses.Contains(o.Status))
+                    .Where(o => revenueStatuses.Contains(o.Status) &&
+                                (!filter.UserId.HasValue || o.CreatedByUserId == filter.UserId.Value))
                     .Sum(o => o.TotalAmount)
             })
             .OrderByDescending(r => r.Count)

@@ -13,7 +13,14 @@
         <span>Đến ngày</span>
         <input type="date" [(ngModel)]="dateTo" (change)="onDateFilterChange()">
       </label>
-      <button type="button" class="btn-clear-dates" *ngIf="dateFrom || dateTo" (click)="clearDateFilter()">Xóa lọc</button>
+      <label class="date-field" *ngIf="isManagerAccount">
+        <span>NV tạo đơn</span>
+        <select [(ngModel)]="selectedCreatedBy" (change)="onDateFilterChange()">
+          <option value="">Tất cả nhân viên</option>
+          <option *ngFor="let u of creatorOptions" [value]="u.id">{{ u.fullName }}</option>
+        </select>
+      </label>
+      <button type="button" class="btn-clear-dates" *ngIf="dateFrom || dateTo || selectedCreatedBy" (click)="clearDateFilter()">Xóa lọc</button>
     </div>
   </div>
 

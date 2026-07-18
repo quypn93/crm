@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { UserManagementService, UserListItem } from '../../../core/services/user-management.service';
 
 interface DealsByStageReport {
   stageName: string;
@@ -38,6 +40,11 @@ export class ReportsComponent implements OnInit {
   dateFrom = '';
   dateTo = '';
 
+  // Lọc theo NV tạo đơn — chỉ tài khoản tổng (Admin/SalesManager) thấy, giống trang Đơn hàng
+  selectedCreatedBy = '';
+  creatorOptions: UserListItem[] = [];
+  isManagerAccount = false;
+
   // Fallback palette for industries (which have no server-provided color)
   private readonly industryPalette = [
     '#6366f1', '#8b5cf6', '#06b6d4', '#10b981',
@@ -45,9 +52,29 @@ export class ReportsComponent implements OnInit {
     '#3b82f6', '#a855f7'
   ];
 
-  constructor(private api: ApiService) {}
+  constructor(
+    private api: ApiService,
+    private authService: AuthService,
+    private userService: UserManagementService
+  ) {}
 
   ngOnInit(): void {
+    this.isManagerAccount = this.authService.hasAnyRole(['Admin', 'SalesManager']);
+    if (this.isManagerAccount) {
+      // Chỉ liệt kê người có khả năng tạo đơn (Admin, SalesManager, SalesRep)
+      const creatorRoles = ['Admin', 'SalesManager', 'SalesRep'];
+      forkJoin(creatorRoles.map(role =>
+        this.userService.getUsers({ page: 1, pageSize: 200, isActive: true, role })
+      )).subscribe({
+        next: (results) => {
+          const byId = new Map<string, UserListItem>();
+          results.forEach(res => (res?.items || []).forEach(u => byId.set(u.id, u)));
+          this.creatorOptions = Array.from(byId.values())
+            .sort((a, b) => (a.fullName || '').localeCompare(b.fullName || '', 'vi'));
+        },
+        error: () => { /* not critical */ }
+      });
+    }
     this.loadReportData();
   }
 
@@ -56,6 +83,7 @@ export class ReportsComponent implements OnInit {
     const params: { [key: string]: any } = {};
     if (this.dateFrom) params['dateFrom'] = new Date(`${this.dateFrom}T00:00:00`).toISOString();
     if (this.dateTo) params['dateTo'] = new Date(`${this.dateTo}T23:59:59.999`).toISOString();
+    if (this.isManagerAccount && this.selectedCreatedBy) params['userId'] = this.selectedCreatedBy;
     return params;
   }
 
@@ -86,6 +114,7 @@ export class ReportsComponent implements OnInit {
   clearDateFilter(): void {
     this.dateFrom = '';
     this.dateTo = '';
+    this.selectedCreatedBy = '';
     this.loadReportData();
   }
 
