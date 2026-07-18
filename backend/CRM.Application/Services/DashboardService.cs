@@ -34,7 +34,7 @@ public class DashboardService : IDashboardService
 
         var cancelledOrdersCount = await _unitOfWork.Orders.GetOrderCountByStatusAsync(OrderStatus.Cancelled);
 
-        // Revenue from completed orders
+        // Doanh thu: mọi đơn trừ đơn đã hủy (ghi nhận ngay khi tạo đơn).
         var totalRevenue = await _unitOfWork.Orders.GetTotalRevenueAsync(null, null);
 
         var pendingTasksCount = await _unitOfWork.Tasks.GetPendingTasksCountAsync(userId);

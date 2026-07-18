@@ -179,7 +179,8 @@ export class OrderFormComponent implements OnInit {
         formId: ['', Validators.required],
         specificationId: ['', Validators.required],
         unitPrice: [0, [Validators.required, Validators.min(1)]],
-        itemDiscountPercent: [0, [Validators.min(0), Validators.max(100)]],
+        // Giảm giá của sản phẩm nhập theo tổng số tiền (VNĐ), trừ thẳng vào tạm tính.
+        itemDiscountAmount: [0, [Validators.min(0)]],
       }),
       items: this.fb.array([])
     });
@@ -685,7 +686,8 @@ export class OrderFormComponent implements OnInit {
             formId: firstItem.formId || '',
             specificationId: firstItem.specificationId || '',
             unitPrice: firstItem.unitPrice || 0,
-            itemDiscountPercent: firstItem.discountPercent || 0,
+            // Tiền giảm được phân bổ vào từng dòng size khi lưu → cộng lại để hiện tổng.
+            itemDiscountAmount: order.items.reduce((s, i) => s + (i.discountAmount || 0), 0),
           });
           if (firstItem.collectionId) this.onCollectionChange(firstItem.collectionId);
         }
@@ -709,19 +711,10 @@ export class OrderFormComponent implements OnInit {
     });
   }
 
-  calculateItemTotal(index: number): number {
-    const item = this.items.at(index);
-    const qty = item.get('quantity')?.value || 0;
-    const price = item.get('unitPrice')?.value || 0;
-    const disc = item.get('discountPercent')?.value || 0;
-    return qty * price * (1 - disc / 100);
-  }
-
   calculateSubTotal(): number {
     const pi = this.orderForm.get('productInfo')?.value || {};
-    const totalQty = this.getTotalQtyInput();
-    const disc = pi.itemDiscountPercent || 0;
-    return totalQty * (pi.unitPrice || 0) * (1 - disc / 100);
+    const gross = this.getTotalQtyInput() * (pi.unitPrice || 0);
+    return Math.max(0, gross - (pi.itemDiscountAmount || 0));
   }
 
   calculateDiscountAmount(): number {
@@ -770,6 +763,13 @@ export class OrderFormComponent implements OnInit {
     const selectedWard = this.wards.find(w => w.code === f.shippingWardCode);
     const vtpProv = this.vtpProvinces.find(p => p.PROVINCE_ID === Number(f.receiverProvinceId));
     const vtpWard = this.vtpWards.find(w => w.WARDS_ID === Number(f.receiverWardId));
+    // Giảm giá sản phẩm nhập theo tổng tiền (VNĐ) → phân bổ vào từng dòng size theo
+    // tỷ lệ số lượng; dòng cuối nhận phần dư để tổng khớp tuyệt đối số tiền đã nhập.
+    const sizeEntries = Object.entries(this.sizeQty).filter(([, quantity]) => quantity > 0);
+    const totalQty = sizeEntries.reduce((s, [, q]) => s + q, 0);
+    const grossAmount = totalQty * (pi.unitPrice || 0);
+    const totalItemDiscount = Math.min(Math.max(pi.itemDiscountAmount || 0, 0), grossAmount);
+    let allocatedDiscount = 0;
     const orderData = {
       customerId: f.customerId || undefined,
       customerName: !f.customerId ? this.customerSearchText || undefined : undefined,
@@ -805,9 +805,12 @@ export class OrderFormComponent implements OnInit {
       styleNotes: f.styleNotes,
       internalNotes: f.internalNotes,
       customerNotes: f.customerNotes,
-      items: Object.entries(this.sizeQty)
-        .filter(([, quantity]) => quantity > 0)
-        .map(([size, quantity]) => ({
+      items: sizeEntries.map(([size, quantity], idx) => {
+        const discountAmount = idx === sizeEntries.length - 1
+          ? totalItemDiscount - allocatedDiscount
+          : Math.floor(totalItemDiscount * quantity / totalQty);
+        allocatedDiscount += discountAmount;
+        return {
           collectionId: pi.collectionId || undefined,
           materialId: pi.materialId || undefined,
           mainColorId: pi.mainColorId || undefined,
@@ -818,8 +821,9 @@ export class OrderFormComponent implements OnInit {
           quantity,
           unit: 'cái',
           unitPrice: pi.unitPrice || 0,
-          discountPercent: pi.itemDiscountPercent || 0,
-        } as CreateOrderItemRequest))
+          discountAmount,
+        } as CreateOrderItemRequest;
+      })
     };
 
     const obs$ = this.isEditMode && this.orderId

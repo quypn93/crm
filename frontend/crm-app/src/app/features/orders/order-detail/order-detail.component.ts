@@ -860,6 +860,15 @@ export class OrderDetailComponent implements OnInit {
     return this.authService.hasAnyRole(['Admin', 'Designer']);
   }
 
+  // Nút "Tải file sản xuất" cạnh "Xuất ảnh đơn hàng": chỉ tài khoản xưởng và
+  // các tài khoản quản lý; sale (SalesRep) không thấy.
+  canDownloadProductionFile(): boolean {
+    return this.authService.hasAnyRole([
+      'Admin', 'SalesManager', 'DesignManager', 'DeliveryManager',
+      'ProductionManager', 'ProductionStaff', 'QualityControl', 'QualityManager'
+    ]);
+  }
+
   onDesignImageSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];

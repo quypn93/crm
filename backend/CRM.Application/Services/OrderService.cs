@@ -629,6 +629,7 @@ public class OrderService : IOrderService
             Unit = itemDto.Unit,
             UnitPrice = itemDto.UnitPrice,
             DiscountPercent = itemDto.DiscountPercent,
+            DiscountAmount = itemDto.DiscountAmount,
             Notes = itemDto.Notes
         };
 
@@ -653,7 +654,11 @@ public class OrderService : IOrderService
     private static void CalculateItemTotal(OrderItem item)
     {
         var subtotal = item.Quantity * item.UnitPrice;
-        item.DiscountAmount = subtotal * item.DiscountPercent / 100;
+        // Giảm giá nay nhập theo số tiền (DiscountAmount). DiscountPercent chỉ còn
+        // cho payload cũ: nếu chỉ có % thì quy ra tiền như trước.
+        if (item.DiscountAmount <= 0 && item.DiscountPercent > 0)
+            item.DiscountAmount = subtotal * item.DiscountPercent / 100;
+        if (item.DiscountAmount > subtotal) item.DiscountAmount = subtotal;
         item.LineTotal = subtotal - item.DiscountAmount;
     }
 

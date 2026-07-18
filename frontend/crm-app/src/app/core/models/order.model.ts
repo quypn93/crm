@@ -214,6 +214,8 @@ export interface CreateOrderItemRequest {
   unit?: string;
   unitPrice: number;
   discountPercent?: number;
+  // Giảm giá theo số tiền (VNĐ) — đã phân bổ cho từng dòng size khi submit.
+  discountAmount?: number;
   notes?: string;
 }
 

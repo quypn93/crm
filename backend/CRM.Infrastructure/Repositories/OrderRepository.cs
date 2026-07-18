@@ -245,7 +245,8 @@ public class OrderRepository : Repository<Order>, IOrderRepository
 
     public async Task<decimal> GetTotalRevenueAsync(DateTime? from = null, DateTime? to = null)
     {
-        var query = _dbSet.Where(o => o.Status == OrderStatus.Completed);
+        // Doanh thu ghi nhận ngay khi tạo đơn: tính tất cả đơn, chỉ loại đơn đã hủy.
+        var query = _dbSet.Where(o => o.Status != OrderStatus.Cancelled);
 
         if (from.HasValue)
             query = query.Where(o => o.OrderDate >= from.Value);

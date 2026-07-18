@@ -116,7 +116,7 @@
           </td>
           <td>
             <div class="customer-info">
-              <span class="customer-name">{{ order.customerName || 'N/A' }}</span>
+              <span class="customer-name" [title]="order.customerName || ''">{{ order.customerName || 'N/A' }}</span>
               <span class="deal-title" *ngIf="order.dealTitle">{{ order.dealTitle }}</span>
             </div>
           </td>

@@ -111,6 +111,18 @@
       {{ isUploadingDesignFile ? 'Đang upload...' : (order.designFileUrl ? 'Thay file thiết kế' : 'Upload file thiết kế') }}
       <input type="file" accept=".cdr,.ai,.eps,.pdf,.psd,.svg,.zip,.rar,.7z,image/*" hidden (change)="onDesignFileSelected($event)" [disabled]="isUploadingDesignFile">
     </label>
+    <a slot="extra-actions" class="btn-download-production-file"
+       *ngIf="order.designFileUrl && canDownloadProductionFile()"
+       [href]="resolveFileUrl(order.designFileUrl)"
+       [attr.download]="order.designFileName || ''"
+       target="_blank" rel="noopener">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Tải file sản xuất
+    </a>
   </app-order-card>
 
   <div class="content-grid">
@@ -359,7 +371,7 @@
                 </td>
                 <td class="text-right" data-label="SL">{{ item.quantity }} {{ item.unit }}</td>
                 <td class="text-right" data-label="Đơn giá">{{ formatCurrency(item.unitPrice) }}</td>
-                <td class="text-right" data-label="Giảm">{{ item.discountPercent }}%</td>
+                <td class="text-right" data-label="Giảm">{{ formatCurrency(item.discountAmount || 0) }}</td>
                 <td class="text-right" data-label="Thành tiền">{{ formatCurrency(item.lineTotal) }}</td>
               </tr>
             </tbody>

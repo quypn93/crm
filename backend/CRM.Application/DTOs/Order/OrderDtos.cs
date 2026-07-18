@@ -232,6 +232,8 @@ public class CreateOrderItemDto
     public string Unit { get; set; } = "cái";
     public decimal UnitPrice { get; set; }
     public decimal DiscountPercent { get; set; }
+    // Giảm giá theo số tiền (VNĐ) — FE nhập tổng tiền giảm của sản phẩm rồi phân bổ sẵn cho từng dòng size.
+    public decimal DiscountAmount { get; set; }
     public string? Notes { get; set; }
 }
 
