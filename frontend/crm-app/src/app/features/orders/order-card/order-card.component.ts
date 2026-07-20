@@ -41,6 +41,10 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
 
     this.isRendering = true;
     try {
+      // Chờ webfont (Roboto việt hóa) load xong, tránh html2canvas chụp lúc
+      // đang fallback font hệ thống làm vỡ dấu tiếng Việt.
+      await document.fonts.ready;
+
       const el = this.cardRef.nativeElement;
       const wrapper = el.parentElement;
       const prevTransform = el.style.transform;

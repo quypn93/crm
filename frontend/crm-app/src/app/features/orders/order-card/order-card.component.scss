@@ -26,7 +26,9 @@ $red: #c83c43;
 
 .card-root {
   position: relative;
-  font-family: Arial, Helvetica, sans-serif;
+  // Roboto tự host (subset tiếng Việt, assets/fonts) để xuất ảnh html2canvas
+  // không vỡ dấu tiếng Việt trên máy thiếu font.
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
   color: $ink;
   background: #eaf3f8 url('/assets/order-template-new.jpg') center / cover no-repeat;
 }
