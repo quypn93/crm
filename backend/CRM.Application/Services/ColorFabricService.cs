@@ -45,8 +45,9 @@ public class ColorFabricService : IColorFabricService
 
     public async Task<ColorFabricDto> CreateAsync(CreateColorFabricDto dto)
     {
-        // Check if name already exists
-        var existing = await _unitOfWork.ColorFabrics.GetByNameAsync(dto.Name);
+        // Tên màu chỉ cần duy nhất trong cùng một chất liệu (hoặc trong nhóm màu dùng chung).
+        var existing = await _unitOfWork.ColorFabrics.FirstOrDefaultAsync(
+            c => c.Name == dto.Name && c.MaterialId == dto.MaterialId);
         if (existing != null)
         {
             throw new InvalidOperationException($"Màu vải '{dto.Name}' đã tồn tại.");
@@ -67,8 +68,9 @@ public class ColorFabricService : IColorFabricService
             throw new KeyNotFoundException("Không tìm thấy màu vải.");
         }
 
-        // Check if new name already exists for another record
-        var existing = await _unitOfWork.ColorFabrics.GetByNameAsync(dto.Name);
+        // Tên màu chỉ cần duy nhất trong cùng một chất liệu (hoặc trong nhóm màu dùng chung).
+        var existing = await _unitOfWork.ColorFabrics.FirstOrDefaultAsync(
+            c => c.Name == dto.Name && c.MaterialId == dto.MaterialId);
         if (existing != null && existing.Id != dto.Id)
         {
             throw new InvalidOperationException($"Màu vải '{dto.Name}' đã tồn tại.");
