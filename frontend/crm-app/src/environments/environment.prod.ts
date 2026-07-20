@@ -4,7 +4,7 @@ export const environment = {
   appName: 'CRM - Quản lý Khách hàng',
   defaultLanguage: 'vi',
   branding: {
-    companyName: 'Đồng Phục Bốn Mùa',
+    companyName: 'ĐỒNG PHỤC XANH',
     headerLine1: 'ĐỒNG PHỤC',
     headerLine2: 'BỐN MÙA',
     logoPath: '/assets/logo.png',
