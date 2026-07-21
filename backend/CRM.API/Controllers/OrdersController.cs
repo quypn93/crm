@@ -407,6 +407,8 @@ public class OrdersController : ControllerBase
 
     /// <summary>Designer upload ảnh thiết kế của đơn hàng.</summary>
     [HttpPost("{id}/design-image")]
+    [RequestSizeLimit(200 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 200 * 1024 * 1024)]
     public async Task<ActionResult<ApiResponse<OrderDto>>> UploadDesignImage(Guid id, IFormFile file)
     {
         if (file == null || file.Length == 0)
@@ -432,6 +434,8 @@ public class OrdersController : ControllerBase
     /// <summary>Khách xem đơn hàng qua QR token (read-only, không cần đăng nhập).</summary>
     /// <summary>Upload file goc thiet ke cua don hang cho san xuat tai ve.</summary>
     [HttpPost("{id}/design-file")]
+    [RequestSizeLimit(200 * 1024 * 1024)]       // file .cdr/.psd hay nặng 50-100MB; nginx cũng phải để client_max_body_size 200M
+    [RequestFormLimits(MultipartBodyLengthLimit = 200 * 1024 * 1024)]
     public async Task<ActionResult<ApiResponse<OrderDto>>> UploadDesignFile(Guid id, IFormFile file)
     {
         if (file == null || file.Length == 0)

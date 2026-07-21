@@ -884,7 +884,9 @@ export class OrderDetailComponent implements OnInit {
       },
       error: (err) => {
         this.isUploadingDesign = false;
-        const msg = err?.error?.message || 'Upload thất bại.';
+        const msg = err?.status === 413
+          ? 'Ảnh quá lớn — tối đa 200MB.'
+          : (err?.error?.message || 'Upload thất bại.');
         this.designUploadError = msg;
         this.toast.error(msg);
       }
@@ -906,7 +908,9 @@ export class OrderDetailComponent implements OnInit {
       },
       error: (err) => {
         this.isUploadingDesignFile = false;
-        const msg = err?.error?.message || 'Upload file thiết kế thất bại.';
+        const msg = err?.status === 413
+          ? 'File thiết kế quá lớn — tối đa 200MB.'
+          : (err?.error?.message || 'Upload file thiết kế thất bại.');
         this.designUploadError = msg;
         this.toast.error(msg);
       }
