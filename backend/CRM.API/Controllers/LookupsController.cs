@@ -218,12 +218,39 @@ public class DepositsController : ControllerBase
     public async Task<ActionResult<ApiResponse<DepositTransactionDto>>> Create([FromBody] CreateDepositTransactionDto dto)
         => Ok(ApiResponse<DepositTransactionDto>.Ok(await _svc.CreateAsync(dto), "Tạo thành công."));
 
+    // Tách 1 giao dịch gộp thành nhiều khoản con (khách cọc 1 lần cho nhiều đơn).
+    [HttpPost("{id}/split")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<IEnumerable<DepositTransactionDto>>>> Split(Guid id, [FromBody] SplitDepositDto dto)
+    {
+        try
+        {
+            var children = await _svc.SplitAsync(id, dto);
+            return Ok(ApiResponse<IEnumerable<DepositTransactionDto>>.Ok(children, "Tách giao dịch thành công."));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<IEnumerable<DepositTransactionDto>>.Fail(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<IEnumerable<DepositTransactionDto>>.Fail(ex.Message));
+        }
+    }
+
     [HttpDelete("{id}")]
     [Authorize]
     public async Task<ActionResult<ApiResponse>> Delete(Guid id)
     {
-        await _svc.DeleteAsync(id);
-        return Ok(ApiResponse.Ok("Xóa thành công."));
+        try
+        {
+            await _svc.DeleteAsync(id);
+            return Ok(ApiResponse.Ok("Xóa thành công."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse.Fail(ex.Message));
+        }
     }
 
     // Casso webhook: POST /api/deposits/casso-webhook

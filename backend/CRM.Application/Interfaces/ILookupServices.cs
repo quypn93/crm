@@ -64,6 +64,7 @@ public interface IDepositTransactionService
 {
     Task<IEnumerable<DepositTransactionDto>> GetAllAsync();
     Task<DepositTransactionDto> CreateAsync(CreateDepositTransactionDto dto);
+    Task<IEnumerable<DepositTransactionDto>> SplitAsync(Guid id, SplitDepositDto dto);
     Task<int> HandleCassoWebhookAsync(CassoWebhookPayload payload);
     Task DeleteAsync(Guid id);
 }

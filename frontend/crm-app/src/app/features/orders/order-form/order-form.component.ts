@@ -69,6 +69,8 @@ export class OrderFormComponent implements OnInit {
   // null = chưa nhập mã, undefined = đã nhập nhưng không khớp, object = đã khớp.
   deposits: DepositTransaction[] = [];
   matchedDeposit: DepositTransaction | null | undefined = null;
+  // Sale gõ đúng mã gốc đã tách thành khoản con → báo dùng mã con thay vì "không khớp".
+  depositCodeIsSplitParent = false;
 
   readonly DeliveryMethod = DeliveryMethod;
   readonly deliveryMethodOptions = [
@@ -178,7 +180,8 @@ export class OrderFormComponent implements OnInit {
         accentColorId: [''],
         formId: ['', Validators.required],
         specificationId: ['', Validators.required],
-        unitPrice: [0, [Validators.required, Validators.min(1)]],
+        // Cho phép đơn giá 0 (đơn tặng/bù hàng...) — chỉ chặn số âm.
+        unitPrice: [0, [Validators.required, Validators.min(0)]],
         // Giảm giá của sản phẩm nhập theo tổng số tiền (VNĐ), trừ thẳng vào tạm tính.
         itemDiscountAmount: [0, [Validators.min(0)]],
       }),
@@ -292,8 +295,15 @@ export class OrderFormComponent implements OnInit {
    */
   onDepositCodeChange(rawCode: string): void {
     const code = (rawCode || '').trim();
+    this.depositCodeIsSplitParent = false;
     if (!code) { this.matchedDeposit = null; return; }
     const found = this.deposits.find(d => (d.code || '').trim().toLowerCase() === code.toLowerCase());
+    if (found?.isSplit) {
+      // Mã gốc đã tách — backend sẽ không cộng tiền, sale phải dùng mã con.
+      this.depositCodeIsSplitParent = true;
+      this.matchedDeposit = undefined;
+      return;
+    }
     this.matchedDeposit = found ?? undefined;
   }
 

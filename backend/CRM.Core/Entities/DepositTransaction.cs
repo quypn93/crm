@@ -12,4 +12,8 @@ public class DepositTransaction : BaseEntity
     public string? ExternalId { get; set; }                   // Id từ webhook nhà cung cấp (dedupe)
     public Guid? MatchedOrderId { get; set; }                 // Order mà sale đã claim mã này
     public virtual Order? MatchedOrder { get; set; }
+
+    // Khoản này được tách ra từ giao dịch gốc nào (khách cọc gộp 1 lần cho nhiều đơn).
+    // Giao dịch gốc sau khi tách vẫn giữ lại để đối soát nhưng không claim được nữa.
+    public Guid? ParentId { get; set; }
 }

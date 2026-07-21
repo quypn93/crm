@@ -99,6 +99,8 @@ export interface DepositTransaction {
   externalId?: string;
   matchedOrderId?: string;
   createdAt: string;
+  parentId?: string;   // khoản con được tách từ giao dịch gốc nào
+  isSplit?: boolean;   // giao dịch gốc đã tách → không claim/xóa được
 }
 
 export interface CreateDepositTransaction {

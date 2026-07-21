@@ -98,4 +98,8 @@ export class SettingsService {
   deleteDeposit(id: string): Observable<void> {
     return this.unwrap(this.http.delete<ApiResponse<void>>(`${this.base}/deposits/${id}`));
   }
+  // Tách giao dịch cọc gộp thành nhiều khoản con
+  splitDeposit(id: string, amounts: number[]): Observable<DepositTransaction[]> {
+    return this.unwrap(this.http.post<ApiResponse<DepositTransaction[]>>(`${this.base}/deposits/${id}/split`, { amounts }));
+  }
 }

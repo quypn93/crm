@@ -646,6 +646,9 @@ namespace CRM.Infrastructure.Migrations
                     b.Property<Guid?>("MatchedOrderId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(20)

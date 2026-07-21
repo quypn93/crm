@@ -120,6 +120,8 @@ public class DepositTransactionDto
     public string? ExternalId { get; set; }
     public Guid? MatchedOrderId { get; set; }
     public DateTime CreatedAt { get; set; }
+    public Guid? ParentId { get; set; }
+    public bool IsSplit { get; set; }   // đã tách thành các khoản con → không claim/xóa được
 }
 
 public class CreateDepositTransactionDto
@@ -130,4 +132,9 @@ public class CreateDepositTransactionDto
     public string? AccountNumber { get; set; }
     public string? Description { get; set; }
     public DateTime TransactionDate { get; set; } = DateTime.UtcNow;
+}
+
+public class SplitDepositDto
+{
+    public List<decimal> Amounts { get; set; } = new();
 }

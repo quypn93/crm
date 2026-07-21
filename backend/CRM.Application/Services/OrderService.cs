@@ -710,6 +710,14 @@ public class OrderService : IOrderService
             return;
         }
 
+        // Giao dịch gốc đã tách thành các khoản con → không claim được nữa, sale phải dùng mã con.
+        var isSplitParent = await _unitOfWork.DepositTransactions.ExistsAsync(d => d.ParentId == deposit.Id);
+        if (isSplitParent)
+        {
+            RecomputePaymentStatus(order);
+            return;
+        }
+
         // Mới khớp lần đầu (chưa link) → cộng tiền + link.
         if (deposit.MatchedOrderId != order.Id)
         {

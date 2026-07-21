@@ -50,19 +50,63 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
           <tr *ngIf="filteredDeposits.length === 0">
             <td colspan="7" style="text-align:center;color:#94a3b8;">Không có giao dịch nào khớp bộ lọc.</td>
           </tr>
-          <tr *ngFor="let d of filteredDeposits">
+          <tr *ngFor="let d of filteredDeposits" [class.split-parent]="d.isSplit">
             <td>{{ d.transactionDate | date:'dd/MM/yyyy HH:mm' }}</td>
-            <td><code>{{ d.code }}</code></td>
+            <td>
+              <code>{{ d.code }}</code>
+              <span class="badge split" *ngIf="d.isSplit">Đã tách</span>
+              <span class="badge child" *ngIf="d.parentId">Tách</span>
+              <span class="badge matched" *ngIf="d.matchedOrderId">Đã gắn đơn</span>
+            </td>
             <td style="text-align:right;color:#16a34a;font-weight:600;">{{ d.amount | number }} đ</td>
             <td>{{ d.bankName }}</td>
             <td>{{ d.description }}</td>
             <td><span class="badge" [class.auto]="d.source==='casso'">{{ d.source }}</span></td>
-            <td>
-              <button class="btn btn-sm btn-danger" (click)="remove(d)">Xóa</button>
+            <td class="actions">
+              <button class="btn btn-sm" *ngIf="!d.isSplit && !d.matchedOrderId" (click)="openSplit(d)">Tách</button>
+              <button class="btn btn-sm btn-danger" *ngIf="!d.isSplit" (click)="remove(d)">Xóa</button>
             </td>
           </tr>
         </tbody>
       </table>
+
+      <!-- Modal tách giao dịch gộp thành nhiều khoản -->
+      <div class="modal-overlay" *ngIf="splitting" (click)="closeSplit()">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Tách giao dịch</h3>
+            <button class="btn-close" (click)="closeSplit()">×</button>
+          </div>
+          <div class="modal-body">
+            <p class="split-info">
+              Mã gốc: <code>{{ splitting.code }}</code> —
+              <strong style="color:#16a34a;">{{ splitting.amount | number }} đ</strong>
+            </p>
+            <p class="muted">Mỗi khoản con sẽ có mã <code>{{ splitting.code }}-1</code>, <code>{{ splitting.code }}-2</code>... để điền vào từng đơn hàng.</p>
+
+            <div class="split-row" *ngFor="let p of splitParts; let i = index; trackBy: trackByIndex">
+              <span class="split-code">{{ splitting.code }}-{{ i + 1 }}</span>
+              <input type="number" min="0" [(ngModel)]="splitParts[i]" placeholder="Số tiền">
+              <button class="btn btn-sm btn-danger" (click)="removeSplitPart(i)" [disabled]="splitParts.length <= 2">−</button>
+            </div>
+            <button class="btn btn-sm btn-secondary" (click)="splitParts.push(0)">+ Thêm khoản</button>
+
+            <div class="split-summary" [class.ok]="splitRemainder === 0" [class.bad]="splitRemainder !== 0">
+              Đã nhập: <strong>{{ splitTotal | number }} đ</strong>
+              <ng-container *ngIf="splitRemainder > 0"> — còn thiếu {{ splitRemainder | number }} đ</ng-container>
+              <ng-container *ngIf="splitRemainder < 0"> — vượt quá {{ -splitRemainder | number }} đ</ng-container>
+              <ng-container *ngIf="splitRemainder === 0"> — khớp số tiền gốc ✓</ng-container>
+            </div>
+            <p class="error" *ngIf="splitError">{{ splitError }}</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="closeSplit()">Hủy</button>
+            <button class="btn btn-primary" (click)="confirmSplit()" [disabled]="splitRemainder !== 0 || splitBusy">
+              {{ splitBusy ? 'Đang tách...' : 'Tách' }}
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div class="modal-overlay" *ngIf="showForm" (click)="showForm = false">
         <div class="modal" (click)="$event.stopPropagation()">
@@ -122,6 +166,22 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
     .table tr:last-child td { border-bottom:none; }
     .badge { padding:2px 8px; border-radius:10px; font-size:11px; background:#e2e8f0; }
     .badge.auto { background:#dbeafe; color:#1e40af; }
+    .badge.split { background:#fef3c7; color:#92400e; margin-left:6px; }
+    .badge.child { background:#dcfce7; color:#166534; margin-left:6px; }
+    .badge.matched { background:#ede9fe; color:#5b21b6; margin-left:6px; }
+    tr.split-parent td { color:#94a3b8; }
+    tr.split-parent code { opacity:.6; }
+    .actions { white-space:nowrap; }
+    .actions .btn-sm { margin-right:4px; }
+    .split-info { font-size:14px; margin:0 0 4px; }
+    .muted { color:#94a3b8; font-size:13px; margin:0 0 14px; }
+    .split-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    .split-code { font-family:monospace; font-size:12px; background:#f1f5f9; padding:4px 8px; border-radius:4px; white-space:nowrap; }
+    .split-row input { flex:1; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; }
+    .split-summary { margin-top:14px; font-size:13px; padding:8px 12px; border-radius:6px; }
+    .split-summary.ok { background:#f0fdf4; color:#166534; }
+    .split-summary.bad { background:#fef2f2; color:#b91c1c; }
+    .error { color:#ef4444; font-size:13px; margin-top:8px; }
     .btn { padding:8px 16px; border:none; border-radius:6px; cursor:pointer; font-size:14px; }
     .btn-primary { background:#6366f1; color:#fff; }
     .btn-secondary { background:#e2e8f0; color:#1e293b; }
@@ -207,6 +267,57 @@ export class DepositsAdminComponent implements OnInit {
   }
   remove(d: DepositTransaction): void {
     if (!confirm('Xóa giao dịch này?')) return;
-    this.settings.deleteDeposit(d.id).subscribe(() => this.load());
+    this.settings.deleteDeposit(d.id).subscribe({
+      next: () => this.load(),
+      error: err => alert(err?.error?.message || 'Xóa thất bại.')
+    });
+  }
+
+  // ===== Tách giao dịch gộp =====
+  splitting: DepositTransaction | null = null;
+  splitParts: number[] = [];
+  splitError = '';
+  splitBusy = false;
+
+  get splitTotal(): number {
+    return this.splitParts.reduce((sum, v) => sum + (Number(v) || 0), 0);
+  }
+
+  get splitRemainder(): number {
+    return (this.splitting?.amount || 0) - this.splitTotal;
+  }
+
+  trackByIndex(index: number): number { return index; }
+
+  openSplit(d: DepositTransaction): void {
+    this.splitting = d;
+    this.splitParts = [0, 0];
+    this.splitError = '';
+    this.splitBusy = false;
+  }
+
+  closeSplit(): void { this.splitting = null; }
+
+  removeSplitPart(i: number): void {
+    if (this.splitParts.length <= 2) return;
+    this.splitParts.splice(i, 1);
+  }
+
+  confirmSplit(): void {
+    if (!this.splitting || this.splitRemainder !== 0 || this.splitBusy) return;
+    const amounts = this.splitParts.map(v => Number(v) || 0);
+    if (amounts.some(a => a <= 0)) {
+      this.splitError = 'Số tiền mỗi khoản phải lớn hơn 0.';
+      return;
+    }
+    this.splitBusy = true;
+    this.splitError = '';
+    this.settings.splitDeposit(this.splitting.id, amounts).subscribe({
+      next: () => { this.splitBusy = false; this.splitting = null; this.load(); },
+      error: err => {
+        this.splitBusy = false;
+        this.splitError = err?.error?.message || 'Tách giao dịch thất bại.';
+      }
+    });
   }
 }

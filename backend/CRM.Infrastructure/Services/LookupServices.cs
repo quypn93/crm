@@ -340,7 +340,8 @@ public class DepositTransactionService : IDepositTransactionService
         var list = await _db.DepositTransactions
             .OrderByDescending(x => x.TransactionDate)
             .ToListAsync();
-        return list.Select(ToDto);
+        var parentIds = list.Where(x => x.ParentId.HasValue).Select(x => x.ParentId!.Value).ToHashSet();
+        return list.Select(e => ToDto(e, parentIds.Contains(e.Id)));
     }
 
     public async Task<DepositTransactionDto> CreateAsync(CreateDepositTransactionDto dto)
@@ -403,14 +404,74 @@ public class DepositTransactionService : IDepositTransactionService
         return added;
     }
 
+    // Tách 1 giao dịch gốc (khách cọc gộp) thành nhiều khoản con để gắn vào nhiều đơn.
+    // Khoản con mang mã "<mã gốc>-1", "-2"... Giao dịch gốc giữ lại đối soát, hết claim được.
+    public async Task<IEnumerable<DepositTransactionDto>> SplitAsync(Guid id, SplitDepositDto dto)
+    {
+        var parent = await _db.DepositTransactions.FindAsync(id)
+            ?? throw new KeyNotFoundException("Không tìm thấy giao dịch.");
+
+        if (parent.MatchedOrderId.HasValue)
+            throw new InvalidOperationException("Giao dịch đã gắn vào đơn hàng — gỡ mã khỏi đơn trước khi tách.");
+
+        if (await _db.DepositTransactions.AnyAsync(x => x.ParentId == parent.Id))
+            throw new InvalidOperationException("Giao dịch này đã được tách rồi.");
+
+        var amounts = dto.Amounts.Where(a => a != 0).ToList();
+        if (amounts.Count < 2)
+            throw new InvalidOperationException("Cần ít nhất 2 khoản để tách.");
+        if (amounts.Any(a => a <= 0))
+            throw new InvalidOperationException("Số tiền mỗi khoản phải lớn hơn 0.");
+        if (amounts.Sum() != parent.Amount)
+            throw new InvalidOperationException(
+                $"Tổng các khoản ({amounts.Sum():N0} đ) phải đúng bằng số tiền gốc ({parent.Amount:N0} đ).");
+
+        // Tránh đụng mã đã tồn tại (ví dụ tách lại sau khi xóa khoản con cũ, hoặc mã trùng).
+        var usedCodes = (await _db.DepositTransactions
+                .Where(x => x.Code.StartsWith(parent.Code + "-"))
+                .Select(x => x.Code)
+                .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var children = new List<DepositTransaction>();
+        var index = 1;
+        foreach (var amount in amounts)
+        {
+            while (usedCodes.Contains($"{parent.Code}-{index}")) index++;
+            var code = $"{parent.Code}-{index}";
+            usedCodes.Add(code);
+
+            children.Add(new DepositTransaction
+            {
+                Code = code,
+                Amount = amount,
+                BankName = parent.BankName,
+                AccountNumber = parent.AccountNumber,
+                Description = string.IsNullOrWhiteSpace(parent.Description)
+                    ? $"Tách từ {parent.Code}"
+                    : $"{parent.Description} (tách từ {parent.Code})",
+                TransactionDate = parent.TransactionDate,
+                Source = parent.Source,
+                ExternalId = null,          // giữ ExternalId ở bản gốc để webhook Casso vẫn dedupe được
+                ParentId = parent.Id
+            });
+        }
+
+        _db.DepositTransactions.AddRange(children);
+        await _db.SaveChangesAsync();
+        return children.Select(c => ToDto(c, false));
+    }
+
     public async Task DeleteAsync(Guid id)
     {
         var e = await _db.DepositTransactions.FindAsync(id) ?? throw new KeyNotFoundException();
+        if (await _db.DepositTransactions.AnyAsync(x => x.ParentId == e.Id))
+            throw new InvalidOperationException("Giao dịch đã tách thành các khoản con — xóa các khoản con trước.");
         _db.DepositTransactions.Remove(e);
         await _db.SaveChangesAsync();
     }
 
-    private static DepositTransactionDto ToDto(DepositTransaction e) => new()
+    private static DepositTransactionDto ToDto(DepositTransaction e, bool isSplit = false) => new()
     {
         Id = e.Id,
         Code = e.Code,
@@ -422,7 +483,9 @@ public class DepositTransactionService : IDepositTransactionService
         Source = e.Source,
         ExternalId = e.ExternalId,
         MatchedOrderId = e.MatchedOrderId,
-        CreatedAt = e.CreatedAt
+        CreatedAt = e.CreatedAt,
+        ParentId = e.ParentId,
+        IsSplit = isSplit
     };
 
     private static readonly TimeZoneInfo VnTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
