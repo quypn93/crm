@@ -8,6 +8,14 @@ import { ToastService } from '../../../core/services/toast.service';
 import { UserManagementService, UserListItem } from '../../../core/services/user-management.service';
 import { Order, OrderStatus, PaymentStatus, OrderStatusLabels, PaymentStatusLabels, OrderStatusColors, PaymentStatusColors, UpdateOrderStatusRequest } from '../../../core/models/order.model';
 
+// Một trường có thể chọn khi xuất dữ liệu đơn hàng
+interface ExportField {
+  key: string;
+  label: string;
+  money?: boolean;
+  value: (o: Order) => string | number;
+}
+
 @Component({
   selector: 'app-order-list',
   templateUrl: './order-list.component.html',
@@ -144,10 +152,106 @@ export class OrderListComponent implements OnInit {
     this.showExportMenu = !this.showExportMenu;
   }
 
+  // ===== Chọn cột xuất dữ liệu =====
+  // Danh mục tất cả các trường có thể xuất; thứ tự cột trong file = thứ tự chọn.
+  readonly exportFieldCatalog: ExportField[] = [
+    { key: 'orderNumber', label: 'Mã đơn', value: o => o.orderNumber },
+    { key: 'itemsCount', label: 'Số sản phẩm', value: o => o.itemsCount },
+    { key: 'customerName', label: 'Khách hàng', value: o => o.customerName || 'N/A' },
+    { key: 'createdByUserName', label: 'Người tạo đơn', value: o => o.createdByUserName || '' },
+    { key: 'designerUserName', label: 'NV thiết kế', value: o => o.designerUserName || '' },
+    { key: 'shipperUserName', label: 'NV giao hàng', value: o => o.shipperUserName || '' },
+    { key: 'status', label: 'Trạng thái', value: o => this.getStatusLabel(o.status) },
+    { key: 'paymentStatus', label: 'Thanh toán', value: o => this.getPaymentStatusLabel(o.paymentStatus) },
+    { key: 'subTotal', label: 'Tiền hàng', money: true, value: o => o.subTotal ?? 0 },
+    { key: 'discountAmount', label: 'Giảm giá', money: true, value: o => o.discountAmount ?? 0 },
+    { key: 'taxAmount', label: 'VAT', money: true, value: o => o.taxAmount ?? 0 },
+    { key: 'shippingFee', label: 'Phí vận chuyển', money: true, value: o => o.shippingFee ?? 0 },
+    { key: 'totalAmount', label: 'Tổng tiền', money: true, value: o => o.totalAmount ?? 0 },
+    { key: 'paidAmount', label: 'Đã thanh toán', money: true, value: o => o.paidAmount ?? 0 },
+    { key: 'remaining', label: 'Còn nợ', money: true, value: o => (o.totalAmount ?? 0) - (o.paidAmount ?? 0) },
+    { key: 'depositCode', label: 'Mã cọc tiền', value: o => o.depositCode || '' },
+    { key: 'orderTypeName', label: 'Dạng đơn', value: o => o.orderTypeName || '' },
+    { key: 'deliveryMethodName', label: 'Hình thức giao', value: o => o.deliveryMethodName || '' },
+    { key: 'shippingContactName', label: 'Người nhận', value: o => o.shippingContactName || '' },
+    { key: 'shippingPhone', label: 'SĐT người nhận', value: o => o.shippingPhone || '' },
+    { key: 'shippingAddress', label: 'Địa chỉ giao', value: o => o.shippingAddress || '' },
+    { key: 'productionDaysOptionName', label: 'Thời gian SX', value: o => o.productionDaysOptionName || '' },
+    { key: 'createdAt', label: 'Ngày tạo', value: o => this.formatDateShort(o.createdAt) },
+    { key: 'completionDate', label: 'Ngày xong', value: o => this.formatDateShort(o.completionDate) },
+    { key: 'returnDate', label: 'Ngày trả hàng', value: o => this.formatDateShort(o.returnDate) },
+    { key: 'notes', label: 'Ghi chú', value: o => o.notes || '' }
+  ];
+
+  private static readonly EXPORT_FIELDS_STORAGE_KEY = 'crm.orderExportFields';
+  private static readonly DEFAULT_EXPORT_FIELDS = [
+    'orderNumber', 'itemsCount', 'customerName', 'createdByUserName',
+    'status', 'paymentStatus', 'totalAmount', 'remaining', 'createdAt'
+  ];
+
+  showColumnPicker = false;
+  pendingFormat: 'xlsx' | 'csv' = 'xlsx';
+  selectedFieldKeys: string[] = [];
+  fieldSearch = '';
+
+  get filteredCatalog(): ExportField[] {
+    const term = this.fieldSearch.trim().toLowerCase();
+    if (!term) return this.exportFieldCatalog;
+    return this.exportFieldCatalog.filter(f => f.label.toLowerCase().includes(term));
+  }
+
+  get selectedFields(): ExportField[] {
+    return this.selectedFieldKeys
+      .map(k => this.exportFieldCatalog.find(f => f.key === k)!)
+      .filter(Boolean);
+  }
+
+  get allFilteredSelected(): boolean {
+    return this.filteredCatalog.length > 0 && this.filteredCatalog.every(f => this.selectedFieldKeys.includes(f.key));
+  }
+
+  isFieldSelected(key: string): boolean { return this.selectedFieldKeys.includes(key); }
+
+  toggleField(key: string): void {
+    const i = this.selectedFieldKeys.indexOf(key);
+    if (i >= 0) this.selectedFieldKeys.splice(i, 1);
+    else this.selectedFieldKeys.push(key);
+  }
+
+  toggleAllFields(): void {
+    if (this.allFilteredSelected) {
+      const keys = new Set(this.filteredCatalog.map(f => f.key));
+      this.selectedFieldKeys = this.selectedFieldKeys.filter(k => !keys.has(k));
+    } else {
+      this.filteredCatalog.forEach(f => {
+        if (!this.selectedFieldKeys.includes(f.key)) this.selectedFieldKeys.push(f.key);
+      });
+    }
+  }
+
   export(format: 'xlsx' | 'csv'): void {
     this.showExportMenu = false;
     if (this.isExporting) return;
+    this.pendingFormat = format;
+    this.fieldSearch = '';
+    // Nhớ lựa chọn cột lần trước của người dùng.
+    try {
+      const saved = JSON.parse(localStorage.getItem(OrderListComponent.EXPORT_FIELDS_STORAGE_KEY) || 'null');
+      this.selectedFieldKeys = Array.isArray(saved) && saved.length
+        ? saved.filter((k: string) => this.exportFieldCatalog.some(f => f.key === k))
+        : [...OrderListComponent.DEFAULT_EXPORT_FIELDS];
+    } catch {
+      this.selectedFieldKeys = [...OrderListComponent.DEFAULT_EXPORT_FIELDS];
+    }
+    this.showColumnPicker = true;
+  }
+
+  confirmExport(): void {
+    const fields = this.selectedFields;
+    if (!fields.length || this.isExporting) return;
+    this.showColumnPicker = false;
     this.isExporting = true;
+    try { localStorage.setItem(OrderListComponent.EXPORT_FIELDS_STORAGE_KEY, JSON.stringify(this.selectedFieldKeys)); } catch { /* noop */ }
 
     // Lấy toàn bộ đơn theo bộ lọc hiện tại (không chỉ trang đang xem).
     const params: OrderSearchParams = {
@@ -168,13 +272,13 @@ export class OrderListComponent implements OnInit {
           this.toast.success(`Đã xuất ${items.length} đơn hàng.`);
           this.isExporting = false;
         };
-        if (format === 'xlsx') {
-          this.downloadXlsx(items).then(done).catch(() => {
+        if (this.pendingFormat === 'xlsx') {
+          this.downloadXlsx(items, fields).then(done).catch(() => {
             this.toast.error('Không thể tạo file Excel.');
             this.isExporting = false;
           });
         } else {
-          this.downloadCsv(items);
+          this.downloadCsv(items, fields);
           done();
         }
       },
@@ -185,17 +289,8 @@ export class OrderListComponent implements OnInit {
     });
   }
 
-  private buildRows(orders: Order[]): (string | number)[][] {
-    return orders.map(o => [
-      o.orderNumber,
-      o.itemsCount,
-      o.customerName || 'N/A',
-      this.getStatusLabel(o.status),
-      this.getPaymentStatusLabel(o.paymentStatus),
-      o.totalAmount ?? 0,
-      (o.totalAmount ?? 0) - (o.paidAmount ?? 0),
-      this.formatDateShort(o.createdAt)
-    ]);
+  private buildRows(orders: Order[], fields: ExportField[]): (string | number)[][] {
+    return orders.map(o => fields.map(f => f.value(o)));
   }
 
   private formatDateShort(d: any): string {
@@ -212,8 +307,6 @@ export class OrderListComponent implements OnInit {
     return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
   }
 
-  private readonly exportHeaders = ['Mã đơn', 'Số sản phẩm', 'Khách hàng', 'Trạng thái', 'Thanh toán', 'Tổng tiền', 'Còn nợ', 'Ngày tạo'];
-
   private triggerDownload(blob: Blob, filename: string): void {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -223,26 +316,23 @@ export class OrderListComponent implements OnInit {
     URL.revokeObjectURL(url);
   }
 
-  private async downloadXlsx(orders: Order[]): Promise<void> {
+  private async downloadXlsx(orders: Order[], fields: ExportField[]): Promise<void> {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Đơn hàng');
 
-    const headerRow = sheet.addRow(this.exportHeaders);
+    const headerRow = sheet.addRow(fields.map(f => f.label));
     headerRow.eachCell(cell => {
       cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6D5AE6' } };
       cell.alignment = { vertical: 'middle', horizontal: 'center' };
     });
 
-    this.buildRows(orders).forEach(r => sheet.addRow(r));
+    this.buildRows(orders, fields).forEach(r => sheet.addRow(r));
 
-    // Định dạng cột số tiền (F = Tổng tiền, G = Còn nợ).
-    ['F', 'G'].forEach(col => {
-      sheet.getColumn(col).numFmt = '#,##0" ₫"';
-    });
-
-    sheet.columns.forEach((col, i) => {
-      col.width = [16, 12, 22, 18, 18, 16, 16, 12][i] || 14;
+    fields.forEach((f, i) => {
+      const col = sheet.getColumn(i + 1);
+      if (f.money) col.numFmt = '#,##0" ₫"';
+      col.width = f.money ? 16 : Math.max(12, Math.min(30, f.label.length + 8));
     });
 
     const buffer = await workbook.xlsx.writeBuffer();
@@ -252,13 +342,13 @@ export class OrderListComponent implements OnInit {
     this.triggerDownload(blob, `don-hang-${this.fileStamp()}.xlsx`);
   }
 
-  private downloadCsv(orders: Order[]): void {
+  private downloadCsv(orders: Order[], fields: ExportField[]): void {
     const escape = (v: any): string => {
       const s = v === null || v === undefined ? '' : String(v);
       return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
 
-    const csv = [this.exportHeaders, ...this.buildRows(orders)]
+    const csv = [fields.map(f => f.label), ...this.buildRows(orders, fields)]
       .map(row => row.map(escape).join(','))
       .join('\r\n');
 

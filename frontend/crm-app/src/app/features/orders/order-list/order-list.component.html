@@ -20,6 +20,49 @@
           <button type="button" (click)="export('csv')">CSV (.csv)</button>
         </div>
       </div>
+
+      <!-- Modal chọn cột dữ liệu sẽ xuất -->
+      <div class="picker-overlay" *ngIf="showColumnPicker" (click)="showColumnPicker = false">
+        <div class="picker-modal" (click)="$event.stopPropagation()">
+          <div class="picker-header">
+            <h3>Chọn cột dữ liệu</h3>
+            <span class="picker-count">{{ selectedFieldKeys.length }} / {{ exportFieldCatalog.length }} trường đã chọn</span>
+            <button class="picker-close" (click)="showColumnPicker = false">×</button>
+          </div>
+          <div class="picker-body">
+            <div class="picker-panel">
+              <div class="panel-title">Trường có sẵn</div>
+              <input type="text" class="field-search" [(ngModel)]="fieldSearch" placeholder="Tìm kiếm">
+              <label class="field-row select-all">
+                <input type="checkbox" [checked]="allFilteredSelected" (change)="toggleAllFields()">
+                <span>Chọn tất cả</span>
+              </label>
+              <div class="field-list">
+                <label class="field-row" *ngFor="let f of filteredCatalog">
+                  <input type="checkbox" [checked]="isFieldSelected(f.key)" (change)="toggleField(f.key)">
+                  <span>{{ f.label }}</span>
+                </label>
+              </div>
+            </div>
+            <div class="picker-panel">
+              <div class="panel-title">Trường sẽ xuất</div>
+              <div class="field-list selected-list">
+                <div class="selected-row" *ngFor="let f of selectedFields">
+                  <span>{{ f.label }}</span>
+                  <button type="button" class="remove-field" (click)="toggleField(f.key)">×</button>
+                </div>
+                <div class="empty-hint" *ngIf="!selectedFields.length">Chưa chọn trường nào.</div>
+              </div>
+            </div>
+          </div>
+          <div class="picker-footer">
+            <button class="btn btn-outline" (click)="showColumnPicker = false">Hủy</button>
+            <button class="btn btn-primary" (click)="confirmExport()" [disabled]="!selectedFields.length">
+              Xuất {{ pendingFormat === 'xlsx' ? 'Excel' : 'CSV' }} ({{ selectedFields.length }} cột)
+            </button>
+          </div>
+        </div>
+      </div>
       <button class="btn btn-primary" (click)="addOrder()" *ngIf="canCreateOrder">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19"></line>
