@@ -110,6 +110,7 @@ export interface Order {
   status: OrderStatus;
   statusName?: string;
   orderDate: Date;
+  confirmedDate?: Date;   // Ngày đặt — lúc sale bấm Xác nhận
   requiredDate?: Date;
   completionDate?: Date;
   returnDate?: Date;

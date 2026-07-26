@@ -369,6 +369,10 @@ public class OrderService : IOrderService
         var previousStatus = order.Status;
         order.Status = dto.Status;
 
+        // "Ngày đặt" = thời điểm sale bấm Xác nhận lần đầu (không ghi đè nếu đã có).
+        if (dto.Status == OrderStatus.Confirmed)
+            order.ConfirmedDate ??= DateTime.UtcNow;
+
         // Hoàn thành đơn = đã thanh toán đủ: tự cộng nốt phần còn nợ và set PaymentStatus = Paid.
         // Ngày thanh toán dời sang thời điểm chốt nếu chưa được ghi.
         if (dto.Status == OrderStatus.Completed)

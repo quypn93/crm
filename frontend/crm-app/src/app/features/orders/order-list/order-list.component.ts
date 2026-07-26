@@ -178,6 +178,7 @@ export class OrderListComponent implements OnInit {
     { key: 'shippingAddress', label: 'Địa chỉ giao', value: o => o.shippingAddress || '' },
     { key: 'productionDaysOptionName', label: 'Thời gian SX', value: o => o.productionDaysOptionName || '' },
     { key: 'createdAt', label: 'Ngày tạo', value: o => this.formatDateShort(o.createdAt) },
+    { key: 'confirmedDate', label: 'Ngày đặt', value: o => this.formatDateShort(o.confirmedDate) },
     { key: 'completionDate', label: 'Ngày xong', value: o => this.formatDateShort(o.completionDate) },
     { key: 'returnDate', label: 'Ngày trả hàng', value: o => this.formatDateShort(o.returnDate) },
     { key: 'notes', label: 'Ghi chú', value: o => o.notes || '' }

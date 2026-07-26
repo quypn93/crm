@@ -21,6 +21,7 @@ public class Order : BaseEntity
 
     // Dates
     public DateTime OrderDate { get; set; } = DateTime.UtcNow;
+    public DateTime? ConfirmedDate { get; set; }          // Ngày đặt — thời điểm sale bấm Xác nhận đơn
     public DateTime? ExpectedDeliveryDate { get; set; }   // Ngày yêu cầu giao
     public DateTime? CompletionDate { get; set; }         // Ngày xong (hoàn thành sản xuất)
     public DateTime? ReturnDate { get; set; }             // Ngày trả hàng cho KH

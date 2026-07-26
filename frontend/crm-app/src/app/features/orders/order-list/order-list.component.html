@@ -146,6 +146,8 @@
           <th>Tổng tiền</th>
           <th>Còn nợ</th>
           <th>Ngày tạo</th>
+          <th>Ngày đặt</th>
+          <th>Ngày trả</th>
           <th class="actions-col">Thao tác</th>
         </tr>
       </thead>
@@ -178,6 +180,8 @@
             {{ formatCurrency(order.totalAmount - (order.paidAmount || 0)) }}
           </td>
           <td>{{ order.createdAt | date:'dd/MM/yyyy' }}</td>
+          <td>{{ order.confirmedDate ? (order.confirmedDate | date:'dd/MM/yyyy') : '—' }}</td>
+          <td>{{ order.returnDate ? (order.returnDate | date:'dd/MM/yyyy') : '—' }}</td>
           <td class="actions-col">
             <div class="action-buttons">
               <button
@@ -222,7 +226,7 @@
           </td>
         </tr>
         <tr *ngIf="orders.length === 0 && !isLoading">
-          <td colspan="8" class="empty-state">
+          <td colspan="10" class="empty-state">
             <div class="empty-content">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>

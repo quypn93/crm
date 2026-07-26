@@ -22,6 +22,7 @@ public class OrderDto
     public string Currency { get; set; } = "VND";
 
     public DateTime OrderDate { get; set; }
+    public DateTime? ConfirmedDate { get; set; }   // Ngày đặt — lúc sale bấm Xác nhận
     public DateTime? ExpectedDeliveryDate { get; set; }
     public DateTime? CompletionDate { get; set; }
     public DateTime? ReturnDate { get; set; }
