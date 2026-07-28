@@ -93,7 +93,8 @@
     <div class="order-code">{{ getOrderFooterLine() }}</div>
 
     <div class="date-meta">
-      <div>NGÀY LÊN ĐƠN: {{ fmtFull(order.orderDate) }}</div>
+      <!-- Ngày lên đơn = lúc sale bấm Xác nhận; đơn cũ/chưa xác nhận fallback về ngày lên đơn nhập tay -->
+      <div>NGÀY LÊN ĐƠN: {{ fmtFull(order.confirmedDate || order.orderDate) }}</div>
       <div>NGÀY XONG HÀNG: {{ fmtFull(order.completionDate) }}</div>
     </div>
 

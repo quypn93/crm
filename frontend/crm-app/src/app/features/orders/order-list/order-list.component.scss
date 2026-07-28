@@ -590,3 +590,20 @@
 @media (max-width: 640px) {
   .picker-body { grid-template-columns: 1fr; }
 }
+
+// Mã đơn bấm được → mở chi tiết đơn
+.order-code-link {
+  cursor: pointer;
+  &:hover { text-decoration: underline; }
+}
+
+// Chọn số đơn mỗi trang
+.page-size-select {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: #64748b;
+  select {
+    padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px;
+    font-size: 13px; background: #fff; cursor: pointer;
+  }
+}

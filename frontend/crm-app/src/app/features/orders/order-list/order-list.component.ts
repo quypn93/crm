@@ -28,7 +28,7 @@ export class OrderListComponent implements OnInit {
   showExportMenu = false;
   searchTerm = '';
   currentPage = 1;
-  pageSize = 10;
+  pageSize = 20;
   totalItems = 0;
   totalPages = 0;
 
@@ -60,9 +60,50 @@ export class OrderListComponent implements OnInit {
     private toast: ToastService
   ) {}
 
+  // Lưu bộ lọc + trang vào sessionStorage để bấm Quay lại từ chi tiết đơn không bị mất.
+  private static readonly LIST_STATE_KEY = 'crm.orderListState';
+
+  private saveListState(): void {
+    try {
+      sessionStorage.setItem(OrderListComponent.LIST_STATE_KEY, JSON.stringify({
+        searchTerm: this.searchTerm,
+        selectedStatus: this.selectedStatus,
+        selectedPaymentStatus: this.selectedPaymentStatus,
+        dateFrom: this.dateFrom,
+        dateTo: this.dateTo,
+        customerNameFilter: this.customerNameFilter,
+        selectedCreatedBy: this.selectedCreatedBy,
+        minQuantity: this.minQuantity,
+        maxQuantity: this.maxQuantity,
+        currentPage: this.currentPage,
+        pageSize: this.pageSize
+      }));
+    } catch { /* noop */ }
+  }
+
+  private restoreListState(): void {
+    try {
+      const raw = sessionStorage.getItem(OrderListComponent.LIST_STATE_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      this.searchTerm = s.searchTerm ?? '';
+      this.selectedStatus = s.selectedStatus ?? null;
+      this.selectedPaymentStatus = s.selectedPaymentStatus ?? null;
+      this.dateFrom = s.dateFrom ?? '';
+      this.dateTo = s.dateTo ?? '';
+      this.customerNameFilter = s.customerNameFilter ?? '';
+      this.selectedCreatedBy = s.selectedCreatedBy ?? '';
+      this.minQuantity = s.minQuantity ?? null;
+      this.maxQuantity = s.maxQuantity ?? null;
+      this.currentPage = s.currentPage || 1;
+      this.pageSize = s.pageSize || 20;
+    } catch { /* noop */ }
+  }
+
   ngOnInit(): void {
     this.canCreateOrder = this.authService.canCreateOrders();
     this.isManagerAccount = this.authService.hasAnyRole(['Admin', 'SalesManager']);
+    this.restoreListState();
     if (this.isManagerAccount) {
       // Chỉ liệt kê người có khả năng tạo đơn (Admin, SalesManager, SalesRep)
       const creatorRoles = ['Admin', 'SalesManager', 'SalesRep'];
@@ -99,6 +140,7 @@ export class OrderListComponent implements OnInit {
 
   loadOrders(): void {
     this.isLoading = true;
+    this.saveListState();
     const params: OrderSearchParams = {
       ...this.buildFilterParams(),
       page: this.currentPage,
@@ -139,6 +181,13 @@ export class OrderListComponent implements OnInit {
     this.selectedCreatedBy = '';
     this.minQuantity = null;
     this.maxQuantity = null;
+    this.currentPage = 1;
+    try { sessionStorage.removeItem(OrderListComponent.LIST_STATE_KEY); } catch { /* noop */ }
+    this.loadOrders();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
     this.currentPage = 1;
     this.loadOrders();
   }

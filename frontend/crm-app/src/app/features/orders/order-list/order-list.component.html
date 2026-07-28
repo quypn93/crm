@@ -155,7 +155,7 @@
         <tr *ngFor="let order of orders">
           <td>
             <div class="order-number">
-              <span class="order-code">{{ order.orderNumber }}</span>
+              <a class="order-code order-code-link" (click)="viewOrder(order.id)">{{ order.orderNumber }}</a>
               <span class="order-items-count">{{ order.itemsCount }} sản phẩm</span>
             </div>
           </td>
@@ -242,7 +242,7 @@
     </table>
   </div>
 
-  <div class="pagination" *ngIf="totalPages > 1">
+  <div class="pagination" *ngIf="totalItems > 0">
     <button
       class="page-btn"
       [disabled]="currentPage === 1"
@@ -265,5 +265,14 @@
     <span class="page-info">
       Hiển thị {{ (currentPage - 1) * pageSize + 1 }} - {{ currentPage * pageSize > totalItems ? totalItems : currentPage * pageSize }} / {{ totalItems }}
     </span>
+    <label class="page-size-select">
+      <span>Mỗi trang</span>
+      <select [ngModel]="pageSize" (ngModelChange)="onPageSizeChange($event)">
+        <option [ngValue]="10">10</option>
+        <option [ngValue]="20">20</option>
+        <option [ngValue]="50">50</option>
+        <option [ngValue]="100">100</option>
+      </select>
+    </label>
   </div>
 </div>

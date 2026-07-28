@@ -494,7 +494,7 @@
           </div>
           <div class="info-row">
             <span>Ngày lên đơn</span>
-            <span>{{ order.createdAt | date:'dd/MM/yyyy' }}</span>
+            <span>{{ (order.confirmedDate || order.createdAt) | date:'dd/MM/yyyy' }}</span>
           </div>
           <div class="info-row" *ngIf="order.completionDate">
             <span>Ngày xong</span>
