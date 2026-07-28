@@ -61,7 +61,8 @@ export class OrderListComponent implements OnInit {
   ) {}
 
   // Lưu bộ lọc + trang vào sessionStorage để bấm Quay lại từ chi tiết đơn không bị mất.
-  private static readonly LIST_STATE_KEY = 'crm.orderListState';
+  // Đổi hậu tố version khi thay đổi default (vd pageSize) để bỏ qua trạng thái cũ đã lưu.
+  private static readonly LIST_STATE_KEY = 'crm.orderListState.v2';
 
   private saveListState(): void {
     try {
