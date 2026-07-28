@@ -28,7 +28,7 @@ export class OrderListComponent implements OnInit {
   showExportMenu = false;
   searchTerm = '';
   currentPage = 1;
-  pageSize = 20;
+  pageSize = 100;
   totalItems = 0;
   totalPages = 0;
 
@@ -96,7 +96,7 @@ export class OrderListComponent implements OnInit {
       this.minQuantity = s.minQuantity ?? null;
       this.maxQuantity = s.maxQuantity ?? null;
       this.currentPage = s.currentPage || 1;
-      this.pageSize = s.pageSize || 20;
+      this.pageSize = s.pageSize || 100;
     } catch { /* noop */ }
   }
 
