@@ -34,6 +34,9 @@ public static class OrderStatusTransitionValidator
 
         // Delivered transitions
         { (OrderStatus.Delivered, OrderStatus.Completed), new[] { RoleNames.Admin, RoleNames.SalesManager, RoleNames.SalesRep } },
+
+        // Cancelled transitions — hủy nhầm thì đưa lại về Nháp để sửa
+        { (OrderStatus.Cancelled, OrderStatus.Draft), new[] { RoleNames.Admin, RoleNames.SalesManager, RoleNames.SalesRep } },
     };
 
     /// <summary>

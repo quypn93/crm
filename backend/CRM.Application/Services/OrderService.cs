@@ -756,7 +756,8 @@ public class OrderService : IOrderService
             { OrderStatus.Shipping, new[] { OrderStatus.Delivered, OrderStatus.Completed } },
             { OrderStatus.Delivered, new[] { OrderStatus.Completed } },
             { OrderStatus.Completed, Array.Empty<OrderStatus>() },
-            { OrderStatus.Cancelled, Array.Empty<OrderStatus>() }
+            // Đơn hủy nhầm có thể đưa lại về Nháp để sửa, khỏi phải tạo đơn mới.
+            { OrderStatus.Cancelled, new[] { OrderStatus.Draft } }
         };
 
         if (!validTransitions.ContainsKey(current) || !validTransitions[current].Contains(next))
