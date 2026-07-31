@@ -449,6 +449,10 @@ export class OrderListComponent implements OnInit {
     this.router.navigate(['/orders/new']);
   }
 
+  copyOrder(order: Order): void {
+    this.router.navigate(['/orders/new'], { queryParams: { copyFrom: order.id } });
+  }
+
   canConfirmOrder(): boolean {
     return this.authService.hasAnyRole(['Admin', 'SalesManager', 'SalesRep']);
   }

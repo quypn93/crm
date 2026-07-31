@@ -26,6 +26,10 @@ export class OrderFormComponent implements OnInit {
   orderId: string | null = null;
   errorMessage = '';
 
+  // Sao chép đơn hàng: tạo đơn mới, prefill từ đơn nguồn (route ?copyFrom=<id>)
+  copyFromId: string | null = null;
+  copiedFromOrderNumber = '';
+
   customers: Customer[] = [];
   deals: Deal[] = [];
   filteredDeals: Deal[] = [];
@@ -194,6 +198,8 @@ export class OrderFormComponent implements OnInit {
     if (id && id !== 'new') {
       this.isEditMode = true;
       this.orderId = id;
+    } else {
+      this.copyFromId = this.route.snapshot.queryParamMap.get('copyFrom');
     }
 
     // Check GHTK config trạng thái — quyết định hint khi chọn hình thức GHTK.
@@ -248,6 +254,8 @@ export class OrderFormComponent implements OnInit {
 
         if (this.isEditMode) {
           this.loadOrder();
+        } else if (this.copyFromId) {
+          this.loadOrderForCopy(this.copyFromId);
         } else {
           const currentUser = this.authService.getCurrentUser();
           if (currentUser) {
@@ -718,6 +726,83 @@ export class OrderFormComponent implements OnInit {
         this.isLoading = false;
       },
       error: () => { this.errorMessage = 'Không thể tải thông tin đơn hàng'; this.isLoading = false; }
+    });
+  }
+
+  // Sao chép đơn: prefill giống loadOrder() nhưng KHÔNG copy các thứ gắn chặt với đơn gốc
+  // (mã cọc tiền, ghi chú nội bộ, design có sẵn) và để ngày lên đơn/ngày xong tự tính lại từ hôm nay.
+  loadOrderForCopy(copyFromId: string): void {
+    this.isLoading = true;
+    this.orderService.getOrder(copyFromId).subscribe({
+      next: (order) => {
+        this.copiedFromOrderNumber = order.orderNumber;
+        this.orderForm.patchValue({
+          customerId: order.customerId,
+          dealId: order.dealId || '',
+          productionDaysOptionId: order.productionDaysOptionId || '',
+          orderTypeId: order.orderTypeId || '',
+          assignedToUserId: order.assignedToUserId || '',
+          designerUserId: order.designerUserId || '',
+          shipperUserId: order.shipperUserId || '',
+          deliveryMethod: order.deliveryMethod ?? '',
+          senderAddressId: order.senderAddressId || '',
+          shippingContactName: order.shippingContactName || '',
+          shippingPhone: order.shippingPhone || '',
+          shippingAddress: order.shippingAddress || '',
+          shippingNotes: order.shippingNotes || '',
+          discountPercent: order.discountPercent || 0,
+          taxPercent: order.taxPercent || 0,
+          shippingFee: order.shippingFee || 0,
+          paymentMethod: order.paymentMethod || '',
+          styleNotes: order.styleNotes || '',
+          customerNotes: order.customerNotes || ''
+        });
+
+        if (order.shippingProvinceCode) {
+          this.orderForm.get('shippingProvinceCode')?.setValue(order.shippingProvinceCode, { emitEvent: false });
+          this.onProvinceChange(order.shippingProvinceCode, true);
+          this.orderForm.get('shippingWardCode')?.setValue(order.shippingWardCode || '', { emitEvent: false });
+        }
+
+        if (Number(order.deliveryMethod) === DeliveryMethod.ViettelPost && order.receiverProvinceId) {
+          this.patchVtpReceiver(order.receiverProvinceId, order.receiverDistrictId, order.receiverWardId);
+        }
+
+        const selectedCustomer = this.customers.find(c => c.id === order.customerId);
+        if (selectedCustomer) this.customerSearchText = this.getCustomerDisplayName(selectedCustomer);
+        else if (order.customerName) this.customerSearchText = order.customerName;
+        this.loadDealsForCustomer(order.customerId);
+
+        const firstItem = order.items[0];
+        if (firstItem) {
+          this.orderForm.get('productInfo')?.patchValue({
+            collectionId: firstItem.collectionId || '',
+            materialId: firstItem.materialId || '',
+            mainColorId: firstItem.mainColorId || '',
+            accentColorId: firstItem.accentColorId || '',
+            formId: firstItem.formId || '',
+            specificationId: firstItem.specificationId || '',
+            unitPrice: firstItem.unitPrice || 0,
+            itemDiscountAmount: order.items.reduce((s, i) => s + (i.discountAmount || 0), 0),
+          });
+          if (firstItem.collectionId) this.onCollectionChange(firstItem.collectionId);
+        }
+
+        const orderFormName = (this.shirtForms.find(f => f.id === firstItem?.formId)?.name || '').toLowerCase();
+        const orderGendered = !(orderFormName.includes('oversize') || orderFormName.includes('unisex'));
+        this.sizeQty = {};
+        order.items.forEach(item => {
+          if (item.size) {
+            const sz = this.normalizeSizeKey(item.size, orderGendered);
+            this.sizeQty[sz] = (this.sizeQty[sz] || 0) + item.quantity;
+          }
+        });
+        this.lastGendered = orderGendered;
+
+        this.items.clear();
+        this.isLoading = false;
+      },
+      error: () => { this.errorMessage = 'Không thể tải đơn hàng gốc để sao chép.'; this.isLoading = false; }
     });
   }
 

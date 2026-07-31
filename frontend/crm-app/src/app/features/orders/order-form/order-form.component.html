@@ -1,9 +1,13 @@
 <div class="page-container">
   <div class="page-header">
     <div class="header-left">
-      <h1>{{ isEditMode ? 'Chỉnh sửa đơn hàng' : 'Tạo đơn hàng mới' }}</h1>
-      <p class="subtitle">{{ isEditMode ? 'Cập nhật thông tin đơn hàng' : 'Nhập thông tin để tạo đơn hàng mới' }}</p>
+      <h1>{{ isEditMode ? 'Chỉnh sửa đơn hàng' : (copyFromId ? 'Sao chép đơn hàng' : 'Tạo đơn hàng mới') }}</h1>
+      <p class="subtitle">{{ isEditMode ? 'Cập nhật thông tin đơn hàng' : (copyFromId ? 'Kiểm tra lại thông tin trước khi tạo đơn mới' : 'Nhập thông tin để tạo đơn hàng mới') }}</p>
     </div>
+  </div>
+
+  <div class="alert alert-info" *ngIf="copyFromId && copiedFromOrderNumber">
+    Đang tạo đơn mới sao chép từ đơn <strong>{{ copiedFromOrderNumber }}</strong>. Mã cọc tiền và ghi chú nội bộ không được sao chép — kiểm tra lại số lượng, giá và thông tin giao hàng trước khi lưu.
   </div>
 
   <div class="alert alert-danger" *ngIf="errorMessage">{{ errorMessage }}</div>

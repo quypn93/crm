@@ -154,6 +154,10 @@ export class OrderDetailComponent implements OnInit {
            this.authService.hasAnyRole(['Admin', 'SalesManager', 'SalesRep']);
   }
 
+  canCreateOrder(): boolean {
+    return this.authService.canCreateOrders();
+  }
+
   canConfirmOrder(): boolean {
     return this.order?.status === OrderStatus.Draft &&
            this.authService.hasAnyRole(['Admin', 'SalesManager', 'SalesRep']);
@@ -300,6 +304,12 @@ export class OrderDetailComponent implements OnInit {
   editOrder(): void {
     if (this.order) {
       this.router.navigate(['/orders', this.order.id, 'edit']);
+    }
+  }
+
+  copyOrder(): void {
+    if (this.order) {
+      this.router.navigate(['/orders/new'], { queryParams: { copyFrom: this.order.id } });
     }
   }
 
