@@ -152,14 +152,9 @@ export class LeaderboardComponent implements OnInit {
     return `${entry.count} ${this.countUnitLabel}`;
   }
 
+  // Mọi bộ phận đều xếp hạng theo số đơn hàng.
   get countUnitLabel(): string {
-    switch (this.scope) {
-      case LeaderboardScope.Sales: return 'đơn';
-      case LeaderboardScope.Design: return 'thiết kế';
-      case LeaderboardScope.Production: return 'công đoạn';
-      case LeaderboardScope.Delivery: return 'đơn';
-      default: return '';
-    }
+    return 'đơn';
   }
 
   formatMillions(value: number): string {

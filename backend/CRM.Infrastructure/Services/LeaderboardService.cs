@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 namespace CRM.Infrastructure.Services;
 
 // Bảng xếp hạng hiệu suất theo bộ phận (Sales/Design/Production/Delivery) — ai cũng xem được,
-// không phân biệt vai trò. Sales xếp theo doanh số đơn phụ trách; các bộ phận còn lại xếp theo
-// số lượng công việc hoàn thành (không có khái niệm "doanh số" riêng).
+// không phân biệt vai trò. Mọi bộ phận đều xếp theo SỐ ĐƠN HÀNG (Sales có thêm doanh số) —
+// không tính theo số lượng công việc/công đoạn hoàn thành.
 public class LeaderboardService : ILeaderboardService
 {
     private readonly CrmDbContext _db;
@@ -53,19 +53,12 @@ public class LeaderboardService : ILeaderboardService
             PeriodLabel = label,
             UpdatedAt = DateTime.UtcNow,
             PrimaryMetric = scope == LeaderboardScope.Sales ? "revenue" : "count",
-            CountLabel = GetCountLabel(scope),
+            CountLabel = CountLabel,
             Entries = entries
         };
     }
 
-    private static string GetCountLabel(LeaderboardScope scope) => scope switch
-    {
-        LeaderboardScope.Sales => "Số đơn",
-        LeaderboardScope.Design => "Thiết kế hoàn thành",
-        LeaderboardScope.Production => "Công đoạn hoàn thành",
-        LeaderboardScope.Delivery => "Đơn đã giao",
-        _ => "Số lượng"
-    };
+    private const string CountLabel = "Số đơn";
 
     private static decimal? ComputeGrowth(decimal current, decimal previous)
     {
@@ -89,24 +82,28 @@ public class LeaderboardService : ILeaderboardService
                     .ToListAsync();
 
             case LeaderboardScope.Design:
-                return await _db.Designs
-                    .Where(d => d.AssignedToUserId != null
-                             && d.Status == DesignStatus.Completed
-                             && d.CompletedAt != null
-                             && d.CompletedAt >= start && d.CompletedAt < end)
-                    .GroupBy(d => d.AssignedToUserId!.Value)
+                // Đếm số ĐƠN HÀNG designer phụ trách (Order.DesignerUserId) — không đếm số bản ghi Design.
+                return await _db.Orders
+                    .Where(o => o.DesignerUserId != null
+                             && o.Status != OrderStatus.Cancelled
+                             && o.OrderDate >= start && o.OrderDate < end)
+                    .GroupBy(o => o.DesignerUserId!.Value)
                     .Select(g => new AggregateRow(g.Key, g.Count(), g.Count()))
                     .ToListAsync();
 
             case LeaderboardScope.Production:
-                return await _db.Set<CRM.Core.Entities.OrderProductionStep>()
+                // Đếm số ĐƠN HÀNG khác nhau (không đếm số công đoạn) mà nhân viên có hoàn thành ít nhất 1 công đoạn trong kỳ.
+                return (await _db.Set<CRM.Core.Entities.OrderProductionStep>()
                     .Where(s => s.CompletedByUserId != null
                              && s.IsCompleted
                              && s.CompletedAt != null
                              && s.CompletedAt >= start && s.CompletedAt < end)
-                    .GroupBy(s => s.CompletedByUserId!.Value)
+                    .Select(s => new { UserId = s.CompletedByUserId!.Value, s.OrderId })
+                    .Distinct()
+                    .ToListAsync())
+                    .GroupBy(x => x.UserId)
                     .Select(g => new AggregateRow(g.Key, g.Count(), g.Count()))
-                    .ToListAsync();
+                    .ToList();
 
             case LeaderboardScope.Delivery:
                 // Không có cột ShippedDate riêng — dùng UpdatedAt của đơn ở trạng thái Đã giao/Hoàn thành làm mốc thời gian giao hàng.
