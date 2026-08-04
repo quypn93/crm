@@ -192,7 +192,7 @@
                 ✓ Xác nhận
               </button>
               <button
-                *ngIf="canConfirmOrder() && order.status === OrderStatus.Confirmed"
+                *ngIf="canMoveToProduction() && order.status === OrderStatus.Confirmed"
                 class="btn-production"
                 title="Chuyển sang sản xuất"
                 (click)="moveToProduction(order)">

@@ -13,7 +13,8 @@ public static class OrderStatusTransitionValidator
         { (OrderStatus.Draft, OrderStatus.Cancelled), new[] { RoleNames.Admin, RoleNames.SalesManager, RoleNames.SalesRep } },
 
         // Confirmed transitions
-        { (OrderStatus.Confirmed, OrderStatus.InProduction), new[] { RoleNames.Admin, RoleNames.SalesManager, RoleNames.SalesRep, RoleNames.ProductionManager } },
+        // Chỉ Admin được chuyển đơn sang sản xuất — Sale/ProductionManager không tự gửi xưởng được.
+        { (OrderStatus.Confirmed, OrderStatus.InProduction), new[] { RoleNames.Admin } },
         { (OrderStatus.Confirmed, OrderStatus.Cancelled), new[] { RoleNames.Admin, RoleNames.SalesManager, RoleNames.SalesRep } },
 
         // InProduction transitions

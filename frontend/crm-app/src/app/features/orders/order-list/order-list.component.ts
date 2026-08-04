@@ -457,6 +457,11 @@ export class OrderListComponent implements OnInit {
     return this.authService.hasAnyRole(['Admin', 'SalesManager', 'SalesRep']);
   }
 
+  // Gửi xưởng (Đã xác nhận → Đang sản xuất) — chỉ Admin, khớp với OrderStatusTransitionValidator ở backend.
+  canMoveToProduction(): boolean {
+    return this.authService.hasAnyRole(['Admin']);
+  }
+
   canEditOrderInList(order: Order): boolean {
     const editableStatuses = [OrderStatus.Draft, OrderStatus.Confirmed];
     return editableStatuses.includes(order.status) &&
