@@ -187,7 +187,8 @@ export class OrderFormComponent implements OnInit {
         accentColorId: [''],
         accentColor2Id: [''],
         collarId: [''],
-        // Màu bo cổ (1..3 ô) — chọn tự do từ AccentColor, số ô hiện phụ thuộc Collar.colorCount đang chọn.
+        // Màu bo cổ (1..3 ô, số ô hiện phụ thuộc Collar.colorCount): ô 1 (chính) ăn theo chất liệu
+        // giống mainColorId, ô 2 & 3 (phối) chọn tự do từ AccentColor giống accentColorId/accentColor2Id.
         collarColor1Id: [''],
         collarColor2Id: [''],
         collarColor3Id: [''],
@@ -528,16 +529,15 @@ export class OrderFormComponent implements OnInit {
     return !!this.orderForm.get('productInfo.materialId')?.value;
   }
 
-  // Khoá ô màu chính khi chưa chọn chất liệu. Màu phối (1 & 2) và Bo cổ chọn tự do,
-  // không phụ thuộc chất liệu nên không bị khoá/xoá ở đây.
+  // Khoá ô màu chính + màu bo cổ chính khi chưa chọn chất liệu (cùng rule, ăn theo ColorFabric).
+  // Màu phối (1 & 2) và màu bo cổ phối (1 & 2) chọn tự do, không phụ thuộc chất liệu nên không bị khoá/xoá ở đây.
   private updateColorControlsState(): void {
     const pi = this.orderForm.get('productInfo');
-    const main = pi?.get('mainColorId');
+    const controls = [pi?.get('mainColorId'), pi?.get('collarColor1Id')];
     if (this.hasMaterialSelected()) {
-      main?.enable({ emitEvent: false });
+      controls.forEach(c => c?.enable({ emitEvent: false }));
     } else {
-      main?.setValue('', { emitEvent: false });
-      main?.disable({ emitEvent: false });
+      controls.forEach(c => { c?.setValue('', { emitEvent: false }); c?.disable({ emitEvent: false }); });
     }
   }
 
@@ -585,6 +585,7 @@ export class OrderFormComponent implements OnInit {
       if (v && !this.filteredColors.find(x => x.id === v)) pi?.get(key)?.setValue('');
     };
     clearIfMissing('mainColorId');
+    clearIfMissing('collarColor1Id');
   }
 
   private recalcDates(): void {
