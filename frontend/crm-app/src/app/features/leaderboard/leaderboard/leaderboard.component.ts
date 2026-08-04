@@ -136,6 +136,11 @@ export class LeaderboardComponent implements OnInit {
     return list.filter(e => e.fullName.toLowerCase().includes(term));
   }
 
+  // # | Nhân viên | (Số đơn — chỉ Sales) | Doanh thu/countLabel | Tiến độ KPI | Tăng trưởng
+  get visibleColumnCount(): number {
+    return this.scope === LeaderboardScope.Sales ? 6 : 5;
+  }
+
   headlineValue(entry: LeaderboardEntry): number {
     return this.scope === LeaderboardScope.Sales && this.headlineMode === 'revenue' ? entry.revenue : entry.count;
   }

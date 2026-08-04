@@ -132,7 +132,7 @@
           </td>
         </tr>
         <tr *ngIf="!rest.length && !isLoading">
-          <td colspan="6" class="lb-empty-row">{{ (result?.entries?.length || 0) <= 3 ? 'Không còn nhân viên nào khác trong kỳ này.' : 'Không tìm thấy.' }}</td>
+          <td [attr.colspan]="visibleColumnCount" class="lb-empty-row">{{ (result?.entries?.length || 0) <= 3 ? 'Không còn nhân viên nào khác trong kỳ này.' : 'Không tìm thấy.' }}</td>
         </tr>
       </tbody>
     </table>
