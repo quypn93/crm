@@ -119,6 +119,12 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
       .reduce((sum, item) => sum + item.quantity, 0);
   }
 
+  // Ẩn số 0: nếu size không có số lượng thì để trống thay vì hiển thị 0.
+  getSizeQtyDisplay(size: string, gender?: 'NAM' | 'NU'): string {
+    const qty = this.getSizeQty(size, gender);
+    return qty > 0 ? String(qty) : '';
+  }
+
   getTotalQty(): number {
     return (this.order.items || []).reduce((sum, item) => sum + item.quantity, 0);
   }

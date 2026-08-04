@@ -32,12 +32,12 @@
             </tr>
             <tr>
               <th>NAM</th>
-              <td *ngFor="let size of ADULT_SIZES">{{ getSizeQty(size, 'NAM') }}</td>
+              <td *ngFor="let size of ADULT_SIZES">{{ getSizeQtyDisplay(size, 'NAM') }}</td>
               <td class="total-cell" rowspan="2">{{ getTotalQty() }}</td>
             </tr>
             <tr>
               <th>NỮ</th>
-              <td *ngFor="let size of ADULT_SIZES">{{ getSizeQty(size, 'NU') }}</td>
+              <td *ngFor="let size of ADULT_SIZES">{{ getSizeQtyDisplay(size, 'NU') }}</td>
             </tr>
           </tbody>
         </table>
@@ -51,7 +51,7 @@
             </tr>
             <tr>
               <ng-container *ngFor="let gender of ['NAM', 'NU']">
-                <td *ngFor="let size of CHILD_SIZES">{{ getSizeQty(size, gender === 'NAM' ? 'NAM' : 'NU') }}</td>
+                <td *ngFor="let size of CHILD_SIZES">{{ getSizeQtyDisplay(size, gender === 'NAM' ? 'NAM' : 'NU') }}</td>
               </ng-container>
             </tr>
           </tbody>
@@ -67,7 +67,7 @@
               <th>TỔNG</th>
             </tr>
             <tr>
-              <td *ngFor="let size of ADULT_SIZES">{{ getSizeQty(size) }}</td>
+              <td *ngFor="let size of ADULT_SIZES">{{ getSizeQtyDisplay(size) }}</td>
               <td class="total-cell">{{ getTotalQty() }}</td>
             </tr>
           </tbody>
@@ -79,7 +79,7 @@
               <th *ngFor="let size of CHILD_SIZES">{{ size }}</th>
             </tr>
             <tr>
-              <td *ngFor="let size of CHILD_SIZES">{{ getSizeQty(size) }}</td>
+              <td *ngFor="let size of CHILD_SIZES">{{ getSizeQtyDisplay(size) }}</td>
             </tr>
           </tbody>
         </table>
