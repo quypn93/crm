@@ -342,10 +342,12 @@
 .actions-col {
   width: 140px;
   text-align: left;
+  vertical-align: middle;
 }
 
 .action-buttons {
   display: flex;
+  flex-wrap: nowrap;
   gap: 6px;
   justify-content: flex-start;
   align-items: center;
