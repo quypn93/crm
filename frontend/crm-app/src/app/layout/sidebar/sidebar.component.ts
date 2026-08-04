@@ -28,6 +28,8 @@ export class SidebarComponent implements OnInit {
     { label: 'Đơn hàng', icon: 'orders', route: '/orders', roles: RoleGroups.OrderRoles, exact: false },
     { label: 'Đơn kho của tôi', icon: 'orders', route: '/orders/my-warehouse', roles: [RoleNames.Admin, RoleNames.WarehouseManager], exact: true },
     { label: 'Công việc', icon: 'tasks', route: '/tasks', exact: false },
+    // Không giới hạn role — ai đăng nhập cũng xem được bảng xếp hạng.
+    { label: 'Bảng xếp hạng', icon: 'chart', route: '/leaderboard', exact: true },
     { label: 'Giao thiết kế', icon: 'design', route: '/designs/assign', roles: RoleGroups.SalesRoles, exact: true },
     { label: 'Thiết kế của tôi', icon: 'design', route: '/designs/my-tasks', roles: [RoleNames.Admin, RoleNames.DesignManager, RoleNames.Designer], exact: true },
     // Thư viện — exact:false để active khi ở mọi sub-route /designs/* (bao gồm detail /designs/:id).

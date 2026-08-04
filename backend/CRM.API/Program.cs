@@ -238,6 +238,7 @@ builder.Services.AddScoped<ICollarService, CollarService>();
 builder.Services.AddScoped<IProductionDaysOptionService, ProductionDaysOptionService>();
 builder.Services.AddScoped<IDepositTransactionService, DepositTransactionService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
+builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 
 // Tài chính — chi phí & báo cáo lãi/lỗ (chỉ Admin + Kế toán truy cập được)
 builder.Services.AddScoped<IOrderCostService, CRM.Infrastructure.Services.Finance.OrderCostService>();

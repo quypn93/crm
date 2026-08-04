@@ -1,0 +1,141 @@
+<div class="lb-page">
+
+  <!-- Header -->
+  <div class="lb-header">
+    <div class="lb-title">
+      <span class="lb-trophy">🏆</span>
+      <div>
+        <h1>Bảng xếp hạng</h1>
+        <span class="lb-updated" *ngIf="result">🔄 Cập nhật {{ formatUpdatedAt(result.updatedAt) }} hôm nay</span>
+      </div>
+    </div>
+
+    <div class="lb-controls">
+      <!-- Chọn bộ phận -->
+      <div class="lb-scope-picker">
+        <button class="lb-scope-btn" (click)="showScopeMenu = !showScopeMenu">
+          <span>{{ scopeIcon }}</span>
+          <span>{{ scopeLabel }}</span>
+          <span class="lb-caret">▾</span>
+        </button>
+        <div class="lb-scope-backdrop" *ngIf="showScopeMenu" (click)="showScopeMenu = false"></div>
+        <div class="lb-scope-menu" *ngIf="showScopeMenu">
+          <button type="button" *ngFor="let s of scopeOptions"
+                  [class.active]="s.value === scope"
+                  (click)="selectScope(s.value)">
+            <span>{{ s.icon }}</span> {{ s.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Điều hướng kỳ -->
+      <div class="lb-period-nav">
+        <button class="lb-nav-arrow" (click)="navigatePeriod(-1)" title="Kỳ trước">‹</button>
+        <span class="lb-period-label">{{ result?.periodLabel || '—' }}</span>
+        <button class="lb-nav-arrow" (click)="navigatePeriod(1)" title="Kỳ sau">›</button>
+        <button class="lb-today-btn" (click)="goToday()">Hôm nay</button>
+      </div>
+
+      <!-- Tuần / Tháng / Quý -->
+      <div class="lb-period-type">
+        <button *ngFor="let p of periodOptions"
+                [class.active]="p.value === period"
+                (click)="selectPeriod(p.value)">{{ p.label }}</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Podium -->
+  <div class="lb-podium-card">
+    <div class="lb-podium-header">
+      <div>
+        <div class="lb-podium-title">TOP 3 NHÂN VIÊN</div>
+        <div class="lb-podium-subtitle">Hiệu suất làm việc dẫn đầu {{ (result?.periodLabel || '') | lowercase }}</div>
+      </div>
+      <div class="lb-headline-toggle" *ngIf="scope === LeaderboardScope.Sales">
+        <button [class.active]="headlineMode === 'revenue'" (click)="headlineMode = 'revenue'">Doanh số</button>
+        <button [class.active]="headlineMode === 'count'" (click)="headlineMode = 'count'">Số đơn</button>
+      </div>
+    </div>
+
+    <div class="lb-podium-stage">
+      <!-- Hạt confetti trang trí nền -->
+      <span class="lb-particle" *ngFor="let p of particles"
+            [style.left.%]="p.left" [style.top.%]="p.top" [style.width.px]="p.size" [style.height.px]="p.size"
+            [style.background]="p.color" [style.animation-delay.s]="p.delay" [style.animation-duration.s]="p.duration">
+      </span>
+
+      <div class="lb-podium-row" *ngIf="result">
+        <ng-container *ngFor="let entry of podiumOrder; let i = index">
+          <div class="lb-podium-slot" *ngIf="entry" [class]="'rank-' + entry.rank">
+            <span class="lb-crown" *ngIf="entry.rank === 1">👑</span>
+            <div class="lb-avatar" [style.background]="getAvatarColor(entry.fullName)">
+              {{ getInitials(entry.fullName) }}
+              <span class="lb-rank-badge">{{ entry.rank }}</span>
+            </div>
+            <div class="lb-podium-name">{{ entry.fullName }}</div>
+            <div class="lb-podium-value">{{ headlineText(entry) }}</div>
+            <div class="lb-podium-growth" *ngIf="entry.growthPercent !== null && entry.growthPercent !== undefined"
+                 [class.up]="entry.growthPercent >= 0" [class.down]="entry.growthPercent < 0">
+              {{ entry.growthPercent >= 0 ? '▲' : '▼' }} {{ (entry.growthPercent >= 0 ? entry.growthPercent : -entry.growthPercent) | number:'1.1-1' }}%
+            </div>
+            <div class="lb-pedestal"><span>{{ entry.rank }}</span></div>
+          </div>
+          <div class="lb-podium-slot empty" *ngIf="!entry"></div>
+        </ng-container>
+      </div>
+
+      <div class="lb-empty" *ngIf="result && !top3.length">Chưa có dữ liệu trong kỳ này.</div>
+      <div class="lb-empty" *ngIf="isLoading">Đang tải...</div>
+    </div>
+  </div>
+
+  <!-- Bảng đầy đủ -->
+  <div class="lb-table-card">
+    <div class="lb-table-header">
+      <h2>TOP NHÂN VIÊN</h2>
+      <div class="lb-search">
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Tìm nhân sự...">
+      </div>
+    </div>
+
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th class="col-rank">#</th>
+          <th>Nhân viên</th>
+          <th class="text-right" *ngIf="scope === LeaderboardScope.Sales">Số đơn</th>
+          <th class="text-right">{{ scope === LeaderboardScope.Sales ? 'Doanh thu' : result?.countLabel }}</th>
+          <th>Tiến độ KPI</th>
+          <th>Tăng trưởng</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let entry of rest">
+          <td class="col-rank">{{ entry.rank }}</td>
+          <td>
+            <div class="lb-row-user">
+              <span class="lb-mini-avatar" [style.background]="getAvatarColor(entry.fullName)">{{ getInitials(entry.fullName) }}</span>
+              {{ entry.fullName }}
+            </div>
+          </td>
+          <td class="text-right" *ngIf="scope === LeaderboardScope.Sales">{{ entry.count }} đơn</td>
+          <td class="text-right">
+            {{ scope === LeaderboardScope.Sales ? formatMillions(entry.revenue) : (entry.count + ' ' + countUnitLabel) }}
+          </td>
+          <td class="lb-kpi">Chưa thiết lập</td>
+          <td>
+            <span *ngIf="entry.growthPercent === null || entry.growthPercent === undefined" class="lb-growth-na">—</span>
+            <span *ngIf="entry.growthPercent !== null && entry.growthPercent !== undefined"
+                  class="lb-growth" [class.up]="entry.growthPercent >= 0" [class.down]="entry.growthPercent < 0">
+              {{ entry.growthPercent >= 0 ? '▲' : '▼' }} {{ (entry.growthPercent >= 0 ? entry.growthPercent : -entry.growthPercent) | number:'1.1-1' }}%
+            </span>
+          </td>
+        </tr>
+        <tr *ngIf="!rest.length && !isLoading">
+          <td colspan="6" class="lb-empty-row">{{ (result?.entries?.length || 0) <= 3 ? 'Không còn nhân viên nào khác trong kỳ này.' : 'Không tìm thấy.' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
