@@ -224,7 +224,9 @@ public abstract class SimpleLookupServiceBase<TEntity> where TEntity : BaseEntit
     public async Task<IEnumerable<LookupItemDto>> GetAllAsync()
     {
         var list = await DbSet.ToListAsync();
-        return list.Select(ToDto);
+        // Sắp theo Name — DB không đảm bảo thứ tự insert (Postgres trả theo thứ tự vật lý/hash),
+        // dropdown như Bo cổ (X-00..X-15) cần hiện đúng thứ tự.
+        return list.Select(ToDto).OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase);
     }
 
     public async Task<LookupItemDto> CreateAsync(CreateLookupItemDto dto)
