@@ -218,7 +218,7 @@ public abstract class SimpleLookupServiceBase<TEntity> where TEntity : BaseEntit
     protected SimpleLookupServiceBase(CrmDbContext db) { _db = db; }
 
     protected abstract DbSet<TEntity> DbSet { get; }
-    protected abstract void SetFields(TEntity e, string name, string? description, bool isActive);
+    protected abstract void SetFields(TEntity e, string name, string? description, bool isActive, int? colorCount);
     protected abstract LookupItemDto ToDto(TEntity e);
 
     public async Task<IEnumerable<LookupItemDto>> GetAllAsync()
@@ -230,7 +230,7 @@ public abstract class SimpleLookupServiceBase<TEntity> where TEntity : BaseEntit
     public async Task<LookupItemDto> CreateAsync(CreateLookupItemDto dto)
     {
         var e = new TEntity();
-        SetFields(e, dto.Name, dto.Description, dto.IsActive);
+        SetFields(e, dto.Name, dto.Description, dto.IsActive, dto.ColorCount);
         DbSet.Add(e);
         await _db.SaveChangesAsync();
         return ToDto(e);
@@ -239,7 +239,7 @@ public abstract class SimpleLookupServiceBase<TEntity> where TEntity : BaseEntit
     public async Task<LookupItemDto> UpdateAsync(UpdateLookupItemDto dto)
     {
         var e = await DbSet.FindAsync(dto.Id) ?? throw new KeyNotFoundException();
-        SetFields(e, dto.Name, dto.Description, dto.IsActive);
+        SetFields(e, dto.Name, dto.Description, dto.IsActive, dto.ColorCount);
         await _db.SaveChangesAsync();
         return ToDto(e);
     }
@@ -256,7 +256,7 @@ public class MaterialService : SimpleLookupServiceBase<Material>, IMaterialServi
 {
     public MaterialService(CrmDbContext db) : base(db) { }
     protected override DbSet<Material> DbSet => _db.Materials;
-    protected override void SetFields(Material e, string name, string? description, bool isActive)
+    protected override void SetFields(Material e, string name, string? description, bool isActive, int? colorCount)
     { e.Name = name; e.Description = description; e.IsActive = isActive; }
     protected override LookupItemDto ToDto(Material e) => new() { Id = e.Id, Name = e.Name, Description = e.Description, IsActive = e.IsActive };
 }
@@ -265,7 +265,7 @@ public class ProductFormService : SimpleLookupServiceBase<ProductForm>, IProduct
 {
     public ProductFormService(CrmDbContext db) : base(db) { }
     protected override DbSet<ProductForm> DbSet => _db.ProductForms;
-    protected override void SetFields(ProductForm e, string name, string? description, bool isActive)
+    protected override void SetFields(ProductForm e, string name, string? description, bool isActive, int? colorCount)
     { e.Name = name; e.Description = description; e.IsActive = isActive; }
     protected override LookupItemDto ToDto(ProductForm e) => new() { Id = e.Id, Name = e.Name, Description = e.Description, IsActive = e.IsActive };
 }
@@ -274,7 +274,7 @@ public class ProductSpecificationService : SimpleLookupServiceBase<ProductSpecif
 {
     public ProductSpecificationService(CrmDbContext db) : base(db) { }
     protected override DbSet<ProductSpecification> DbSet => _db.ProductSpecifications;
-    protected override void SetFields(ProductSpecification e, string name, string? description, bool isActive)
+    protected override void SetFields(ProductSpecification e, string name, string? description, bool isActive, int? colorCount)
     { e.Name = name; e.Description = description; e.IsActive = isActive; }
     protected override LookupItemDto ToDto(ProductSpecification e) => new() { Id = e.Id, Name = e.Name, Description = e.Description, IsActive = e.IsActive };
 }
@@ -283,7 +283,7 @@ public class OrderTypeService : SimpleLookupServiceBase<OrderType>, IOrderTypeSe
 {
     public OrderTypeService(CrmDbContext db) : base(db) { }
     protected override DbSet<OrderType> DbSet => _db.OrderTypes;
-    protected override void SetFields(OrderType e, string name, string? description, bool isActive)
+    protected override void SetFields(OrderType e, string name, string? description, bool isActive, int? colorCount)
     { e.Name = name; e.Description = description; e.IsActive = isActive; }
     protected override LookupItemDto ToDto(OrderType e) => new() { Id = e.Id, Name = e.Name, Description = e.Description, IsActive = e.IsActive };
 }
@@ -293,7 +293,7 @@ public class AccentColorService : SimpleLookupServiceBase<AccentColor>, IAccentC
 {
     public AccentColorService(CrmDbContext db) : base(db) { }
     protected override DbSet<AccentColor> DbSet => _db.AccentColors;
-    protected override void SetFields(AccentColor e, string name, string? description, bool isActive)
+    protected override void SetFields(AccentColor e, string name, string? description, bool isActive, int? colorCount)
     { e.Name = name; e.Description = description; e.IsActive = isActive; }
     protected override LookupItemDto ToDto(AccentColor e) => new() { Id = e.Id, Name = e.Name, Description = e.Description, IsActive = e.IsActive };
 }
@@ -302,9 +302,13 @@ public class CollarService : SimpleLookupServiceBase<Collar>, ICollarService
 {
     public CollarService(CrmDbContext db) : base(db) { }
     protected override DbSet<Collar> DbSet => _db.Collars;
-    protected override void SetFields(Collar e, string name, string? description, bool isActive)
-    { e.Name = name; e.Description = description; e.IsActive = isActive; }
-    protected override LookupItemDto ToDto(Collar e) => new() { Id = e.Id, Name = e.Name, Description = e.Description, IsActive = e.IsActive };
+    protected override void SetFields(Collar e, string name, string? description, bool isActive, int? colorCount)
+    {
+        e.Name = name; e.Description = description; e.IsActive = isActive;
+        // Kẹp về 1..3 — số selectbox "Màu bo cổ" tối đa hỗ trợ ở form đơn hàng (CollarColor1/2/3).
+        e.ColorCount = Math.Clamp(colorCount ?? e.ColorCount, 1, 3);
+    }
+    protected override LookupItemDto ToDto(Collar e) => new() { Id = e.Id, Name = e.Name, Description = e.Description, IsActive = e.IsActive, ColorCount = e.ColorCount };
 }
 
 public class ProductionDaysOptionService : IProductionDaysOptionService

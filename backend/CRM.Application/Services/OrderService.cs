@@ -628,6 +628,9 @@ public class OrderService : IOrderService
             AccentColorId = itemDto.AccentColorId,
             AccentColor2Id = itemDto.AccentColor2Id,
             CollarId = itemDto.CollarId,
+            CollarColor1Id = itemDto.CollarColor1Id,
+            CollarColor2Id = itemDto.CollarColor2Id,
+            CollarColor3Id = itemDto.CollarColor3Id,
             MaterialId = itemDto.MaterialId,
             FormId = itemDto.FormId,
             SpecificationId = itemDto.SpecificationId,
@@ -653,6 +656,13 @@ public class OrderService : IOrderService
             item.AccentColor2Name = (await _unitOfWork.AccentColors.GetByIdAsync(itemDto.AccentColor2Id.Value))?.Name;
         if (itemDto.CollarId.HasValue)
             item.CollarName = (await _unitOfWork.Collars.GetByIdAsync(itemDto.CollarId.Value))?.Name;
+        // Màu bo cổ (1..3) — cùng danh mục AccentColor, chọn tự do như Màu phối.
+        if (itemDto.CollarColor1Id.HasValue)
+            item.CollarColor1Name = (await _unitOfWork.AccentColors.GetByIdAsync(itemDto.CollarColor1Id.Value))?.Name;
+        if (itemDto.CollarColor2Id.HasValue)
+            item.CollarColor2Name = (await _unitOfWork.AccentColors.GetByIdAsync(itemDto.CollarColor2Id.Value))?.Name;
+        if (itemDto.CollarColor3Id.HasValue)
+            item.CollarColor3Name = (await _unitOfWork.AccentColors.GetByIdAsync(itemDto.CollarColor3Id.Value))?.Name;
         if (itemDto.MaterialId.HasValue)
             item.MaterialName = (await _unitOfWork.Materials.GetByIdAsync(itemDto.MaterialId.Value))?.Name;
         if (itemDto.FormId.HasValue)

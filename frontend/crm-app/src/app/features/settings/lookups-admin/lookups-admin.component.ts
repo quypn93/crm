@@ -14,7 +14,7 @@ import { ColorFabric, DesignService } from '../../../core/services/design.servic
       </div>
 
       <table class="table">
-        <thead><tr><th>Tên</th><th>Mô tả</th><th *ngIf="isMaterials">Màu sắc</th><th>Trạng thái</th><th></th></tr></thead>
+        <thead><tr><th>Tên</th><th>Mô tả</th><th *ngIf="isMaterials">Màu sắc</th><th *ngIf="isCollars">Số màu</th><th>Trạng thái</th><th></th></tr></thead>
         <tbody>
           <tr *ngFor="let m of items">
             <td>{{ m.name }}</td>
@@ -23,6 +23,7 @@ import { ColorFabric, DesignService } from '../../../core/services/design.servic
               <span class="color-chip" *ngFor="let c of colorsOf(m.id)">{{ c.name }}</span>
               <span class="muted" *ngIf="!colorsOf(m.id).length">—</span>
             </td>
+            <td *ngIf="isCollars">{{ m.colorCount || 1 }}</td>
             <td>{{ m.isActive ? 'Đang dùng' : 'Tắt' }}</td>
             <td>
               <button class="btn btn-sm" (click)="edit(m)">Sửa</button>
@@ -51,6 +52,16 @@ import { ColorFabric, DesignService } from '../../../core/services/design.servic
               <input type="checkbox" [(ngModel)]="formData.isActive">
               Đang dùng
             </label>
+
+            <!-- Số lượng màu bo cổ (chỉ resource collars) — quyết định số selectbox "Màu bo cổ" ở đơn hàng -->
+            <div class="form-group" *ngIf="isCollars">
+              <label>Số lượng màu *</label>
+              <select [(ngModel)]="formData.colorCount">
+                <option [ngValue]="1">1 màu (chỉ màu chính)</option>
+                <option [ngValue]="2">2 màu (màu chính + màu phối)</option>
+                <option [ngValue]="3">3 màu (màu chính + màu phối 1 + màu phối 2)</option>
+              </select>
+            </div>
 
             <!-- Quản lý màu sắc của chất liệu (chỉ resource materials) -->
             <div class="colors-section" *ngIf="isMaterials">
@@ -147,6 +158,7 @@ export class LookupsAdminComponent implements OnInit {
   ) {}
 
   get isMaterials(): boolean { return this.resource === 'materials'; }
+  get isCollars(): boolean { return this.resource === 'collars'; }
 
   ngOnInit(): void {
     this.route.data.subscribe(d => {
@@ -174,7 +186,7 @@ export class LookupsAdminComponent implements OnInit {
 
   openNew(): void {
     this.editing = null;
-    this.formData = { name: '', description: '', isActive: true };
+    this.formData = { name: '', description: '', isActive: true, colorCount: 1 };
     this.colors = [];
     this.resetColorInputs();
     this.showForm = true;
@@ -182,7 +194,7 @@ export class LookupsAdminComponent implements OnInit {
 
   edit(m: LookupItem): void {
     this.editing = m;
-    this.formData = { name: m.name, description: m.description || '', isActive: m.isActive };
+    this.formData = { name: m.name, description: m.description || '', isActive: m.isActive, colorCount: m.colorCount || 1 };
     this.colors = this.colorsOf(m.id);
     this.resetColorInputs();
     this.showForm = true;

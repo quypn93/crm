@@ -189,6 +189,31 @@
             </select>
           </div>
 
+          <!-- Màu bo cổ — chọn tự do (danh mục Màu phối), số ô hiện theo số màu của bo cổ đang chọn -->
+          <div class="form-group" *ngIf="collarColorSlotCount() >= 1">
+            <label>Màu bo cổ{{ collarColorSlotCount() > 1 ? ' 1' : '' }}</label>
+            <select formControlName="collarColor1Id">
+              <option value="">-- Chọn màu --</option>
+              <option *ngFor="let c of accentColors" [value]="c.id">{{ c.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="collarColorSlotCount() >= 2">
+            <label>Màu bo cổ 2</label>
+            <select formControlName="collarColor2Id">
+              <option value="">-- Chọn màu --</option>
+              <option *ngFor="let c of accentColors" [value]="c.id">{{ c.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group" *ngIf="collarColorSlotCount() >= 3">
+            <label>Màu bo cổ 3</label>
+            <select formControlName="collarColor3Id">
+              <option value="">-- Chọn màu --</option>
+              <option *ngFor="let c of accentColors" [value]="c.id">{{ c.name }}</option>
+            </select>
+          </div>
+
           <!-- Form dáng -->
           <div class="form-group">
             <label>Form <span class="required">*</span></label>

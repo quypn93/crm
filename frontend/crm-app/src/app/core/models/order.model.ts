@@ -84,6 +84,9 @@ export interface OrderItem {
   accentColorId?: string;
   accentColor2Id?: string;
   collarId?: string;
+  collarColor1Id?: string;
+  collarColor2Id?: string;
+  collarColor3Id?: string;
   materialId?: string;
   formId?: string;
   specificationId?: string;
@@ -91,6 +94,9 @@ export interface OrderItem {
   accentColorName?: string;
   accentColor2Name?: string;
   collarName?: string;
+  collarColor1Name?: string;
+  collarColor2Name?: string;
+  collarColor3Name?: string;
   materialName?: string;
   formName?: string;
   specificationName?: string;
@@ -214,6 +220,9 @@ export interface CreateOrderItemRequest {
   accentColorId?: string;
   accentColor2Id?: string;
   collarId?: string;
+  collarColor1Id?: string;
+  collarColor2Id?: string;
+  collarColor3Id?: string;
   materialId?: string;
   formId?: string;
   specificationId?: string;

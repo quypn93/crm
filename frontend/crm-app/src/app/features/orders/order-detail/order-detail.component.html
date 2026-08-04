@@ -378,6 +378,7 @@
                   <span *ngIf="item.accentColorName"> · Phối 1: {{ item.accentColorName }}</span>
                   <span *ngIf="item.accentColor2Name"> · Phối 2: {{ item.accentColor2Name }}</span>
                   <span *ngIf="item.collarName"> · Bo cổ: {{ item.collarName }}</span>
+                  <span *ngIf="collarColorsLabel(item)"> ({{ collarColorsLabel(item) }})</span>
                 </td>
                 <td class="text-right" data-label="SL">{{ item.quantity }} {{ item.unit }}</td>
                 <td class="text-right" data-label="Đơn giá">{{ formatCurrency(item.unitPrice) }}</td>

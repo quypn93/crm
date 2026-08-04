@@ -165,6 +165,9 @@ public class OrderItemDto
     public Guid? AccentColorId { get; set; }
     public Guid? AccentColor2Id { get; set; }
     public Guid? CollarId { get; set; }
+    public Guid? CollarColor1Id { get; set; }
+    public Guid? CollarColor2Id { get; set; }
+    public Guid? CollarColor3Id { get; set; }
     public Guid? MaterialId { get; set; }
     public Guid? FormId { get; set; }
     public Guid? SpecificationId { get; set; }
@@ -172,6 +175,9 @@ public class OrderItemDto
     public string? AccentColorName { get; set; }
     public string? AccentColor2Name { get; set; }
     public string? CollarName { get; set; }
+    public string? CollarColor1Name { get; set; }
+    public string? CollarColor2Name { get; set; }
+    public string? CollarColor3Name { get; set; }
     public string? MaterialName { get; set; }
     public string? FormName { get; set; }
     public string? SpecificationName { get; set; }
@@ -232,6 +238,9 @@ public class CreateOrderItemDto
     public Guid? AccentColorId { get; set; }
     public Guid? AccentColor2Id { get; set; }
     public Guid? CollarId { get; set; }
+    public Guid? CollarColor1Id { get; set; }
+    public Guid? CollarColor2Id { get; set; }
+    public Guid? CollarColor3Id { get; set; }
     public Guid? MaterialId { get; set; }
     public Guid? FormId { get; set; }
     public Guid? SpecificationId { get; set; }

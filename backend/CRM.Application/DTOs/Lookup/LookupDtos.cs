@@ -6,6 +6,9 @@ public class LookupItemDto
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public bool IsActive { get; set; } = true;
+    // Chỉ có ý nghĩa với Collar (Bo cổ) — số selectbox "Màu bo cổ" cần hiện ở form đơn hàng.
+    // Null với các lookup khác (Material, ProductForm...).
+    public int? ColorCount { get; set; }
 }
 
 public class CreateLookupItemDto
@@ -13,6 +16,7 @@ public class CreateLookupItemDto
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public bool IsActive { get; set; } = true;
+    public int? ColorCount { get; set; }
 }
 
 public class UpdateLookupItemDto : CreateLookupItemDto

@@ -187,6 +187,10 @@ export class OrderFormComponent implements OnInit {
         accentColorId: [''],
         accentColor2Id: [''],
         collarId: [''],
+        // Màu bo cổ (1..3 ô) — chọn tự do từ AccentColor, số ô hiện phụ thuộc Collar.colorCount đang chọn.
+        collarColor1Id: [''],
+        collarColor2Id: [''],
+        collarColor3Id: [''],
         formId: ['', Validators.required],
         specificationId: ['', Validators.required],
         // Cho phép đơn giá 0 (đơn tặng/bù hàng...) — chỉ chặn số âm.
@@ -285,6 +289,7 @@ export class OrderFormComponent implements OnInit {
     this.orderForm.get('productInfo.collectionId')?.valueChanges.subscribe((id: string) => this.onCollectionChange(id));
     this.orderForm.get('productInfo.formId')?.valueChanges.subscribe(() => this.onFormModeChange());
     this.orderForm.get('productInfo.materialId')?.valueChanges.subscribe(() => this.onMaterialChange());
+    this.orderForm.get('productInfo.collarId')?.valueChanges.subscribe(() => this.onCollarChange());
     this.orderForm.get('shippingProvinceCode')?.valueChanges.subscribe((code: string) => this.onProvinceChange(code));
     this.orderForm.get('designId')?.valueChanges.subscribe((id: string) => this.onDesignChange(id));
     this.orderForm.get('depositCode')?.valueChanges.subscribe((code: string) => this.onDepositCodeChange(code));
@@ -536,6 +541,28 @@ export class OrderFormComponent implements OnInit {
     }
   }
 
+  // Bo cổ đang chọn ở form sản phẩm (dùng để biết cần hiện bao nhiêu ô "Màu bo cổ").
+  get selectedCollar(): LookupItem | undefined {
+    const id = this.orderForm.get('productInfo.collarId')?.value;
+    return this.collars.find(c => c.id === id);
+  }
+
+  // Số selectbox "Màu bo cổ" cần hiện: 0 nếu chưa chọn bo cổ, ngược lại theo Collar.colorCount (1..3).
+  collarColorSlotCount(): number {
+    if (!this.selectedCollar) return 0;
+    return Math.min(Math.max(this.selectedCollar.colorCount || 1, 1), 3);
+  }
+
+  // Đổi bo cổ → xoá các ô màu bo cổ vượt quá số lượng màu cho phép của bo cổ mới (màu chọn tự do,
+  // không phụ thuộc chất liệu/màu sản phẩm nên chỉ cần cắt theo số lượng, không cần lọc theo danh sách).
+  private onCollarChange(): void {
+    const pi = this.orderForm.get('productInfo');
+    const count = this.collarColorSlotCount();
+    (['collarColor1Id', 'collarColor2Id', 'collarColor3Id'] as const).forEach((key, idx) => {
+      if (idx >= count) pi?.get(key)?.setValue('', { emitEvent: false });
+    });
+  }
+
   private recomputeFilteredColors(): void {
     const pi = this.orderForm.get('productInfo');
     const collectionId = pi?.get('collectionId')?.value;
@@ -708,6 +735,9 @@ export class OrderFormComponent implements OnInit {
             accentColorId: firstItem.accentColorId || '',
             accentColor2Id: firstItem.accentColor2Id || '',
             collarId: firstItem.collarId || '',
+            collarColor1Id: firstItem.collarColor1Id || '',
+            collarColor2Id: firstItem.collarColor2Id || '',
+            collarColor3Id: firstItem.collarColor3Id || '',
             formId: firstItem.formId || '',
             specificationId: firstItem.specificationId || '',
             unitPrice: firstItem.unitPrice || 0,
@@ -789,6 +819,9 @@ export class OrderFormComponent implements OnInit {
             accentColorId: firstItem.accentColorId || '',
             accentColor2Id: firstItem.accentColor2Id || '',
             collarId: firstItem.collarId || '',
+            collarColor1Id: firstItem.collarColor1Id || '',
+            collarColor2Id: firstItem.collarColor2Id || '',
+            collarColor3Id: firstItem.collarColor3Id || '',
             formId: firstItem.formId || '',
             specificationId: firstItem.specificationId || '',
             unitPrice: firstItem.unitPrice || 0,
@@ -921,6 +954,9 @@ export class OrderFormComponent implements OnInit {
           accentColorId: pi.accentColorId || undefined,
           accentColor2Id: pi.accentColor2Id || undefined,
           collarId: pi.collarId || undefined,
+          collarColor1Id: pi.collarColor1Id || undefined,
+          collarColor2Id: pi.collarColor2Id || undefined,
+          collarColor3Id: pi.collarColor3Id || undefined,
           formId: pi.formId || undefined,
           specificationId: pi.specificationId || undefined,
           size,

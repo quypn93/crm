@@ -20,6 +20,9 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         builder.Property(oi => oi.AccentColorName).HasMaxLength(100);
         builder.Property(oi => oi.AccentColor2Name).HasMaxLength(100);
         builder.Property(oi => oi.CollarName).HasMaxLength(100);
+        builder.Property(oi => oi.CollarColor1Name).HasMaxLength(100);
+        builder.Property(oi => oi.CollarColor2Name).HasMaxLength(100);
+        builder.Property(oi => oi.CollarColor3Name).HasMaxLength(100);
         builder.Property(oi => oi.MaterialName).HasMaxLength(100);
         builder.Property(oi => oi.FormName).HasMaxLength(100);
         builder.Property(oi => oi.SpecificationName).HasMaxLength(100);

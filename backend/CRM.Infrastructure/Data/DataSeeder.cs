@@ -641,10 +641,27 @@ public static class DataSeeder
         }
 
         // ── Collars (Bo cổ: X-00 .. X-15) ─────────────────────────────
+        // ColorCount = số selectbox "Màu bo cổ" cần hiện ở form đơn hàng (1 = chỉ màu chính,
+        // 2 = +màu phối, 3 = +màu phối 1 & 2) — theo cột "QUY ĐỊNH CHỌN MÀU" trong bảng bo cổ gốc.
         if (!await context.Collars.AnyAsync())
         {
             context.Collars.AddRange(
-                Enumerable.Range(0, 16).Select(i => new Collar { Name = $"X-{i:D2}", IsActive = true })
+                new Collar { Name = "X-00", Description = "Dệt trơn 1 màu", ColorCount = 1, IsActive = true },
+                new Collar { Name = "X-01", Description = "Dệt họa tiết xương cá ở mí", ColorCount = 1, IsActive = true },
+                new Collar { Name = "X-02", Description = "Dệt 2 màu, phối có hai đường lé cùng màu, có hoạ tiết chìm trên lé", ColorCount = 2, IsActive = true },
+                new Collar { Name = "X-03", Description = "Dệt 2 màu, màu phối dệt hoạ tiết màu trắng cố định", ColorCount = 2, IsActive = true },
+                new Collar { Name = "X-04", Description = "Dệt 3 màu, có hoạ tiết nổi ở đường lé giữa", ColorCount = 3, IsActive = true },
+                new Collar { Name = "X-05", Description = "Dệt 2 màu, phối có phần hoạ tiết nổi", ColorCount = 2, IsActive = true },
+                new Collar { Name = "X-06", Description = "Dệt 2 màu, phối có một đường lé hoạ tiết", ColorCount = 2, IsActive = true },
+                new Collar { Name = "X-07", Description = "Dệt 2 màu, phối có một đường lé khác màu", ColorCount = 2, IsActive = true },
+                new Collar { Name = "X-08", Description = "Dệt 2 màu, phối có hai đường lé cùng màu", ColorCount = 2, IsActive = true },
+                new Collar { Name = "X-09", Description = "Dệt 3 màu", ColorCount = 3, IsActive = true },
+                new Collar { Name = "X-10", Description = "Dệt 3 màu", ColorCount = 3, IsActive = true },
+                new Collar { Name = "X-11", Description = "Dệt 3 màu (ngưng bán)", ColorCount = 3, IsActive = false },
+                new Collar { Name = "X-12", Description = "Dệt 2 màu, phối có một đường lé cuối bo", ColorCount = 2, IsActive = true },
+                new Collar { Name = "X-13", Description = "Dệt 2 hoặc 3 màu, phối có hai đường lé. Lé phía trên tính từ đường may bo cổ với áo có hoạ tiết xương cá, có thể phối cùng màu hoặc khác màu", ColorCount = 3, IsActive = true },
+                new Collar { Name = "X-14", Description = "Dệt 2 màu, phối có hai đường lé cùng màu", ColorCount = 2, IsActive = true },
+                new Collar { Name = "X-15", Description = "Dệt 2 màu", ColorCount = 3, IsActive = true }
             );
         }
 

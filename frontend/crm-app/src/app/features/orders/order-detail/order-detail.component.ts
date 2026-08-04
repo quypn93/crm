@@ -14,6 +14,7 @@ import { ProcessWaybillPayload } from '../../../core/services/production.service
 import { environment } from '../../../../environments/environment';
 import {
   Order,
+  OrderItem,
   OrderStatus,
   PaymentStatus,
   DeliveryMethod,
@@ -299,6 +300,13 @@ export class OrderDetailComponent implements OnInit {
 
   formatCurrency(value: number): string {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+  }
+
+  // Ghép tên các màu bo cổ (1..3, chọn tự do) đã lưu trên dòng đơn hàng thành 1 chuỗi hiển thị.
+  collarColorsLabel(item: OrderItem): string {
+    return [item.collarColor1Name, item.collarColor2Name, item.collarColor3Name]
+      .filter((name): name is string => !!name)
+      .join(' - ');
   }
 
   editOrder(): void {

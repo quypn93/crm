@@ -3,12 +3,15 @@ export interface LookupItem {
   name: string;
   description?: string;
   isActive: boolean;
+  // Chỉ có ý nghĩa với resource 'collars' (Bo cổ) — số selectbox "Màu bo cổ" cần hiện ở form đơn hàng.
+  colorCount?: number;
 }
 
 export interface CreateLookupItem {
   name: string;
   description?: string;
   isActive?: boolean;
+  colorCount?: number;
 }
 
 export interface Collection {
