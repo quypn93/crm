@@ -24,9 +24,7 @@ export class LeaderboardComponent implements OnInit {
 
   readonly scopeOptions: ScopeOption[] = [
     { value: LeaderboardScope.Sales, label: 'Sales', icon: '💼' },
-    { value: LeaderboardScope.Design, label: 'Thiết kế', icon: '🎨' },
-    { value: LeaderboardScope.Production, label: 'Sản xuất', icon: '🏭' },
-    { value: LeaderboardScope.Delivery, label: 'Giao hàng', icon: '🚚' }
+    { value: LeaderboardScope.Design, label: 'Thiết kế', icon: '🎨' }
   ];
 
   readonly periodOptions: PeriodOption[] = [
