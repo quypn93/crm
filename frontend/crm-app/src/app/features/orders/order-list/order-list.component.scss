@@ -353,6 +353,14 @@
   align-items: center;
 }
 
+// Giữ chỗ cố định cho nút Xác nhận/Sản xuất — kể cả khi rỗng (đơn không ở trạng thái phù hợp),
+// để icon phía sau luôn bắt đầu cùng một vị trí giữa các dòng.
+.btn-primary-slot {
+  display: inline-flex;
+  align-items: center;
+  min-width: 100px;
+}
+
 .btn-confirm {
   height: 30px;
   padding: 0 12px;

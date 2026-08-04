@@ -214,20 +214,24 @@
           <td *ngIf="isColumnVisible('returnDate')">{{ order.returnDate ? (order.returnDate | date:'dd/MM/yyyy') : '—' }}</td>
           <td class="actions-col">
             <div class="action-buttons">
-              <button
-                *ngIf="canConfirmOrder() && order.status === OrderStatus.Draft"
-                class="btn-confirm"
-                title="Xác nhận đơn hàng"
-                (click)="confirmOrder(order)">
-                ✓ Xác nhận
-              </button>
-              <button
-                *ngIf="canMoveToProduction() && order.status === OrderStatus.Confirmed"
-                class="btn-production"
-                title="Chuyển sang sản xuất"
-                (click)="moveToProduction(order)">
-                🏭 Sản xuất
-              </button>
+              <!-- Slot chiều rộng cố định cho nút Xác nhận/Sản xuất — giữ chỗ kể cả khi không hiện,
+                   để các icon phía sau (mắt, sao chép...) luôn bắt đầu ở cùng một vị trí giữa các dòng. -->
+              <span class="btn-primary-slot">
+                <button
+                  *ngIf="canConfirmOrder() && order.status === OrderStatus.Draft"
+                  class="btn-confirm"
+                  title="Xác nhận đơn hàng"
+                  (click)="confirmOrder(order)">
+                  ✓ Xác nhận
+                </button>
+                <button
+                  *ngIf="canMoveToProduction() && order.status === OrderStatus.Confirmed"
+                  class="btn-production"
+                  title="Chuyển sang sản xuất"
+                  (click)="moveToProduction(order)">
+                  🏭 Sản xuất
+                </button>
+              </span>
               <button class="btn-icon" title="Xem chi tiết" (click)="viewOrder(order.id)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
