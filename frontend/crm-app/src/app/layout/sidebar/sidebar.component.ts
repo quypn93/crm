@@ -47,6 +47,8 @@ export class SidebarComponent implements OnInit {
     { label: 'Chất liệu', icon: 'fabric', route: '/settings/materials', roles: [RoleNames.Admin], exact: true },
     { label: 'Form áo', icon: 'list', route: '/settings/product-forms', roles: [RoleNames.Admin], exact: true },
     { label: 'Quy cách', icon: 'list', route: '/settings/product-specifications', roles: [RoleNames.Admin], exact: true },
+    { label: 'Màu phối', icon: 'fabric', route: '/settings/accent-colors', roles: [RoleNames.Admin], exact: true },
+    { label: 'Bo cổ', icon: 'list', route: '/settings/collars', roles: [RoleNames.Admin], exact: true },
     { label: 'Thời gian SX', icon: 'check-circle', route: '/settings/production-days', roles: [RoleNames.Admin], exact: true },
     { label: 'Lịch sử cộng tiền', icon: 'chart', route: '/settings/deposits', roles: RoleGroups.SalesRoles, exact: true },
     { label: 'Người dùng', icon: 'user-manage', route: '/settings/users', roles: UserAdminRoles, exact: false },
