@@ -18,6 +18,8 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         builder.Property(oi => oi.Size).HasMaxLength(50);
         builder.Property(oi => oi.MainColorName).HasMaxLength(100);
         builder.Property(oi => oi.AccentColorName).HasMaxLength(100);
+        builder.Property(oi => oi.AccentColor2Name).HasMaxLength(100);
+        builder.Property(oi => oi.CollarName).HasMaxLength(100);
         builder.Property(oi => oi.MaterialName).HasMaxLength(100);
         builder.Property(oi => oi.FormName).HasMaxLength(100);
         builder.Property(oi => oi.SpecificationName).HasMaxLength(100);

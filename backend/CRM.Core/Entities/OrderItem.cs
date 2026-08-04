@@ -13,12 +13,16 @@ public class OrderItem : BaseEntity
     // Specifications (for uniforms) - lấy từ pool chung, filter theo Collection
     public string? Size { get; set; }
     public Guid? MainColorId { get; set; }              // ColorFabric
-    public Guid? AccentColorId { get; set; }            // ColorFabric
+    public Guid? AccentColorId { get; set; }            // AccentColor — Màu phối 1 (chọn tự do)
+    public Guid? AccentColor2Id { get; set; }           // AccentColor — Màu phối 2 (chọn tự do)
+    public Guid? CollarId { get; set; }                 // Collar — Bo cổ
     public Guid? MaterialId { get; set; }
     public Guid? FormId { get; set; }
     public Guid? SpecificationId { get; set; }
     public string? MainColorName { get; set; }
     public string? AccentColorName { get; set; }
+    public string? AccentColor2Name { get; set; }
+    public string? CollarName { get; set; }
     public string? MaterialName { get; set; }
     public string? FormName { get; set; }
     public string? SpecificationName { get; set; }

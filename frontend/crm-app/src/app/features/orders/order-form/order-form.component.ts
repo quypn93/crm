@@ -40,6 +40,9 @@ export class OrderFormComponent implements OnInit {
   shirtForms: LookupItem[] = [];
   styleSpecs: LookupItem[] = [];
   orderTypes: LookupItem[] = [];
+  // Màu phối (1 & 2) và Bo cổ — chọn tự do, không phụ thuộc chất liệu.
+  accentColors: LookupItem[] = [];
+  collars: LookupItem[] = [];
   collections: Collection[] = [];
   senderAddresses: SenderAddress[] = [];
   productionDaysOptions: ProductionDaysOption[] = [];
@@ -182,6 +185,8 @@ export class OrderFormComponent implements OnInit {
         materialId: ['', Validators.required],
         mainColorId: ['', Validators.required],
         accentColorId: [''],
+        accentColor2Id: [''],
+        collarId: [''],
         formId: ['', Validators.required],
         specificationId: ['', Validators.required],
         // Cho phép đơn giá 0 (đơn tặng/bù hàng...) — chỉ chặn số âm.
@@ -222,6 +227,8 @@ export class OrderFormComponent implements OnInit {
       shirtForms: this.settingsService.getLookups('product-forms'),
       styleSpecs: this.settingsService.getLookups('product-specifications'),
       orderTypes: this.settingsService.getLookups('order-types'),
+      accentColors: this.settingsService.getLookups('accent-colors'),
+      collars: this.settingsService.getLookups('collars'),
       collections: this.settingsService.getCollections(),
       senderAddresses: this.settingsService.getSenderAddresses(),
       productionDaysOptions: this.settingsService.getProductionDaysOptions(),
@@ -239,6 +246,8 @@ export class OrderFormComponent implements OnInit {
         this.shirtForms = res.shirtForms || [];
         this.styleSpecs = res.styleSpecs || [];
         this.orderTypes = (res.orderTypes || []).filter(x => x.isActive);
+        this.accentColors = (res.accentColors || []).filter(x => x.isActive);
+        this.collars = (res.collars || []).filter(x => x.isActive);
         this.collections = res.collections || [];
         this.senderAddresses = (res.senderAddresses || []).filter(a => a.isActive);
         this.productionDaysOptions = (res.productionDaysOptions || []).filter(o => o.isActive);
@@ -514,19 +523,16 @@ export class OrderFormComponent implements OnInit {
     return !!this.orderForm.get('productInfo.materialId')?.value;
   }
 
-  // Khoá 2 ô màu (chính + phối) khi chưa chọn chất liệu.
+  // Khoá ô màu chính khi chưa chọn chất liệu. Màu phối (1 & 2) và Bo cổ chọn tự do,
+  // không phụ thuộc chất liệu nên không bị khoá/xoá ở đây.
   private updateColorControlsState(): void {
     const pi = this.orderForm.get('productInfo');
     const main = pi?.get('mainColorId');
-    const accent = pi?.get('accentColorId');
     if (this.hasMaterialSelected()) {
       main?.enable({ emitEvent: false });
-      accent?.enable({ emitEvent: false });
     } else {
       main?.setValue('', { emitEvent: false });
-      accent?.setValue('', { emitEvent: false });
       main?.disable({ emitEvent: false });
-      accent?.disable({ emitEvent: false });
     }
   }
 
@@ -552,7 +558,6 @@ export class OrderFormComponent implements OnInit {
       if (v && !this.filteredColors.find(x => x.id === v)) pi?.get(key)?.setValue('');
     };
     clearIfMissing('mainColorId');
-    clearIfMissing('accentColorId');
   }
 
   private recalcDates(): void {
@@ -701,6 +706,8 @@ export class OrderFormComponent implements OnInit {
             materialId: firstItem.materialId || '',
             mainColorId: firstItem.mainColorId || '',
             accentColorId: firstItem.accentColorId || '',
+            accentColor2Id: firstItem.accentColor2Id || '',
+            collarId: firstItem.collarId || '',
             formId: firstItem.formId || '',
             specificationId: firstItem.specificationId || '',
             unitPrice: firstItem.unitPrice || 0,
@@ -780,6 +787,8 @@ export class OrderFormComponent implements OnInit {
             materialId: firstItem.materialId || '',
             mainColorId: firstItem.mainColorId || '',
             accentColorId: firstItem.accentColorId || '',
+            accentColor2Id: firstItem.accentColor2Id || '',
+            collarId: firstItem.collarId || '',
             formId: firstItem.formId || '',
             specificationId: firstItem.specificationId || '',
             unitPrice: firstItem.unitPrice || 0,
@@ -910,6 +919,8 @@ export class OrderFormComponent implements OnInit {
           materialId: pi.materialId || undefined,
           mainColorId: pi.mainColorId || undefined,
           accentColorId: pi.accentColorId || undefined,
+          accentColor2Id: pi.accentColor2Id || undefined,
+          collarId: pi.collarId || undefined,
           formId: pi.formId || undefined,
           specificationId: pi.specificationId || undefined,
           size,

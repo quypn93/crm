@@ -163,11 +163,15 @@ public class OrderItemDto
     public string? Size { get; set; }
     public Guid? MainColorId { get; set; }
     public Guid? AccentColorId { get; set; }
+    public Guid? AccentColor2Id { get; set; }
+    public Guid? CollarId { get; set; }
     public Guid? MaterialId { get; set; }
     public Guid? FormId { get; set; }
     public Guid? SpecificationId { get; set; }
     public string? MainColorName { get; set; }
     public string? AccentColorName { get; set; }
+    public string? AccentColor2Name { get; set; }
+    public string? CollarName { get; set; }
     public string? MaterialName { get; set; }
     public string? FormName { get; set; }
     public string? SpecificationName { get; set; }
@@ -226,6 +230,8 @@ public class CreateOrderItemDto
     public string? Size { get; set; }
     public Guid? MainColorId { get; set; }
     public Guid? AccentColorId { get; set; }
+    public Guid? AccentColor2Id { get; set; }
+    public Guid? CollarId { get; set; }
     public Guid? MaterialId { get; set; }
     public Guid? FormId { get; set; }
     public Guid? SpecificationId { get; set; }

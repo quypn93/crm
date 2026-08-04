@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="AutoMapper" Version="12.0.1" />
@@ -19,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\CRM.Core\CRM.Core.csproj" />
     <ProjectReference Include="..\..\CRM.Application\CRM.Application.csproj" />
+    <ProjectReference Include="..\..\CRM.Infrastructure\CRM.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

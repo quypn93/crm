@@ -288,6 +288,25 @@ public class OrderTypeService : SimpleLookupServiceBase<OrderType>, IOrderTypeSe
     protected override LookupItemDto ToDto(OrderType e) => new() { Id = e.Id, Name = e.Name, Description = e.Description, IsActive = e.IsActive };
 }
 
+// Màu phối — chọn tự do (không phụ thuộc chất liệu), 2 selectbox "Màu phối 1"/"Màu phối 2" ở đơn hàng.
+public class AccentColorService : SimpleLookupServiceBase<AccentColor>, IAccentColorService
+{
+    public AccentColorService(CrmDbContext db) : base(db) { }
+    protected override DbSet<AccentColor> DbSet => _db.AccentColors;
+    protected override void SetFields(AccentColor e, string name, string? description, bool isActive)
+    { e.Name = name; e.Description = description; e.IsActive = isActive; }
+    protected override LookupItemDto ToDto(AccentColor e) => new() { Id = e.Id, Name = e.Name, Description = e.Description, IsActive = e.IsActive };
+}
+
+public class CollarService : SimpleLookupServiceBase<Collar>, ICollarService
+{
+    public CollarService(CrmDbContext db) : base(db) { }
+    protected override DbSet<Collar> DbSet => _db.Collars;
+    protected override void SetFields(Collar e, string name, string? description, bool isActive)
+    { e.Name = name; e.Description = description; e.IsActive = isActive; }
+    protected override LookupItemDto ToDto(Collar e) => new() { Id = e.Id, Name = e.Name, Description = e.Description, IsActive = e.IsActive };
+}
+
 public class ProductionDaysOptionService : IProductionDaysOptionService
 {
     private readonly CrmDbContext _db;

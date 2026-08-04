@@ -626,6 +626,8 @@ public class OrderService : IOrderService
             Size = itemDto.Size,
             MainColorId = itemDto.MainColorId,
             AccentColorId = itemDto.AccentColorId,
+            AccentColor2Id = itemDto.AccentColor2Id,
+            CollarId = itemDto.CollarId,
             MaterialId = itemDto.MaterialId,
             FormId = itemDto.FormId,
             SpecificationId = itemDto.SpecificationId,
@@ -644,8 +646,13 @@ public class OrderService : IOrderService
         }
         if (itemDto.MainColorId.HasValue)
             item.MainColorName = (await _unitOfWork.ColorFabrics.GetByIdAsync(itemDto.MainColorId.Value))?.Name;
+        // Màu phối (1 & 2) chọn tự do từ danh mục AccentColor — không còn phụ thuộc chất liệu.
         if (itemDto.AccentColorId.HasValue)
-            item.AccentColorName = (await _unitOfWork.ColorFabrics.GetByIdAsync(itemDto.AccentColorId.Value))?.Name;
+            item.AccentColorName = (await _unitOfWork.AccentColors.GetByIdAsync(itemDto.AccentColorId.Value))?.Name;
+        if (itemDto.AccentColor2Id.HasValue)
+            item.AccentColor2Name = (await _unitOfWork.AccentColors.GetByIdAsync(itemDto.AccentColor2Id.Value))?.Name;
+        if (itemDto.CollarId.HasValue)
+            item.CollarName = (await _unitOfWork.Collars.GetByIdAsync(itemDto.CollarId.Value))?.Name;
         if (itemDto.MaterialId.HasValue)
             item.MaterialName = (await _unitOfWork.Materials.GetByIdAsync(itemDto.MaterialId.Value))?.Name;
         if (itemDto.FormId.HasValue)

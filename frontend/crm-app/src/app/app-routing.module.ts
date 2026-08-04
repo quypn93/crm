@@ -55,6 +55,10 @@ const routes: Routes = [
         loadChildren: () => import('./features/production/production.module').then(m => m.ProductionModule)
       },
       {
+        path: 'finance',
+        loadChildren: () => import('./features/finance/finance.module').then(m => m.FinanceModule)
+      },
+      {
         path: 'catalog',
         loadChildren: () => import('./features/catalog/catalog.module').then(m => m.CatalogModule)
       },

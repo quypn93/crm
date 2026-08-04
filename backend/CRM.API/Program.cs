@@ -232,9 +232,18 @@ builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IProductFormService, ProductFormService>();
 builder.Services.AddScoped<IProductSpecificationService, ProductSpecificationService>();
 builder.Services.AddScoped<IOrderTypeService, OrderTypeService>();
+builder.Services.AddScoped<IAccentColorService, AccentColorService>();
+builder.Services.AddScoped<ICollarService, CollarService>();
 builder.Services.AddScoped<IProductionDaysOptionService, ProductionDaysOptionService>();
 builder.Services.AddScoped<IDepositTransactionService, DepositTransactionService>();
 builder.Services.AddScoped<ILocationService, LocationService>();
+
+// Tài chính — chi phí & báo cáo lãi/lỗ (chỉ Admin + Kế toán truy cập được)
+builder.Services.AddScoped<IOrderCostService, CRM.Infrastructure.Services.Finance.OrderCostService>();
+builder.Services.AddScoped<IExpenseCategoryService, CRM.Infrastructure.Services.Finance.ExpenseCategoryService>();
+builder.Services.AddScoped<IFixedExpenseService, CRM.Infrastructure.Services.Finance.FixedExpenseService>();
+builder.Services.AddScoped<IPayrollService, CRM.Infrastructure.Services.Finance.PayrollService>();
+builder.Services.AddScoped<IProfitReportService, CRM.Infrastructure.Services.Finance.ProfitReportService>();
 
 // GHTK integration — endpoint & shipment orchestrator
 builder.Services.Configure<GhtkOptions>(builder.Configuration.GetSection("Ghtk"));

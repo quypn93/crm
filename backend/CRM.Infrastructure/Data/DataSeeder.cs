@@ -46,6 +46,10 @@ public static class DataSeeder
         await SeedLookupsAsync(context);
         await context.SaveChangesAsync();
 
+        // Role Kế toán + đầu mục chi phí cố định mặc định (idempotent).
+        await EnsureFinanceSeedAsync(context);
+        await context.SaveChangesAsync();
+
         await SeedSheetMaterialsAndColorsAsync(context);
 
         await RemoveLegacyMaterialsColorsAsync(context);
@@ -260,6 +264,60 @@ public static class DataSeeder
         await AddIfMissing("content2@crm.com", MakeUser("content2@crm.com", "Content@123", "Content", "2", "0967001002"), contentStaffRole);
     }
 
+    // Idempotent: role Kế toán + 7 đầu mục chi phí cố định mặc định + 1 tài khoản kế toán mẫu.
+    private static async Task EnsureFinanceSeedAsync(CrmDbContext context)
+    {
+        var accountantRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == RoleNames.Accountant);
+        if (accountantRole == null)
+        {
+            // Không hardcode Id: dải 1x1x1x1x đã bị RoleConfiguration.HasData (các role Marketing)
+            // chiếm giữ — tra cứu vốn theo Name nên để EF tự sinh Id là an toàn nhất.
+            accountantRole = new Role
+            {
+                Name = RoleNames.Accountant,
+                Description = "Kế toán (nhập chi phí, xem báo cáo lãi/lỗ)",
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            };
+            context.Roles.Add(accountantRole);
+            await context.SaveChangesAsync();
+        }
+
+        if (!await context.Users.AnyAsync(u => u.Email == "accountant@crm.com"))
+        {
+            var user = MakeUser("accountant@crm.com", "Accountant@123", "Ke", "Toan", "0978000001");
+            context.Users.Add(user);
+            context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = accountantRole.Id });
+            await context.SaveChangesAsync();
+        }
+
+        // Đầu mục chi phí cố định — khách hàng liệt kê sẵn. Kế toán tự thêm mục mới khi thiếu.
+        var defaults = new (string Name, int SortOrder)[]
+        {
+            ("Tiền thuê nhà", 1),
+            ("Tiền điện nước", 2),
+            ("Tiền mạng internet", 3),
+            ("Chi phí ăn uống", 4),
+            ("Chi phí gửi xe", 5),
+            ("Chi phí ship nội bộ", 6),
+            ("Chi phí khác", 99)
+        };
+
+        var existing = await context.ExpenseCategories.Select(c => c.Name).ToListAsync();
+        var existingSet = existing.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (name, sortOrder) in defaults)
+        {
+            if (existingSet.Contains(name)) continue;
+            context.ExpenseCategories.Add(new ExpenseCategory
+            {
+                Name = name,
+                SortOrder = sortOrder,
+                IsActive = true,
+                IsSystem = true
+            });
+        }
+    }
+
     // Idempotent: role "Vận đơn" (WaybillStaff) + khâu Vận đơn dùng role này + backfill bước
     // cho đơn đang sản xuất + 1 user mẫu. Chạy mỗi startup nên áp cho cả DB đã tồn tại.
     private static async Task EnsureWaybillStageAndRoleAsync(CrmDbContext context)
@@ -268,9 +326,10 @@ public static class DataSeeder
         var waybillRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == RoleNames.WaybillStaff);
         if (waybillRole == null)
         {
+            // Id 15151515 đã bị RoleConfiguration.HasData gán cho MarketingManager (migration
+            // AddMarketingRoles) → hardcode lại sẽ đụng PK_Roles. Để EF tự sinh Id.
             waybillRole = new Role
             {
-                Id = Guid.Parse("15151515-1515-1515-1515-151515151515"),
                 Name = RoleNames.WaybillStaff,
                 Description = "Nhân viên vận đơn (chọn kho, nhập địa chỉ nhận, tạo vận đơn)",
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -283,9 +342,9 @@ public static class DataSeeder
         var warehouseRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == RoleNames.WarehouseManager);
         if (warehouseRole == null)
         {
+            // Id 16161616 đã thuộc về MediaMarketing — xem chú thích ở WaybillStaff bên trên.
             warehouseRole = new Role
             {
-                Id = Guid.Parse("16161616-1616-1616-1616-161616161616"),
                 Name = RoleNames.WarehouseManager,
                 Description = "Quản lý kho (account gắn với địa chỉ gửi hàng)",
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -578,6 +637,14 @@ public static class DataSeeder
             context.OrderTypes.AddRange(
                 new OrderType { Name = "Cắt may", Description = "Đơn sản xuất theo yêu cầu", IsActive = true },
                 new OrderType { Name = "Áo sẵn", Description = "Đơn dùng hàng có sẵn", IsActive = true }
+            );
+        }
+
+        // ── Collars (Bo cổ: X-00 .. X-15) ─────────────────────────────
+        if (!await context.Collars.AnyAsync())
+        {
+            context.Collars.AddRange(
+                Enumerable.Range(0, 16).Select(i => new Collar { Name = $"X-{i:D2}", IsActive = true })
             );
         }
 

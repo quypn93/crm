@@ -50,6 +50,18 @@ export class SettingsLayoutComponent {
       description: 'Quản lý quy cách'
     },
     {
+      label: 'Màu phối',
+      route: '/settings/accent-colors',
+      icon: 'list',
+      description: 'Quản lý màu phối'
+    },
+    {
+      label: 'Bo cổ',
+      route: '/settings/collars',
+      icon: 'list',
+      description: 'Quản lý bo cổ'
+    },
+    {
       label: 'Thời gian SX',
       route: '/settings/production-days',
       icon: 'list',

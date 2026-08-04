@@ -27,7 +27,9 @@ const routes: Routes = [
   { path: 'materials', component: LookupsAdminComponent, data: { resource: 'materials', title: 'Chất liệu' } },
   { path: 'order-types', component: LookupsAdminComponent, data: { resource: 'order-types', title: 'Dạng đơn' } },
   { path: 'product-forms', component: LookupsAdminComponent, data: { resource: 'product-forms', title: 'Form áo' } },
-  { path: 'product-specifications', component: LookupsAdminComponent, data: { resource: 'product-specifications', title: 'Quy cách' } }
+  { path: 'product-specifications', component: LookupsAdminComponent, data: { resource: 'product-specifications', title: 'Quy cách' } },
+  { path: 'accent-colors', component: LookupsAdminComponent, data: { resource: 'accent-colors', title: 'Màu phối' } },
+  { path: 'collars', component: LookupsAdminComponent, data: { resource: 'collars', title: 'Bo cổ' } }
 ];
 
 @NgModule({

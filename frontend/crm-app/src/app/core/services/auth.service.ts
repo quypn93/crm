@@ -18,6 +18,7 @@ export const RoleNames = {
   ProductionStaff: 'ProductionStaff',
   WaybillStaff: 'WaybillStaff',
   WarehouseManager: 'WarehouseManager',
+  Accountant: 'Accountant',
   QualityManager: 'QualityManager',
   QualityControl: 'QualityControl',
   DeliveryManager: 'DeliveryManager',
@@ -35,6 +36,8 @@ export const RoleGroups = {
   ManagerRoles: [RoleNames.Admin, RoleNames.SalesManager],
   ProductionRoles: [RoleNames.Admin, RoleNames.ProductionManager, RoleNames.ProductionStaff, RoleNames.WaybillStaff],
   QualityRoles: [RoleNames.Admin, RoleNames.QualityManager, RoleNames.QualityControl],
+  // Tài chính — giá vốn & lãi/lỗ là dữ liệu nhạy cảm, chỉ Admin + Kế toán.
+  FinanceRoles: [RoleNames.Admin, RoleNames.Accountant],
   DeliveryRoles: [RoleNames.Admin, RoleNames.DeliveryManager, RoleNames.DeliveryStaff],
   DesignRoles: [RoleNames.Admin, RoleNames.DesignManager, RoleNames.Designer],
   OperationalRoles: [RoleNames.Admin, RoleNames.ProductionManager, RoleNames.ProductionStaff, RoleNames.QualityManager, RoleNames.QualityControl, RoleNames.DeliveryManager, RoleNames.DeliveryStaff],

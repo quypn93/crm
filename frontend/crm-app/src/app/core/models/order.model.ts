@@ -82,11 +82,15 @@ export interface OrderItem {
   size?: string;
   mainColorId?: string;
   accentColorId?: string;
+  accentColor2Id?: string;
+  collarId?: string;
   materialId?: string;
   formId?: string;
   specificationId?: string;
   mainColorName?: string;
   accentColorName?: string;
+  accentColor2Name?: string;
+  collarName?: string;
   materialName?: string;
   formName?: string;
   specificationName?: string;
@@ -208,6 +212,8 @@ export interface CreateOrderItemRequest {
   size?: string;
   mainColorId?: string;
   accentColorId?: string;
+  accentColor2Id?: string;
+  collarId?: string;
   materialId?: string;
   formId?: string;
   specificationId?: string;

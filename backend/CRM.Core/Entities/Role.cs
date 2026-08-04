@@ -32,6 +32,9 @@ public static class RoleNames
     // Kho
     public const string WarehouseManager = "WarehouseManager"; // Quản lý kho (account gắn với mỗi địa chỉ gửi hàng)
 
+    // Kế toán — nhập chi phí (đơn hàng, nhân sự, cố định) và xem báo cáo lãi/lỗ
+    public const string Accountant = "Accountant";
+
     // Quality Control
     public const string QualityManager = "QualityManager";
     public const string QualityControl = "QualityControl"; // Kiểm tra chất lượng
@@ -61,6 +64,7 @@ public static class RoleNames
         ProductionManager, ProductionStaff,
         CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff, WaybillStaff,
         WarehouseManager,
+        Accountant,
         QualityManager, QualityControl,
         DeliveryManager, DeliveryStaff,
         DesignManager, Designer,
@@ -77,6 +81,11 @@ public static class RoleNames
     public static readonly string[] ProductionStageRoles = {
         CuttingStaff, SewingStaff, PrintingStaff, FinishingStaff, PackagingStaff
     };
+    // Tài chính — xem/nhập chi phí và báo cáo lãi/lỗ. Dữ liệu giá vốn nhạy cảm, chỉ 2 role này.
+    public static readonly string[] FinanceRoles = { Admin, Accountant };
+    /// <summary>Dùng cho [Authorize(Roles = ...)] — không nhận mảng nên phải là chuỗi const.</summary>
+    public const string FinanceRolesCsv = Admin + "," + Accountant;
+
     public static readonly string[] QualityRoles = { Admin, QualityManager, QualityControl };
     public static readonly string[] DeliveryRoles = { Admin, DeliveryManager, DeliveryStaff };
     public static readonly string[] DesignRoles = { Admin, DesignManager, Designer };

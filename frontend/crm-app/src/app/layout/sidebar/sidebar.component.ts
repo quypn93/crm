@@ -35,6 +35,12 @@ export class SidebarComponent implements OnInit {
     { label: 'Thư viện thiết kế', icon: 'design', route: '/designs', roles: [...RoleGroups.SalesRoles, RoleNames.Admin, RoleNames.DesignManager], exact: false },
     { label: 'Sản xuất', icon: 'factory', route: '/production', roles: RoleGroups.ProductionRoles },
     { label: 'Báo cáo', icon: 'chart', route: '/reports', roles: RoleGroups.ManagerRoles },
+    // Tài chính — chỉ Admin + Kế toán (giá vốn & lãi/lỗ là dữ liệu nhạy cảm).
+    { label: 'Chi phí SX hàng hóa', icon: 'chart', route: '/finance/order-costs', roles: RoleGroups.FinanceRoles, exact: true },
+    { label: 'Chi phí nhân sự', icon: 'user-manage', route: '/finance/payroll', roles: RoleGroups.FinanceRoles, exact: true },
+    { label: 'Chi phí cố định', icon: 'list', route: '/finance/fixed-expenses', roles: RoleGroups.FinanceRoles, exact: true },
+    { label: 'Đầu mục chi phí', icon: 'list', route: '/finance/expense-categories', roles: RoleGroups.FinanceRoles, exact: true },
+    { label: 'Báo cáo lãi/lỗ', icon: 'chart', route: '/finance/profit', roles: RoleGroups.FinanceRoles, exact: true },
     { label: 'Bộ sưu tập', icon: 'fabric', route: '/settings/collections', roles: [RoleNames.Admin], exact: true },
     { label: 'Dạng đơn', icon: 'list', route: '/settings/order-types', roles: [RoleNames.Admin], exact: true },
     { label: 'Địa chỉ gửi', icon: 'list', route: '/settings/sender-addresses', roles: [RoleNames.Admin], exact: true },

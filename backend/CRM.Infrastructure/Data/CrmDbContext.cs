@@ -29,6 +29,8 @@ public class CrmDbContext : DbContext
     public DbSet<ProductForm> ProductForms => Set<ProductForm>();
     public DbSet<ProductSpecification> ProductSpecifications => Set<ProductSpecification>();
     public DbSet<OrderType> OrderTypes => Set<OrderType>();
+    public DbSet<AccentColor> AccentColors => Set<AccentColor>();
+    public DbSet<Collar> Collars => Set<Collar>();
     public DbSet<SenderAddress> SenderAddresses => Set<SenderAddress>();
     public DbSet<CollectionMaterial> CollectionMaterials => Set<CollectionMaterial>();
     public DbSet<CollectionColor> CollectionColors => Set<CollectionColor>();
@@ -36,6 +38,12 @@ public class CrmDbContext : DbContext
     public DbSet<CollectionSpecification> CollectionSpecifications => Set<CollectionSpecification>();
     public DbSet<ProductionDaysOption> ProductionDaysOptions => Set<ProductionDaysOption>();
     public DbSet<DepositTransaction> DepositTransactions => Set<DepositTransaction>();
+
+    // Tài chính — chi phí & báo cáo lãi/lỗ
+    public DbSet<OrderCost> OrderCosts => Set<OrderCost>();
+    public DbSet<PayrollEntry> PayrollEntries => Set<PayrollEntry>();
+    public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
+    public DbSet<FixedExpense> FixedExpenses => Set<FixedExpense>();
     public DbSet<Province> Provinces => Set<Province>();
     public DbSet<Ward> Wards => Set<Ward>();
     public DbSet<Notification> Notifications => Set<Notification>();
