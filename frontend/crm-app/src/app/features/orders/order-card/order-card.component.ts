@@ -82,13 +82,14 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
 
   getSpecificationLines(): string[] {
     const item = this.order.items?.[0];
+    // Không đưa ghi chú kiểu dáng (styleNotes) vào đây vì nội dung đó đã hiển thị
+    // đầy đủ ở phần CHÚ Ý bên dưới; lặp lại sẽ gây trùng thông tin.
     const lines = [
       item?.collectionName,
       item?.formName,
       item?.materialName,
       this.getColorText(),
       item?.specificationName,
-      this.getStyleText(),
     ]
       .flatMap(value => (value || '').split('\n'))
       .map(value => value.replace(/^-\s*/, '').trim())
@@ -205,15 +206,6 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
     if (colorLines.length) return colorLines.join('\n');
 
     return [...new Set((this.order.items || []).map(item => item.mainColorName).filter(Boolean))]
-      .join('\n');
-  }
-
-  private getStyleText(): string {
-    return this.parseStyleNotes()
-      .filter(([key]) => !/màu|chất liệu/i.test(key))
-      // Bỏ qua ghi chú không có giá trị (chỉ có nhãn, phần sau dấu ":" trống)
-      .filter(([, value]) => value)
-      .map(([key, value]) => `${key}: ${value}`)
       .join('\n');
   }
 
