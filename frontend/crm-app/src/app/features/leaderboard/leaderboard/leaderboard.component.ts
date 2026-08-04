@@ -106,11 +106,6 @@ export class LeaderboardComponent implements OnInit {
     this.load();
   }
 
-  goToday(): void {
-    this.referenceDate = new Date();
-    this.load();
-  }
-
   toggleHeadlineMode(): void {
     if (this.scope !== LeaderboardScope.Sales) return;
     this.headlineMode = this.headlineMode === 'revenue' ? 'count' : 'revenue';
