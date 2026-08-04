@@ -189,12 +189,12 @@
             </select>
           </div>
 
-          <!-- Màu bo cổ chính — theo đúng rule của Màu sắc chính (ăn theo chất liệu); 2 màu phối bo cổ chọn tự do -->
+          <!-- Màu bo cổ — chọn tự do: ô chính từ danh mục Màu chính, 2 ô phối từ danh mục Màu phối -->
           <div class="form-group" *ngIf="collarColorSlotCount() >= 1">
             <label>Màu bo cổ chính</label>
             <select formControlName="collarColor1Id">
-              <option value="">{{ hasMaterialSelected() ? '-- Chọn màu --' : '-- Chọn chất liệu trước --' }}</option>
-              <option *ngFor="let c of filteredColors" [value]="c.id">{{ c.name }}</option>
+              <option value="">-- Chọn màu --</option>
+              <option *ngFor="let c of mainColors" [value]="c.id">{{ c.name }}</option>
             </select>
           </div>
 

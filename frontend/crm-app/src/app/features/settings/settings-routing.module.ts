@@ -29,6 +29,7 @@ const routes: Routes = [
   { path: 'product-forms', component: LookupsAdminComponent, data: { resource: 'product-forms', title: 'Form áo' } },
   { path: 'product-specifications', component: LookupsAdminComponent, data: { resource: 'product-specifications', title: 'Quy cách' } },
   { path: 'accent-colors', component: LookupsAdminComponent, data: { resource: 'accent-colors', title: 'Màu phối' } },
+  { path: 'main-colors', component: LookupsAdminComponent, data: { resource: 'main-colors', title: 'Màu chính' } },
   { path: 'collars', component: LookupsAdminComponent, data: { resource: 'collars', title: 'Bo cổ' } }
 ];
 

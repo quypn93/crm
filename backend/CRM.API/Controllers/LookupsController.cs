@@ -183,6 +183,19 @@ public class AccentColorsController : SimpleLookupControllerBase<IAccentColorSer
 }
 
 [ApiController]
+[Route("api/main-colors")]
+[Authorize]
+public class MainColorsController : SimpleLookupControllerBase<IMainColorService>
+{
+    private readonly IMainColorService _svc;
+    public MainColorsController(IMainColorService svc) { _svc = svc; }
+    protected override Task<IEnumerable<LookupItemDto>> GetAllCore() => _svc.GetAllAsync();
+    protected override Task<LookupItemDto> CreateCore(CreateLookupItemDto dto) => _svc.CreateAsync(dto);
+    protected override Task<LookupItemDto> UpdateCore(UpdateLookupItemDto dto) => _svc.UpdateAsync(dto);
+    protected override Task DeleteCore(Guid id) => _svc.DeleteAsync(id);
+}
+
+[ApiController]
 [Route("api/collars")]
 [Authorize]
 public class CollarsController : SimpleLookupControllerBase<ICollarService>

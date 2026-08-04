@@ -300,6 +300,16 @@ public class AccentColorService : SimpleLookupServiceBase<AccentColor>, IAccentC
     protected override LookupItemDto ToDto(AccentColor e) => new() { Id = e.Id, Name = e.Name, Description = e.Description, IsActive = e.IsActive };
 }
 
+// Màu chính — chọn tự do (không phụ thuộc chất liệu), dùng cho Màu bo cổ chính.
+public class MainColorService : SimpleLookupServiceBase<MainColor>, IMainColorService
+{
+    public MainColorService(CrmDbContext db) : base(db) { }
+    protected override DbSet<MainColor> DbSet => _db.MainColors;
+    protected override void SetFields(MainColor e, string name, string? description, bool isActive, int? colorCount)
+    { e.Name = name; e.Description = description; e.IsActive = isActive; }
+    protected override LookupItemDto ToDto(MainColor e) => new() { Id = e.Id, Name = e.Name, Description = e.Description, IsActive = e.IsActive };
+}
+
 public class CollarService : SimpleLookupServiceBase<Collar>, ICollarService
 {
     public CollarService(CrmDbContext db) : base(db) { }

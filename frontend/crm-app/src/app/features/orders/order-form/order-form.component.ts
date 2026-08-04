@@ -40,8 +40,9 @@ export class OrderFormComponent implements OnInit {
   shirtForms: LookupItem[] = [];
   styleSpecs: LookupItem[] = [];
   orderTypes: LookupItem[] = [];
-  // Màu phối (1 & 2) và Bo cổ — chọn tự do, không phụ thuộc chất liệu.
+  // Màu phối (1 & 2), Màu chính (dùng cho màu bo cổ chính) và Bo cổ — chọn tự do, không phụ thuộc chất liệu.
   accentColors: LookupItem[] = [];
+  mainColors: LookupItem[] = [];
   collars: LookupItem[] = [];
   collections: Collection[] = [];
   senderAddresses: SenderAddress[] = [];
@@ -187,8 +188,8 @@ export class OrderFormComponent implements OnInit {
         accentColorId: [''],
         accentColor2Id: [''],
         collarId: [''],
-        // Màu bo cổ (1..3 ô, số ô hiện phụ thuộc Collar.colorCount): ô 1 (chính) ăn theo chất liệu
-        // giống mainColorId, ô 2 & 3 (phối) chọn tự do từ AccentColor giống accentColorId/accentColor2Id.
+        // Màu bo cổ (1..3 ô, số ô hiện phụ thuộc Collar.colorCount) — cả 3 đều chọn tự do:
+        // ô 1 (chính) từ danh mục MainColor, ô 2 & 3 (phối) từ AccentColor giống accentColorId/accentColor2Id.
         collarColor1Id: [''],
         collarColor2Id: [''],
         collarColor3Id: [''],
@@ -233,6 +234,7 @@ export class OrderFormComponent implements OnInit {
       styleSpecs: this.settingsService.getLookups('product-specifications'),
       orderTypes: this.settingsService.getLookups('order-types'),
       accentColors: this.settingsService.getLookups('accent-colors'),
+      mainColors: this.settingsService.getLookups('main-colors'),
       collars: this.settingsService.getLookups('collars'),
       collections: this.settingsService.getCollections(),
       senderAddresses: this.settingsService.getSenderAddresses(),
@@ -252,6 +254,7 @@ export class OrderFormComponent implements OnInit {
         this.styleSpecs = res.styleSpecs || [];
         this.orderTypes = (res.orderTypes || []).filter(x => x.isActive);
         this.accentColors = (res.accentColors || []).filter(x => x.isActive);
+        this.mainColors = (res.mainColors || []).filter(x => x.isActive);
         this.collars = (res.collars || []).filter(x => x.isActive);
         this.collections = res.collections || [];
         this.senderAddresses = (res.senderAddresses || []).filter(a => a.isActive);
@@ -529,15 +532,16 @@ export class OrderFormComponent implements OnInit {
     return !!this.orderForm.get('productInfo.materialId')?.value;
   }
 
-  // Khoá ô màu chính + màu bo cổ chính khi chưa chọn chất liệu (cùng rule, ăn theo ColorFabric).
-  // Màu phối (1 & 2) và màu bo cổ phối (1 & 2) chọn tự do, không phụ thuộc chất liệu nên không bị khoá/xoá ở đây.
+  // Khoá ô màu chính khi chưa chọn chất liệu. Màu phối (1 & 2), Bo cổ và cả 3 màu bo cổ (chính + phối 1/2)
+  // chọn tự do, không phụ thuộc chất liệu nên không bị khoá/xoá ở đây.
   private updateColorControlsState(): void {
     const pi = this.orderForm.get('productInfo');
-    const controls = [pi?.get('mainColorId'), pi?.get('collarColor1Id')];
+    const main = pi?.get('mainColorId');
     if (this.hasMaterialSelected()) {
-      controls.forEach(c => c?.enable({ emitEvent: false }));
+      main?.enable({ emitEvent: false });
     } else {
-      controls.forEach(c => { c?.setValue('', { emitEvent: false }); c?.disable({ emitEvent: false }); });
+      main?.setValue('', { emitEvent: false });
+      main?.disable({ emitEvent: false });
     }
   }
 
@@ -585,7 +589,6 @@ export class OrderFormComponent implements OnInit {
       if (v && !this.filteredColors.find(x => x.id === v)) pi?.get(key)?.setValue('');
     };
     clearIfMissing('mainColorId');
-    clearIfMissing('collarColor1Id');
   }
 
   private recalcDates(): void {

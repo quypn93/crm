@@ -56,6 +56,12 @@ export class SettingsLayoutComponent {
       description: 'Quản lý màu phối'
     },
     {
+      label: 'Màu chính',
+      route: '/settings/main-colors',
+      icon: 'list',
+      description: 'Quản lý màu chính (dùng cho màu bo cổ chính)'
+    },
+    {
       label: 'Bo cổ',
       route: '/settings/collars',
       icon: 'list',

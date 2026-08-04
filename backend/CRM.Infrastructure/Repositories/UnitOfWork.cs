@@ -33,6 +33,7 @@ public class UnitOfWork : IUnitOfWork
     private IRepository<ProductionDaysOption>? _productionDaysOptions;
     private IRepository<OrderType>? _orderTypes;
     private IRepository<AccentColor>? _accentColors;
+    private IRepository<MainColor>? _mainColors;
     private IRepository<Collar>? _collars;
     private IRepository<DepositTransaction>? _depositTransactions;
     private INotificationRepository? _notifications;
@@ -68,6 +69,7 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<ProductionDaysOption> ProductionDaysOptions => _productionDaysOptions ??= new Repository<ProductionDaysOption>(_context);
     public IRepository<OrderType> OrderTypes => _orderTypes ??= new Repository<OrderType>(_context);
     public IRepository<AccentColor> AccentColors => _accentColors ??= new Repository<AccentColor>(_context);
+    public IRepository<MainColor> MainColors => _mainColors ??= new Repository<MainColor>(_context);
     public IRepository<Collar> Collars => _collars ??= new Repository<Collar>(_context);
     public IRepository<DepositTransaction> DepositTransactions => _depositTransactions ??= new Repository<DepositTransaction>(_context);
     public IRepository<SenderAddress> SenderAddresses => _senderAddresses ??= new Repository<SenderAddress>(_context);

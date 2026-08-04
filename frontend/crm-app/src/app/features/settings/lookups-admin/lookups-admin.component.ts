@@ -136,7 +136,7 @@ import { ColorFabric, DesignService } from '../../../core/services/design.servic
   `]
 })
 export class LookupsAdminComponent implements OnInit {
-  resource: 'materials' | 'product-forms' | 'product-specifications' | 'order-types' | 'accent-colors' | 'collars' = 'materials';
+  resource: 'materials' | 'product-forms' | 'product-specifications' | 'order-types' | 'accent-colors' | 'main-colors' | 'collars' = 'materials';
   title = 'Chất liệu';
   items: LookupItem[] = [];
   showForm = false;

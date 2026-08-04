@@ -16,10 +16,11 @@ public class OrderItem : BaseEntity
     public Guid? AccentColorId { get; set; }            // AccentColor — Màu phối 1 (chọn tự do)
     public Guid? AccentColor2Id { get; set; }           // AccentColor — Màu phối 2 (chọn tự do)
     public Guid? CollarId { get; set; }                 // Collar — Bo cổ
-    // Màu bo cổ — số lượng slot hiển thị ở FE phụ thuộc Collar.ColorCount (1..3).
-    public Guid? CollarColor1Id { get; set; }            // ColorFabric — Màu bo cổ chính, ăn theo chất liệu (giống MainColorId)
-    public Guid? CollarColor2Id { get; set; }            // AccentColor — Màu bo cổ phối 1 (chọn tự do)
-    public Guid? CollarColor3Id { get; set; }            // AccentColor — Màu bo cổ phối 2 (chọn tự do)
+    // Màu bo cổ — số lượng slot hiển thị ở FE phụ thuộc Collar.ColorCount (1..3). Cả 3 đều chọn tự do,
+    // không phụ thuộc chất liệu (khác MainColorId của sản phẩm, vốn ăn theo ColorFabric).
+    public Guid? CollarColor1Id { get; set; }            // MainColor — Màu bo cổ chính
+    public Guid? CollarColor2Id { get; set; }            // AccentColor — Màu bo cổ phối 1
+    public Guid? CollarColor3Id { get; set; }            // AccentColor — Màu bo cổ phối 2
     public Guid? MaterialId { get; set; }
     public Guid? FormId { get; set; }
     public Guid? SpecificationId { get; set; }

@@ -30,6 +30,7 @@ public class CrmDbContext : DbContext
     public DbSet<ProductSpecification> ProductSpecifications => Set<ProductSpecification>();
     public DbSet<OrderType> OrderTypes => Set<OrderType>();
     public DbSet<AccentColor> AccentColors => Set<AccentColor>();
+    public DbSet<MainColor> MainColors => Set<MainColor>();
     public DbSet<Collar> Collars => Set<Collar>();
     public DbSet<SenderAddress> SenderAddresses => Set<SenderAddress>();
     public DbSet<CollectionMaterial> CollectionMaterials => Set<CollectionMaterial>();

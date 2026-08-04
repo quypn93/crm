@@ -68,6 +68,14 @@ public interface ICollarService
     Task DeleteAsync(Guid id);
 }
 
+public interface IMainColorService
+{
+    Task<IEnumerable<LookupItemDto>> GetAllAsync();
+    Task<LookupItemDto> CreateAsync(CreateLookupItemDto dto);
+    Task<LookupItemDto> UpdateAsync(UpdateLookupItemDto dto);
+    Task DeleteAsync(Guid id);
+}
+
 public interface IProductionDaysOptionService
 {
     Task<IEnumerable<ProductionDaysOptionDto>> GetAllAsync();

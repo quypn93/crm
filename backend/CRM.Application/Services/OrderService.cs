@@ -656,9 +656,9 @@ public class OrderService : IOrderService
             item.AccentColor2Name = (await _unitOfWork.AccentColors.GetByIdAsync(itemDto.AccentColor2Id.Value))?.Name;
         if (itemDto.CollarId.HasValue)
             item.CollarName = (await _unitOfWork.Collars.GetByIdAsync(itemDto.CollarId.Value))?.Name;
-        // Màu bo cổ chính — theo đúng rule của Màu sắc chính sản phẩm (ColorFabric, ăn theo chất liệu).
+        // Màu bo cổ chính — danh mục MainColor riêng, chọn tự do như Màu phối (không ăn theo chất liệu).
         if (itemDto.CollarColor1Id.HasValue)
-            item.CollarColor1Name = (await _unitOfWork.ColorFabrics.GetByIdAsync(itemDto.CollarColor1Id.Value))?.Name;
+            item.CollarColor1Name = (await _unitOfWork.MainColors.GetByIdAsync(itemDto.CollarColor1Id.Value))?.Name;
         // Màu bo cổ phối 1 & 2 — cùng danh mục AccentColor, chọn tự do như Màu phối sản phẩm.
         if (itemDto.CollarColor2Id.HasValue)
             item.CollarColor2Name = (await _unitOfWork.AccentColors.GetByIdAsync(itemDto.CollarColor2Id.Value))?.Name;

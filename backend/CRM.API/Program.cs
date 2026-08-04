@@ -233,6 +233,7 @@ builder.Services.AddScoped<IProductFormService, ProductFormService>();
 builder.Services.AddScoped<IProductSpecificationService, ProductSpecificationService>();
 builder.Services.AddScoped<IOrderTypeService, OrderTypeService>();
 builder.Services.AddScoped<IAccentColorService, AccentColorService>();
+builder.Services.AddScoped<IMainColorService, MainColorService>();
 builder.Services.AddScoped<ICollarService, CollarService>();
 builder.Services.AddScoped<IProductionDaysOptionService, ProductionDaysOptionService>();
 builder.Services.AddScoped<IDepositTransactionService, DepositTransactionService>();

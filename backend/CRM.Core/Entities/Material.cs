@@ -36,6 +36,15 @@ public class AccentColor : BaseEntity
     public bool IsActive { get; set; } = true;
 }
 
+// Màu chính — chọn tự do (không phụ thuộc chất liệu), dùng cho Màu bo cổ chính (khác ColorFabric
+// "ăn theo" chất liệu, dùng cho Màu sắc chính của sản phẩm).
+public class MainColor : BaseEntity
+{
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
 // Bo cổ (VD: X-00 .. X-15)
 public class Collar : BaseEntity
 {
