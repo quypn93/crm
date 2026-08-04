@@ -25,6 +25,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Ensure wwwroot exists before static files middleware looks for it
 Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads", "designs"));
 Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads", "tasks"));
+Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads", "avatars"));
 
 // Add services to the container
 builder.Services.AddControllers();

@@ -22,7 +22,8 @@
 
     <div class="user-menu" (click)="toggleUserMenu()">
       <div class="user-avatar">
-        {{ currentUser?.firstName?.charAt(0) || 'U' }}{{ currentUser?.lastName?.charAt(0) || '' }}
+        <img *ngIf="currentUser?.avatarUrl" [src]="resolveUrl(currentUser!.avatarUrl)" alt="Avatar">
+        <span *ngIf="!currentUser?.avatarUrl">{{ currentUser?.firstName?.charAt(0) || 'U' }}{{ currentUser?.lastName?.charAt(0) || '' }}</span>
       </div>
       <div class="user-info">
         <span class="user-name">{{ currentUser ? (currentUser.firstName + ' ' + currentUser.lastName) : 'Người dùng' }}</span>

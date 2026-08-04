@@ -4,6 +4,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { User } from '../../../core/models';
 import { UserManagementService } from '../../../core/services/user-management.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-profile',
@@ -18,6 +19,8 @@ export class ProfileComponent implements OnInit {
   showCurrentPassword = false;
   showNewPassword = false;
   showConfirmPassword = false;
+  isUploadingAvatar = false;
+  avatarError = '';
 
   constructor(
     private fb: FormBuilder,
@@ -65,6 +68,47 @@ export class ProfileComponent implements OnInit {
         this.errorMessage = err.error?.message || 'Đổi mật khẩu thất bại. Vui lòng thử lại.';
       }
     });
+  }
+
+  onAvatarSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      this.avatarError = 'Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.';
+      input.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.avatarError = 'Ảnh vượt quá dung lượng cho phép (5MB).';
+      input.value = '';
+      return;
+    }
+
+    this.avatarError = '';
+    this.isUploadingAvatar = true;
+    this.authService.uploadAvatar(file).subscribe({
+      next: (user) => {
+        this.currentUser = user;
+        this.isUploadingAvatar = false;
+        input.value = '';
+        this.toast.success('Cập nhật ảnh đại diện thành công');
+      },
+      error: (err) => {
+        this.isUploadingAvatar = false;
+        this.avatarError = err.error?.message || 'Upload ảnh thất bại. Vui lòng thử lại.';
+        input.value = '';
+      }
+    });
+  }
+
+  resolveUrl(path?: string): string {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const origin = (environment.apiUrl || '').replace(/\/api\/?$/, '');
+    return origin + (path.startsWith('/') ? path : '/' + path);
   }
 
   getInitials(): string {

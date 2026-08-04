@@ -104,6 +104,35 @@ public class AuthController : ControllerBase
         }
     }
 
+    [Authorize]
+    [HttpPost("upload-avatar")]
+    public async Task<ActionResult<ApiResponse<UserDto>>> UploadAvatar(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(ApiResponse<UserDto>.Fail("Không có file."));
+
+        var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!allowed.Contains(ext))
+            return BadRequest(ApiResponse<UserDto>.Fail("Định dạng ảnh không hỗ trợ. Chỉ chấp nhận JPG, PNG, WEBP."));
+
+        const long maxSizeBytes = 5 * 1024 * 1024;
+        if (file.Length > maxSizeBytes)
+            return BadRequest(ApiResponse<UserDto>.Fail("Ảnh vượt quá dung lượng cho phép (5MB)."));
+
+        var uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatars");
+        Directory.CreateDirectory(uploadsRoot);
+        var fileName = $"avatar_{Guid.NewGuid():N}{ext}";
+        var fullPath = Path.Combine(uploadsRoot, fileName);
+        await using (var stream = System.IO.File.Create(fullPath))
+            await file.CopyToAsync(stream);
+
+        var userId = GetCurrentUserId();
+        var user = await _authService.UpdateAvatarAsync(userId, $"/uploads/avatars/{fileName}");
+
+        return Ok(ApiResponse<UserDto>.Ok(user, "Cập nhật ảnh đại diện thành công."));
+    }
+
     private Guid GetCurrentUserId()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

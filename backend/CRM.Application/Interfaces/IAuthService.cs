@@ -10,4 +10,5 @@ public interface IAuthService
     Task LogoutAsync(Guid userId);
     Task<UserDto?> GetCurrentUserAsync(Guid userId);
     Task ChangePasswordAsync(Guid userId, ChangePasswordRequestDto request);
+    Task<UserDto> UpdateAvatarAsync(Guid userId, string avatarUrl);
 }

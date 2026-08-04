@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { ApiService } from './api.service';
+import { BehaviorSubject, Observable, map, tap } from 'rxjs';
+import { ApiService, ApiResponse } from './api.service';
 import { StorageService } from './storage.service';
+import { environment } from '../../../environments/environment';
 import { User, LoginRequest, RegisterRequest, AuthResponse, RefreshTokenRequest, ChangePasswordRequest } from '../models';
 import { NotificationRealtimeService } from './notification-realtime.service';
 import { NotificationService } from './notification.service';
@@ -79,6 +81,7 @@ export class AuthService {
 
   constructor(
     private api: ApiService,
+    private http: HttpClient,
     private storage: StorageService,
     private router: Router,
     private realtime: NotificationRealtimeService,
@@ -146,6 +149,20 @@ export class AuthService {
 
   changePassword(request: ChangePasswordRequest): Observable<void> {
     return this.api.put<void>('auth/change-password', request);
+  }
+
+  uploadAvatar(file: File): Observable<User> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http
+      .post<ApiResponse<User>>(`${environment.apiUrl}/auth/upload-avatar`, form)
+      .pipe(
+        map(r => r.data),
+        tap(user => {
+          this.storage.setUser(user);
+          this.currentUserSubject.next(user);
+        })
+      );
   }
 
   private handleAuthResponse(response: AuthResponse): void {

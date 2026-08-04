@@ -153,6 +153,22 @@ public class AuthService : IAuthService
         await _unitOfWork.SaveChangesAsync();
     }
 
+    public async Task<UserDto> UpdateAvatarAsync(Guid userId, string avatarUrl)
+    {
+        var user = await _unitOfWork.Users.GetByIdWithRolesAsync(userId);
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException("Không tìm thấy người dùng.");
+        }
+
+        user.AvatarUrl = avatarUrl;
+        _unitOfWork.Users.Update(user);
+        await _unitOfWork.SaveChangesAsync();
+
+        return _mapper.Map<UserDto>(user);
+    }
+
     private AuthResponseDto CreateAuthResponse(User user)
     {
         var accessToken = GenerateAccessToken(user);

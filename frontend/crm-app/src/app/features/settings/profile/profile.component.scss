@@ -60,7 +60,24 @@
   border-bottom: 1px solid var(--border-color);
   margin-bottom: 16px;
 
+  .avatar-upload {
+    position: relative;
+    flex-shrink: 0;
+
+    input[type='file'] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    input[type='file']:disabled {
+      cursor: not-allowed;
+    }
+  }
+
   .avatar {
+    position: relative;
     width: 64px;
     height: 64px;
     border-radius: 50%;
@@ -71,8 +88,42 @@
     justify-content: center;
     font-size: 22px;
     font-weight: 700;
-    flex-shrink: 0;
     box-shadow: var(--shadow-primary);
+    overflow: hidden;
+    cursor: pointer;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .avatar-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.45);
+      color: #fff;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+
+    &:hover .avatar-overlay {
+      opacity: 1;
+    }
+
+    &.uploading .avatar-overlay {
+      opacity: 1;
+    }
+
+    .avatar-spinner {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      color: #fff;
+    }
   }
 
   .identity-text {
@@ -90,6 +141,13 @@
     font-size: 13px;
     color: var(--text-secondary);
     margin-top: 2px;
+  }
+
+  .avatar-error {
+    font-size: 12px;
+    color: var(--danger-color);
+    margin-top: 4px;
+    font-weight: 500;
   }
 }
 

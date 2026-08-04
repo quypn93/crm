@@ -2,6 +2,7 @@ import { Component, EventEmitter, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { UserManagementService } from '../../core/services/user-management.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-header',
@@ -25,6 +26,13 @@ export class HeaderComponent {
 
   get currentUser() {
     return this.authService.currentUser;
+  }
+
+  resolveUrl(path?: string): string {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const origin = (environment.apiUrl || '').replace(/\/api\/?$/, '');
+    return origin + (path.startsWith('/') ? path : '/' + path);
   }
 
   onToggleSidebar(): void {
