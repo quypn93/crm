@@ -16,6 +16,12 @@ interface ExportField {
   value: (o: Order) => string | number;
 }
 
+// Một cột có thể bật/tắt hiển thị trên bảng danh sách đơn hàng
+interface TableColumn {
+  key: string;
+  label: string;
+}
+
 @Component({
   selector: 'app-order-list',
   templateUrl: './order-list.component.html',
@@ -104,6 +110,7 @@ export class OrderListComponent implements OnInit {
   ngOnInit(): void {
     this.canCreateOrder = this.authService.canCreateOrders();
     this.isManagerAccount = this.authService.hasAnyRole(['Admin', 'SalesManager']);
+    this.loadColumnPrefs();
     this.restoreListState();
     if (this.isManagerAccount) {
       // Chỉ liệt kê người có khả năng tạo đơn (Admin, SalesManager, SalesRep)
@@ -406,6 +413,80 @@ export class OrderListComponent implements OnInit {
     // BOM UTF-8 để Excel đọc đúng tiếng Việt.
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     this.triggerDownload(blob, `don-hang-${this.fileStamp()}.csv`);
+  }
+
+  // ===== Tùy chỉnh cột hiển thị trên bảng =====
+  // Mã đơn, Khách hàng và Thao tác luôn hiển thị; các cột còn lại người dùng tự bật/tắt.
+  readonly columnCatalog: TableColumn[] = [
+    { key: 'createdByUserName', label: 'Sale (người tạo đơn)' },
+    { key: 'status', label: 'Trạng thái' },
+    { key: 'paymentStatus', label: 'Thanh toán' },
+    { key: 'deliveryMethodName', label: 'Hình thức vận chuyển' },
+    { key: 'invoiceStatus', label: 'Trạng thái hóa đơn' },
+    { key: 'quantity', label: 'Số lượng' },
+    { key: 'totalAmount', label: 'Tổng tiền' },
+    { key: 'remaining', label: 'Còn nợ' },
+    { key: 'createdAt', label: 'Ngày tạo' },
+    { key: 'confirmedDate', label: 'Ngày đặt' },
+    { key: 'returnDate', label: 'Ngày trả' }
+  ];
+
+  private static readonly COLUMNS_STORAGE_KEY = 'crm.orderListColumns.v1';
+  private static readonly DEFAULT_VISIBLE_COLUMNS = [
+    'createdByUserName', 'status', 'paymentStatus', 'deliveryMethodName', 'invoiceStatus',
+    'quantity', 'totalAmount', 'remaining', 'createdAt', 'confirmedDate', 'returnDate'
+  ];
+
+  visibleColumns = new Set<string>(OrderListComponent.DEFAULT_VISIBLE_COLUMNS);
+  showColumnMenu = false;
+
+  private loadColumnPrefs(): void {
+    try {
+      const saved = JSON.parse(localStorage.getItem(OrderListComponent.COLUMNS_STORAGE_KEY) || 'null');
+      if (Array.isArray(saved)) {
+        const validKeys = new Set(this.columnCatalog.map(c => c.key));
+        this.visibleColumns = new Set(saved.filter((k: string) => validKeys.has(k)));
+        return;
+      }
+    } catch { /* noop */ }
+    this.visibleColumns = new Set(OrderListComponent.DEFAULT_VISIBLE_COLUMNS);
+  }
+
+  private saveColumnPrefs(): void {
+    try { localStorage.setItem(OrderListComponent.COLUMNS_STORAGE_KEY, JSON.stringify([...this.visibleColumns])); } catch { /* noop */ }
+  }
+
+  toggleColumnMenu(): void { this.showColumnMenu = !this.showColumnMenu; }
+
+  isColumnVisible(key: string): boolean { return this.visibleColumns.has(key); }
+
+  toggleColumn(key: string): void {
+    if (this.visibleColumns.has(key)) this.visibleColumns.delete(key);
+    else this.visibleColumns.add(key);
+    this.saveColumnPrefs();
+  }
+
+  resetColumns(): void {
+    this.visibleColumns = new Set(OrderListComponent.DEFAULT_VISIBLE_COLUMNS);
+    this.saveColumnPrefs();
+  }
+
+  // colspan của dòng "chưa có đơn hàng": Mã đơn + Khách hàng + Thao tác (luôn hiện) + số cột tùy chỉnh đang bật.
+  get visibleColumnCount(): number {
+    return 3 + this.visibleColumns.size;
+  }
+
+  getQuantity(order: Order): number {
+    return (order.items || []).reduce((sum, i) => sum + (i.quantity || 0), 0);
+  }
+
+  // "Trạng thái hóa đơn" suy ra từ % VAT đã chọn khi tạo đơn (0% = không lấy hóa đơn, 8% = lấy VAT).
+  getInvoiceStatusLabel(order: Order): string {
+    return (order.taxPercent || 0) > 0 ? 'Lấy VAT' : 'Không lấy VAT';
+  }
+
+  getInvoiceStatusColor(order: Order): string {
+    return (order.taxPercent || 0) > 0 ? '#16a34a' : '#6c757d';
   }
 
   viewOrder(id: string): void {

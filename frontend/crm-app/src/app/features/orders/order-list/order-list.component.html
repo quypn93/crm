@@ -6,6 +6,24 @@
     </div>
     <div class="header-actions">
       <div class="export-dropdown">
+        <button class="btn btn-outline" (click)="toggleColumnMenu()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="18" rx="1"></rect>
+            <rect x="14" y="3" width="7" height="18" rx="1"></rect>
+          </svg>
+          Cột hiển thị
+        </button>
+        <div class="export-backdrop" *ngIf="showColumnMenu" (click)="showColumnMenu = false"></div>
+        <div class="export-menu column-menu" *ngIf="showColumnMenu">
+          <label class="column-menu-item" *ngFor="let c of columnCatalog">
+            <input type="checkbox" [checked]="isColumnVisible(c.key)" (change)="toggleColumn(c.key)">
+            <span>{{ c.label }}</span>
+          </label>
+          <button type="button" class="column-menu-reset" (click)="resetColumns()">Khôi phục mặc định</button>
+        </div>
+      </div>
+
+      <div class="export-dropdown">
         <button class="btn btn-outline" (click)="toggleExportMenu()" [disabled]="isExporting">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -141,13 +159,17 @@
         <tr>
           <th>Mã đơn</th>
           <th>Khách hàng</th>
-          <th>Trạng thái</th>
-          <th>Thanh toán</th>
-          <th>Tổng tiền</th>
-          <th>Còn nợ</th>
-          <th>Ngày tạo</th>
-          <th>Ngày đặt</th>
-          <th>Ngày trả</th>
+          <th *ngIf="isColumnVisible('createdByUserName')">Sale</th>
+          <th *ngIf="isColumnVisible('status')">Trạng thái</th>
+          <th *ngIf="isColumnVisible('paymentStatus')">Thanh toán</th>
+          <th *ngIf="isColumnVisible('deliveryMethodName')">Vận chuyển</th>
+          <th *ngIf="isColumnVisible('invoiceStatus')">Hóa đơn</th>
+          <th *ngIf="isColumnVisible('quantity')">Số lượng</th>
+          <th *ngIf="isColumnVisible('totalAmount')">Tổng tiền</th>
+          <th *ngIf="isColumnVisible('remaining')">Còn nợ</th>
+          <th *ngIf="isColumnVisible('createdAt')">Ngày tạo</th>
+          <th *ngIf="isColumnVisible('confirmedDate')">Ngày đặt</th>
+          <th *ngIf="isColumnVisible('returnDate')">Ngày trả</th>
           <th class="actions-col">Thao tác</th>
         </tr>
       </thead>
@@ -165,23 +187,31 @@
               <span class="deal-title" *ngIf="order.dealTitle">{{ order.dealTitle }}</span>
             </div>
           </td>
-          <td>
+          <td *ngIf="isColumnVisible('createdByUserName')">{{ order.createdByUserName || '—' }}</td>
+          <td *ngIf="isColumnVisible('status')">
             <span class="status-badge" [style.background-color]="getStatusColor(order.status) + '20'" [style.color]="getStatusColor(order.status)">
               {{ getStatusLabel(order.status) }}
             </span>
           </td>
-          <td>
+          <td *ngIf="isColumnVisible('paymentStatus')">
             <span class="status-badge" [style.background-color]="getPaymentStatusColor(order.paymentStatus) + '20'" [style.color]="getPaymentStatusColor(order.paymentStatus)">
               {{ getPaymentStatusLabel(order.paymentStatus) }}
             </span>
           </td>
-          <td class="amount">{{ formatCurrency(order.totalAmount) }}</td>
-          <td class="amount" [class.overdue]="(order.totalAmount - (order.paidAmount || 0)) > 0">
+          <td *ngIf="isColumnVisible('deliveryMethodName')">{{ order.deliveryMethodName || '—' }}</td>
+          <td *ngIf="isColumnVisible('invoiceStatus')">
+            <span class="status-badge" [style.background-color]="getInvoiceStatusColor(order) + '20'" [style.color]="getInvoiceStatusColor(order)">
+              {{ getInvoiceStatusLabel(order) }}
+            </span>
+          </td>
+          <td *ngIf="isColumnVisible('quantity')">{{ getQuantity(order) }}</td>
+          <td class="amount" *ngIf="isColumnVisible('totalAmount')">{{ formatCurrency(order.totalAmount) }}</td>
+          <td class="amount" *ngIf="isColumnVisible('remaining')" [class.overdue]="(order.totalAmount - (order.paidAmount || 0)) > 0">
             {{ formatCurrency(order.totalAmount - (order.paidAmount || 0)) }}
           </td>
-          <td>{{ order.createdAt | date:'dd/MM/yyyy' }}</td>
-          <td>{{ order.confirmedDate ? (order.confirmedDate | date:'dd/MM/yyyy') : '—' }}</td>
-          <td>{{ order.returnDate ? (order.returnDate | date:'dd/MM/yyyy') : '—' }}</td>
+          <td *ngIf="isColumnVisible('createdAt')">{{ order.createdAt | date:'dd/MM/yyyy' }}</td>
+          <td *ngIf="isColumnVisible('confirmedDate')">{{ order.confirmedDate ? (order.confirmedDate | date:'dd/MM/yyyy') : '—' }}</td>
+          <td *ngIf="isColumnVisible('returnDate')">{{ order.returnDate ? (order.returnDate | date:'dd/MM/yyyy') : '—' }}</td>
           <td class="actions-col">
             <div class="action-buttons">
               <button
@@ -232,7 +262,7 @@
           </td>
         </tr>
         <tr *ngIf="orders.length === 0 && !isLoading">
-          <td colspan="10" class="empty-state">
+          <td [attr.colspan]="visibleColumnCount" class="empty-state">
             <div class="empty-content">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
