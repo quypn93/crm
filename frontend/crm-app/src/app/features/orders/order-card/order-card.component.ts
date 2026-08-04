@@ -198,6 +198,8 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
   private getColorText(): string {
     const colorLines = this.parseStyleNotes()
       .filter(([key]) => /màu/i.test(key))
+      // Bỏ qua ghi chú màu không có giá trị để fallback về tên màu thực tế
+      .filter(([, value]) => value)
       .map(([key, value]) => `${key}: ${value}`);
 
     if (colorLines.length) return colorLines.join('\n');
@@ -209,6 +211,8 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
   private getStyleText(): string {
     return this.parseStyleNotes()
       .filter(([key]) => !/màu|chất liệu/i.test(key))
+      // Bỏ qua ghi chú không có giá trị (chỉ có nhãn, phần sau dấu ":" trống)
+      .filter(([, value]) => value)
       .map(([key, value]) => `${key}: ${value}`)
       .join('\n');
   }
