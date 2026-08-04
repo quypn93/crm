@@ -73,8 +73,10 @@ public class LeaderboardService : ILeaderboardService
         switch (scope)
         {
             case LeaderboardScope.Sales:
+                // Chỉ tính đơn từ trạng thái Đã xác nhận trở lên — Nháp chưa chắc khách sẽ chốt nên không tính.
                 return await _db.Orders
                     .Where(o => o.AssignedToUserId != null
+                             && o.Status != OrderStatus.Draft
                              && o.Status != OrderStatus.Cancelled
                              && o.OrderDate >= start && o.OrderDate < end)
                     .GroupBy(o => o.AssignedToUserId!.Value)
@@ -83,8 +85,10 @@ public class LeaderboardService : ILeaderboardService
 
             case LeaderboardScope.Design:
                 // Đếm số ĐƠN HÀNG designer phụ trách (Order.DesignerUserId) — không đếm số bản ghi Design.
+                // Cũng chỉ tính từ Đã xác nhận trở lên, giống Sales.
                 return await _db.Orders
                     .Where(o => o.DesignerUserId != null
+                             && o.Status != OrderStatus.Draft
                              && o.Status != OrderStatus.Cancelled
                              && o.OrderDate >= start && o.OrderDate < end)
                     .GroupBy(o => o.DesignerUserId!.Value)
