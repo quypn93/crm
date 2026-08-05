@@ -43,12 +43,15 @@ export const RoleGroups = {
   DeliveryRoles: [RoleNames.Admin, RoleNames.DeliveryManager, RoleNames.DeliveryStaff],
   DesignRoles: [RoleNames.Admin, RoleNames.DesignManager, RoleNames.Designer],
   OperationalRoles: [RoleNames.Admin, RoleNames.ProductionManager, RoleNames.ProductionStaff, RoleNames.QualityManager, RoleNames.QualityControl, RoleNames.DeliveryManager, RoleNames.DeliveryStaff],
-  // Roles được phép truy cập đơn hàng — mọi role nghiệp vụ trừ Content (Manager + Staff)
+  // Roles được phép truy cập đơn hàng — mọi role nghiệp vụ trừ Content (Manager + Staff).
+  // Accountant chỉ XEM: mọi nút tạo/sửa/xóa đều gate bằng allow-list riêng không có Accountant,
+  // backend cũng chặn bằng [DenyWriteForRoles] trên OrdersController.
   OrderRoles: [
     RoleNames.Admin,
     RoleNames.SalesManager, RoleNames.SalesRep,
     RoleNames.ProductionManager, RoleNames.ProductionStaff,
     RoleNames.WaybillStaff, RoleNames.WarehouseManager,
+    RoleNames.Accountant,
     RoleNames.QualityManager, RoleNames.QualityControl,
     RoleNames.DeliveryManager, RoleNames.DeliveryStaff,
     RoleNames.DesignManager, RoleNames.Designer

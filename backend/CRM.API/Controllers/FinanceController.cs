@@ -83,11 +83,14 @@ public class OrderCostsController : FinanceControllerBase
         return Ok(ApiResponse<CostImportResultDto>.Ok(result, message));
     }
 
+    /// <summary>File mẫu để nhập giá cost — mặc định .xlsx, truyền ?format=csv để lấy bản .csv.</summary>
     [HttpGet("import-template")]
-    public IActionResult DownloadTemplate()
-        => File(OrderCostService.BuildImportTemplate(),
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "mau-gia-cost.xlsx");
+    public IActionResult DownloadTemplate([FromQuery] string? format)
+        => string.Equals(format, "csv", StringComparison.OrdinalIgnoreCase)
+            ? File(OrderCostService.BuildImportTemplateCsv(), "text/csv; charset=utf-8", "mau-gia-cost.csv")
+            : File(OrderCostService.BuildImportTemplate(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "mau-gia-cost.xlsx");
 
     /// <summary>Đính kèm file giá cost gốc cho 1 đơn (chỉ lưu tham chiếu, không parse).</summary>
     [HttpPost("{orderId}/attachment")]

@@ -13,6 +13,7 @@ namespace CRM.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+// Lưu ý: quyền ghi của Kế toán bị chặn bởi DenyWriteForRolesAttribute đăng ký toàn cục ở Program.cs.
 public class OrdersController : ControllerBase
 {
     private readonly IOrderService _orderService;

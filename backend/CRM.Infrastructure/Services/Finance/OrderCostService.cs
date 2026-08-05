@@ -535,19 +535,36 @@ public class OrderCostService : IOrderCostService
         return value;
     }
 
+    private static readonly string[] TemplateHeaders =
+    {
+        "Mã đơn hàng", "Giá cost", "Chi phí ship hàng", "Chi phí gửi hàng đi", "Chi phí khác", "Ghi chú"
+    };
+
+    private const string TemplateSampleNote = "Ví dụ — xóa dòng này trước khi import";
+
+    /// <summary>
+    /// File mẫu .csv — cho ai không dùng Excel. Kèm BOM UTF-8 để Excel không vỡ tiếng Việt.
+    /// </summary>
+    public static byte[] BuildImportTemplateCsv()
+    {
+        var sb = new StringBuilder();
+        sb.Append(string.Join(',', TemplateHeaders)).Append('\n');
+        sb.Append($"ORD-2026-0001,1200000,35000,20000,0,\"{TemplateSampleNote}\"").Append('\n');
+
+        return Encoding.UTF8.GetPreamble()
+            .Concat(Encoding.UTF8.GetBytes(sb.ToString()))
+            .ToArray();
+    }
+
     /// <summary>File mẫu .xlsx cho kế toán tải về.</summary>
     public static byte[] BuildImportTemplate()
     {
         using var wb = new XLWorkbook();
         var ws = wb.AddWorksheet("Gia cost");
 
-        var headers = new[]
+        for (var i = 0; i < TemplateHeaders.Length; i++)
         {
-            "Mã đơn hàng", "Giá cost", "Chi phí ship hàng", "Chi phí gửi hàng đi", "Chi phí khác", "Ghi chú"
-        };
-        for (var i = 0; i < headers.Length; i++)
-        {
-            ws.Cell(1, i + 1).Value = headers[i];
+            ws.Cell(1, i + 1).Value = TemplateHeaders[i];
             ws.Cell(1, i + 1).Style.Font.Bold = true;
             ws.Cell(1, i + 1).Style.Fill.BackgroundColor = XLColor.LightGray;
         }
@@ -557,7 +574,7 @@ public class OrderCostService : IOrderCostService
         ws.Cell(2, 3).Value = 35000;
         ws.Cell(2, 4).Value = 20000;
         ws.Cell(2, 5).Value = 0;
-        ws.Cell(2, 6).Value = "Ví dụ — xóa dòng này trước khi import";
+        ws.Cell(2, 6).Value = TemplateSampleNote;
 
         ws.Columns().AdjustToContents();
 

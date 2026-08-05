@@ -12,8 +12,15 @@ import {
       <div class="page-header">
         <h1>Chi phí sản xuất hàng hóa</h1>
         <div class="header-actions">
-          <button class="btn btn-secondary" (click)="downloadTemplate()">Tải file mẫu</button>
-          <button class="btn btn-secondary" (click)="fileInput.click()">Tải file giá cost</button>
+          <button class="btn btn-secondary" (click)="downloadTemplate('xlsx')" title="Tải xuống file mẫu định dạng Excel">
+            ⬇ File mẫu (.xlsx)
+          </button>
+          <button class="btn btn-secondary" (click)="downloadTemplate('csv')" title="Tải xuống file mẫu định dạng CSV">
+            ⬇ File mẫu (.csv)
+          </button>
+          <button class="btn btn-secondary" (click)="fileInput.click()" title="Chọn file giá cost từ máy để nhập vào hệ thống">
+            ⬆ Nhập file giá cost
+          </button>
           <input #fileInput type="file" accept=".xlsx,.csv" hidden (change)="onImportFile($event)">
           <button class="btn btn-primary" (click)="saveAll()" [disabled]="dirtyCount === 0 || saving">
             {{ saving ? 'Đang lưu...' : 'Lưu' + (dirtyCount ? ' (' + dirtyCount + ')' : '') }}
@@ -23,7 +30,8 @@ import {
 
       <p class="hint">
         Đơn hàng từ trạng thái <strong>Đang sản xuất</strong> trở đi tự động xuất hiện ở đây.
-        Nhập trực tiếp vào bảng rồi bấm <strong>Lưu</strong>, hoặc tải file giá cost lên.
+        Nhập trực tiếp vào bảng rồi bấm <strong>Lưu</strong>, hoặc dùng <strong>Nhập file giá cost</strong>
+        để tải file lên (nhận cả <code>.xlsx</code> và <code>.csv</code>).
       </p>
 
       <div class="filter-bar">
@@ -344,9 +352,9 @@ export class OrderCostsComponent implements OnInit {
   }
 
   // ── Import / template / đính kèm ──────────────────────────────────────
-  downloadTemplate(): void {
-    this.finance.downloadImportTemplate().subscribe({
-      next: blob => this.saveBlob(blob, 'mau-gia-cost.xlsx'),
+  downloadTemplate(format: 'xlsx' | 'csv' = 'xlsx'): void {
+    this.finance.downloadImportTemplate(format).subscribe({
+      next: blob => this.saveBlob(blob, `mau-gia-cost.${format}`),
       error: () => this.toast.error('Không tải được file mẫu.')
     });
   }

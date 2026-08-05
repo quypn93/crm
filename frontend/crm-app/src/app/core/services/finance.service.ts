@@ -52,9 +52,12 @@ export class FinanceService {
     return this.http.post<ApiResponse<CostImportResult>>(`${this.base}/order-costs/import`, form);
   }
 
-  /** File mẫu .xlsx — tải blob rồi trigger download ở component. */
-  downloadImportTemplate(): Observable<Blob> {
-    return this.http.get(`${this.base}/order-costs/import-template`, { responseType: 'blob' });
+  /** File mẫu nhập giá cost — tải blob rồi trigger download ở component. */
+  downloadImportTemplate(format: 'xlsx' | 'csv' = 'xlsx'): Observable<Blob> {
+    return this.http.get(`${this.base}/order-costs/import-template`, {
+      params: this.params({ format }),
+      responseType: 'blob'
+    });
   }
 
   uploadCostAttachment(orderId: string, file: File): Observable<OrderCostListItem> {

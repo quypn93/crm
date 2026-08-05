@@ -17,6 +17,7 @@ using Microsoft.OpenApi.Models;
 using CRM.Core.Entities;
 using CRM.API.Authorization;
 using CRM.API.BackgroundJobs;
+using CRM.API.Filters;
 using CRM.API.Hubs;
 using CRM.API.Realtime;
 
@@ -28,7 +29,24 @@ Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "www
 Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads", "avatars"));
 
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    // Kế toán chỉ được XEM dữ liệu nghiệp vụ (đơn hàng, khách hàng, deal, thiết kế, danh mục…).
+    // Đăng ký toàn cục vì hầu hết controller chỉ có [Authorize] cấp class — tức mọi user đăng nhập
+    // đều ghi được. Đăng ký ở đây thì endpoint/controller thêm mới sau cũng tự động được chặn.
+    options.Filters.Add(new DenyWriteForRolesAttribute(RoleNames.Accountant)
+    {
+        // Các nhánh kế toán VẪN phải ghi được.
+        ExemptPathPrefixes = new[]
+        {
+            "/api/finance",        // nghiệp vụ chính: nhập chi phí, lương, đầu mục
+            "/api/auth",           // đăng nhập, refresh token, đổi mật khẩu, đổi avatar
+            "/api/tasks",          // menu "Công việc" mở cho mọi role
+            "/api/chat",           // chat nội bộ
+            "/api/notifications"   // đánh dấu đã đọc
+        }
+    });
+});
 builder.Services.AddEndpointsApiExplorer();
 
 // Branding — đọc một lần để dùng cho Swagger; cũng register IOptions để inject vào services.
