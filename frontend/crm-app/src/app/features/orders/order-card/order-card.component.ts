@@ -17,6 +17,7 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
   branding = environment.branding;
   readonly ADULT_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'NC', 'TE'];
   readonly CHILD_SIZES = ['NC1', 'NC2', 'NC3'];
+  readonly READYMADE_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'];
 
   // File xuất phải luôn dưới 4MB — html2canvas ở scale:2 xuất PNG lossless dễ vượt 5MB.
   private readonly MAX_EXPORT_BYTES = 4 * 1024 * 1024;
@@ -173,6 +174,11 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
   isGenderedForm(): boolean {
     const name = (this.order?.items?.[0]?.formName || '').toLowerCase();
     return !(name.includes('oversize') || name.includes('unisex'));
+  }
+
+  // Dạng đơn "Áo sẵn" → bảng size chuẩn XS-3XL, 1 dòng, bất kể Form dáng.
+  isReadyMadeOrder(): boolean {
+    return (this.order?.orderTypeName || '').toLowerCase().includes('sẵn');
   }
 
   fmt(d: Date | string | null | undefined): string {

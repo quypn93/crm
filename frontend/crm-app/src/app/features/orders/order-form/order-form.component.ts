@@ -95,6 +95,8 @@ export class OrderFormComponent implements OnInit {
   readonly ADULT_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'NC', 'TE'];
   readonly CHILD_SIZES = ['NC1', 'NC2', 'NC3'];
   readonly SIZE_LIST = [...this.ADULT_SIZES, ...this.CHILD_SIZES];
+  // Dạng đơn "Áo sẵn" (hàng có sẵn) dùng size chuẩn XS-3XL, 1 dòng duy nhất — khác hẳn bảng size của "Cắt may".
+  readonly READYMADE_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'];
   readonly SIZE_GENDERS = [
     { key: 'NAM', label: 'NAM' },
     { key: 'NU', label: 'NỮ' }
@@ -125,15 +127,27 @@ export class OrderFormComponent implements OnInit {
     return !(name.includes('oversize') || name.includes('unisex'));
   }
 
-  // Khi đổi giữa dạng chia giới tính ↔ 1 dòng, key size không tương thích (VD "NAM:S" vs "S")
-  // nên xoá sizeQty để tránh cộng dồn nhầm số lượng cũ.
-  private lastGendered: boolean | null = null;
+  // Dạng đơn = "Áo sẵn" → bảng size chuẩn XS-3XL, 1 dòng, bất kể Form dáng đang chọn là gì.
+  isReadyMadeOrder(): boolean {
+    const id = this.orderForm.get('orderTypeId')?.value;
+    const name = (this.orderTypes.find(t => t.id === id)?.name || '').toLowerCase();
+    return name.includes('sẵn');
+  }
+
+  private getSizeMode(): 'readymade' | 'gendered' | 'plain' {
+    if (this.isReadyMadeOrder()) return 'readymade';
+    return this.isGenderedForm() ? 'gendered' : 'plain';
+  }
+
+  // Khi đổi giữa các dạng bảng size (chia giới tính / 1 dòng thường / áo sẵn), key size không tương
+  // thích nhau (VD "NAM:S" vs "S" vs "2XL") nên xoá sizeQty để tránh cộng dồn nhầm số lượng cũ.
+  private lastSizeMode: 'readymade' | 'gendered' | 'plain' | null = null;
   private onFormModeChange(): void {
-    const gendered = this.isGenderedForm();
-    if (this.lastGendered !== null && this.lastGendered !== gendered) {
+    const mode = this.getSizeMode();
+    if (this.lastSizeMode !== null && this.lastSizeMode !== mode) {
       this.sizeQty = {};
     }
-    this.lastGendered = gendered;
+    this.lastSizeMode = mode;
   }
 
   constructor(
@@ -292,6 +306,7 @@ export class OrderFormComponent implements OnInit {
     this.orderForm.get('orderDate')?.valueChanges.subscribe(() => this.recalcDates());
     this.orderForm.get('productInfo.collectionId')?.valueChanges.subscribe((id: string) => this.onCollectionChange(id));
     this.orderForm.get('productInfo.formId')?.valueChanges.subscribe(() => this.onFormModeChange());
+    this.orderForm.get('orderTypeId')?.valueChanges.subscribe(() => this.onFormModeChange());
     this.orderForm.get('productInfo.materialId')?.valueChanges.subscribe(() => this.onMaterialChange());
     this.orderForm.get('productInfo.collarId')?.valueChanges.subscribe(() => this.onCollarChange());
     this.orderForm.get('shippingProvinceCode')?.valueChanges.subscribe((code: string) => this.onProvinceChange(code));
@@ -762,9 +777,10 @@ export class OrderFormComponent implements OnInit {
           if (firstItem.collectionId) this.onCollectionChange(firstItem.collectionId);
         }
 
-        // Xác định form của đơn để biết size lưu dạng chia giới tính hay 1 dòng.
+        // Xác định form/dạng đơn để biết size lưu dạng chia giới tính, 1 dòng thường, hay áo sẵn (XS-3XL).
         const orderFormName = (this.shirtForms.find(f => f.id === firstItem?.formId)?.name || '').toLowerCase();
-        const orderGendered = !(orderFormName.includes('oversize') || orderFormName.includes('unisex'));
+        const orderIsReadyMade = (order.orderTypeName || '').toLowerCase().includes('sẵn');
+        const orderGendered = !orderIsReadyMade && !(orderFormName.includes('oversize') || orderFormName.includes('unisex'));
         this.sizeQty = {};
         order.items.forEach(item => {
           if (item.size) {
@@ -772,7 +788,7 @@ export class OrderFormComponent implements OnInit {
             this.sizeQty[sz] = (this.sizeQty[sz] || 0) + item.quantity;
           }
         });
-        this.lastGendered = orderGendered;
+        this.lastSizeMode = orderIsReadyMade ? 'readymade' : (orderGendered ? 'gendered' : 'plain');
 
         this.items.clear();
         this.isLoading = false;
@@ -846,7 +862,8 @@ export class OrderFormComponent implements OnInit {
         }
 
         const orderFormName = (this.shirtForms.find(f => f.id === firstItem?.formId)?.name || '').toLowerCase();
-        const orderGendered = !(orderFormName.includes('oversize') || orderFormName.includes('unisex'));
+        const orderIsReadyMade = (order.orderTypeName || '').toLowerCase().includes('sẵn');
+        const orderGendered = !orderIsReadyMade && !(orderFormName.includes('oversize') || orderFormName.includes('unisex'));
         this.sizeQty = {};
         order.items.forEach(item => {
           if (item.size) {
@@ -854,7 +871,7 @@ export class OrderFormComponent implements OnInit {
             this.sizeQty[sz] = (this.sizeQty[sz] || 0) + item.quantity;
           }
         });
-        this.lastGendered = orderGendered;
+        this.lastSizeMode = orderIsReadyMade ? 'readymade' : (orderGendered ? 'gendered' : 'plain');
 
         this.items.clear();
         this.isLoading = false;

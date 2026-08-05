@@ -21,8 +21,24 @@
     </div>
 
     <div class="size-content">
+      <!-- Áo sẵn: size chuẩn XS-3XL, 1 dòng -->
+      <ng-container *ngIf="isReadyMadeOrder()">
+        <table class="size-table">
+          <tbody>
+            <tr>
+              <th *ngFor="let size of READYMADE_SIZES">{{ size }}</th>
+              <th>TỔNG</th>
+            </tr>
+            <tr>
+              <td *ngFor="let size of READYMADE_SIZES">{{ getSizeQtyDisplay(size) }}</td>
+              <td class="total-cell">{{ getTotalQty() }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </ng-container>
+
       <!-- Classic: chia NAM / NỮ -->
-      <ng-container *ngIf="isGenderedForm()">
+      <ng-container *ngIf="!isReadyMadeOrder() && isGenderedForm()">
         <table class="size-table">
           <tbody>
             <tr>
@@ -59,7 +75,7 @@
       </ng-container>
 
       <!-- Oversize / Unisex: không chia giới tính, 1 dòng -->
-      <ng-container *ngIf="!isGenderedForm()">
+      <ng-container *ngIf="!isReadyMadeOrder() && !isGenderedForm()">
         <table class="size-table">
           <tbody>
             <tr>

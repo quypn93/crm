@@ -246,8 +246,32 @@
         <!-- Size grid -->
         <div class="size-grid-section">
           <div class="size-grid-label">Số lượng theo size <span class="required">*</span></div>
+
+          <!-- Áo sẵn: size chuẩn XS-3XL, 1 dòng — bất kể Form dáng đang chọn là gì -->
+          <div class="size-matrix" *ngIf="isReadyMadeOrder()">
+            <table>
+              <thead>
+                <tr>
+                  <th *ngFor="let s of READYMADE_SIZES">{{ s }}</th>
+                  <th class="total-head">TỔNG</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td *ngFor="let s of READYMADE_SIZES">
+                    <input type="number"
+                           [value]="getSizeQtyInput(s)"
+                           (input)="onSizeQtyChange(s, $event)"
+                           min="0" placeholder="0">
+                  </td>
+                  <td class="total-cell">{{ getTotalQtyInput() }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
           <!-- Classic: chia NAM / NỮ -->
-          <div class="size-matrix" *ngIf="isGenderedForm()">
+          <div class="size-matrix" *ngIf="!isReadyMadeOrder() && isGenderedForm()">
             <table>
               <thead>
                 <tr>
@@ -296,7 +320,7 @@
           </div>
 
           <!-- Oversize / Unisex: không chia giới tính, 1 dòng -->
-          <div class="size-matrix" *ngIf="!isGenderedForm()">
+          <div class="size-matrix" *ngIf="!isReadyMadeOrder() && !isGenderedForm()">
             <table>
               <thead>
                 <tr>
