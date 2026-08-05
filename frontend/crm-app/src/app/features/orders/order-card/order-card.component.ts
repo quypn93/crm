@@ -18,6 +18,9 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
   readonly ADULT_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'NC', 'TE'];
   readonly CHILD_SIZES = ['NC1', 'NC2', 'NC3'];
 
+  // File xuất phải luôn dưới 4MB — html2canvas ở scale:2 xuất PNG lossless dễ vượt 5MB.
+  private readonly MAX_EXPORT_BYTES = 4 * 1024 * 1024;
+
   private viewReady = false;
 
   ngAfterViewInit(): void {
@@ -71,13 +74,49 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
       el.style.marginRight = prevMarginRight;
       if (wrapper) wrapper.style.overflow = prevWrapperOverflow;
 
+      const blob = await this.compressToTargetSize(canvas, this.MAX_EXPORT_BYTES);
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.download = `${this.order.orderNumber}.png`;
-      a.href = canvas.toDataURL('image/png');
+      a.download = `${this.order.orderNumber}.jpg`;
+      a.href = url;
       a.click();
+      URL.revokeObjectURL(url);
     } finally {
       this.isRendering = false;
     }
+  }
+
+  // Xuất JPEG (nén được, khác PNG lossless) — giảm dần chất lượng, rồi giảm cả kích thước ảnh
+  // nếu vẫn còn vượt ngưỡng, cho tới khi dưới maxBytes.
+  private async compressToTargetSize(sourceCanvas: HTMLCanvasElement, maxBytes: number): Promise<Blob> {
+    let canvas = sourceCanvas;
+
+    for (let round = 0; round < 4; round++) {
+      for (let quality = 0.92; quality >= 0.4; quality -= 0.08) {
+        const blob = await this.canvasToJpegBlob(canvas, quality);
+        if (blob.size <= maxBytes) return blob;
+      }
+      // Vẫn quá ngưỡng dù đã nén tối đa chất lượng — thu nhỏ kích thước ảnh rồi thử lại.
+      canvas = this.downscaleCanvas(canvas, 0.8);
+    }
+
+    // Đã cố hết mức — trả về bản nén nhất có thể (hiếm khi tới đây với nội dung dạng này).
+    return this.canvasToJpegBlob(canvas, 0.4);
+  }
+
+  private canvasToJpegBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(b => b ? resolve(b) : reject(new Error('Không thể tạo ảnh JPEG.')), 'image/jpeg', quality);
+    });
+  }
+
+  private downscaleCanvas(source: HTMLCanvasElement, factor: number): HTMLCanvasElement {
+    const target = document.createElement('canvas');
+    target.width = Math.round(source.width * factor);
+    target.height = Math.round(source.height * factor);
+    const ctx = target.getContext('2d')!;
+    ctx.drawImage(source, 0, 0, target.width, target.height);
+    return target;
   }
 
   getSpecificationLines(): string[] {
