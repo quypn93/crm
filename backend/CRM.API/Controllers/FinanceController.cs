@@ -2,6 +2,7 @@ using System.Security.Claims;
 using CRM.Application.DTOs.Common;
 using CRM.Application.DTOs.Finance;
 using CRM.Application.Interfaces;
+using CRM.API.Filters;
 using CRM.Core.Entities;
 using CRM.Infrastructure.Services.Finance;
 using Microsoft.AspNetCore.Authorization;
@@ -14,6 +15,8 @@ namespace CRM.API.Controllers;
 /// </summary>
 [ApiController]
 [Authorize(Roles = RoleNames.FinanceRolesCsv)]
+// Đổi exception nghiệp vụ thành 404/400 kèm thông báo, thay vì 500 nuốt mất lý do.
+[MapDomainExceptions]
 public abstract class FinanceControllerBase : ControllerBase
 {
     protected Guid GetCurrentUserId()
