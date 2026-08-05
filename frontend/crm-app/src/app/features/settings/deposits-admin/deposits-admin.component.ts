@@ -16,15 +16,15 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
       </p>
 
       <div class="filter-bar">
-        <input type="text" class="filter-search" [(ngModel)]="searchText"
+        <input type="text" class="filter-search" [(ngModel)]="searchText" (ngModelChange)="onFilterChange()"
                placeholder="Tìm mã GD, nội dung, ngân hàng, số tiền...">
         <label class="filter-date">
           <span>Từ ngày</span>
-          <input type="date" [(ngModel)]="dateFrom">
+          <input type="date" [(ngModel)]="dateFrom" (ngModelChange)="onFilterChange()">
         </label>
         <label class="filter-date">
           <span>Đến ngày</span>
-          <input type="date" [(ngModel)]="dateTo">
+          <input type="date" [(ngModel)]="dateTo" (ngModelChange)="onFilterChange()">
         </label>
         <button class="btn btn-secondary" *ngIf="searchText || dateFrom || dateTo" (click)="clearFilters()">Xóa lọc</button>
       </div>
@@ -50,7 +50,7 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
           <tr *ngIf="filteredDeposits.length === 0">
             <td colspan="7" style="text-align:center;color:#94a3b8;">Không có giao dịch nào khớp bộ lọc.</td>
           </tr>
-          <tr *ngFor="let d of filteredDeposits" [class.split-parent]="d.isSplit">
+          <tr *ngFor="let d of pagedDeposits" [class.split-parent]="d.isSplit">
             <td>{{ d.transactionDate | date:'dd/MM/yyyy HH:mm' }}</td>
             <td>
               <code>{{ d.code }}</code>
@@ -69,6 +69,24 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
           </tr>
         </tbody>
       </table>
+
+      <div class="pagination" *ngIf="filteredDeposits.length > 0">
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">Trước</button>
+        <button *ngFor="let page of pageNumbers" class="page-btn" [class.active]="page === currentPage" (click)="goToPage(page)">{{ page }}</button>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">Sau</button>
+        <span class="page-info">
+          Hiển thị {{ (currentPage - 1) * pageSize + 1 }}–{{ Math.min(currentPage * pageSize, filteredDeposits.length) }} / {{ filteredDeposits.length }}
+        </span>
+        <label class="page-size-select">
+          <span>Mỗi trang</span>
+          <select [ngModel]="pageSize" (ngModelChange)="onPageSizeChange($event)">
+            <option [ngValue]="20">20</option>
+            <option [ngValue]="50">50</option>
+            <option [ngValue]="100">100</option>
+            <option [ngValue]="200">200</option>
+          </select>
+        </label>
+      </div>
 
       <!-- Modal tách giao dịch gộp thành nhiều khoản -->
       <div class="modal-overlay" *ngIf="splitting" (click)="closeSplit()">
@@ -164,6 +182,14 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
     .table th { background:#f8fafc; font-weight:600; color:#475569; }
     .table th, .table td { padding:12px; border-bottom:1px solid #e2e8f0; text-align:left; }
     .table tr:last-child td { border-bottom:none; }
+    .pagination { display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; margin-top:16px; }
+    .page-btn { min-width:34px; padding:6px 10px; border:1px solid #cbd5e1; background:#fff; border-radius:6px; font-size:13px; cursor:pointer; color:#334155; }
+    .page-btn:hover:not(:disabled) { background:#f1f5f9; }
+    .page-btn.active { background:#6366f1; border-color:#6366f1; color:#fff; }
+    .page-btn:disabled { opacity:.5; cursor:default; }
+    .page-info { margin-left:8px; font-size:13px; color:#64748b; white-space:nowrap; }
+    .page-size-select { display:flex; align-items:center; gap:6px; margin-left:12px; font-size:13px; color:#64748b; }
+    .page-size-select select { padding:5px 8px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; }
     .badge { padding:2px 8px; border-radius:10px; font-size:11px; background:#e2e8f0; }
     .badge.auto { background:#dbeafe; color:#1e40af; }
     .badge.split { background:#fef3c7; color:#92400e; margin-left:6px; }
@@ -202,11 +228,51 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
   `]
 })
 export class DepositsAdminComponent implements OnInit {
+  readonly Math = Math;
+
   deposits: DepositTransaction[] = [];
   showForm = false;
   searchText = '';
   dateFrom = '';
   dateTo = '';
+
+  // Phân trang client-side trên danh sách đã lọc.
+  currentPage = 1;
+  pageSize = 50;
+
+  get pagedDeposits(): DepositTransaction[] {
+    // Clamp để không rơi vào trang rỗng nếu dữ liệu vừa thay đổi (xóa/tách) làm mất trang cuối.
+    const page = Math.min(this.currentPage, this.totalPages);
+    const start = (page - 1) * this.pageSize;
+    return this.filteredDeposits.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredDeposits.length / this.pageSize));
+  }
+
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    const start = Math.max(1, this.currentPage - 2);
+    const end = Math.min(total, this.currentPage + 2);
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+  }
+
+  onFilterChange(): void {
+    this.currentPage = 1;
+  }
 
   // Lọc client-side: tìm theo mã GD / nội dung / ngân hàng / số tiền + khoảng ngày giao dịch
   get filteredDeposits(): DepositTransaction[] {
@@ -239,6 +305,7 @@ export class DepositsAdminComponent implements OnInit {
     this.searchText = '';
     this.dateFrom = '';
     this.dateTo = '';
+    this.currentPage = 1;
   }
 
   // yyyy-MM-dd theo giờ địa phương — khớp với ngày hiển thị trên bảng
