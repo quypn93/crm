@@ -176,9 +176,9 @@ export class OrderCardComponent implements OnChanges, AfterViewInit {
     return !(name.includes('oversize') || name.includes('unisex'));
   }
 
-  // Dạng đơn "Áo sẵn" → bảng size chuẩn XS-3XL, 1 dòng, bất kể Form dáng.
+  // Form dáng "Áo sẵn" → bảng size chuẩn XS-3XL, 1 dòng.
   isReadyMadeOrder(): boolean {
-    return (this.order?.orderTypeName || '').toLowerCase().includes('sẵn');
+    return (this.order?.items?.[0]?.formName || '').toLowerCase().includes('sẵn');
   }
 
   fmt(d: Date | string | null | undefined): string {

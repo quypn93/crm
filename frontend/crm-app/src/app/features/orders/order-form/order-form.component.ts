@@ -127,10 +127,10 @@ export class OrderFormComponent implements OnInit {
     return !(name.includes('oversize') || name.includes('unisex'));
   }
 
-  // Dạng đơn = "Áo sẵn" → bảng size chuẩn XS-3XL, 1 dòng, bất kể Form dáng đang chọn là gì.
+  // Form dáng = "Áo sẵn" → bảng size chuẩn XS-3XL, 1 dòng (khác Classic/Oversize/Unisex).
   isReadyMadeOrder(): boolean {
-    const id = this.orderForm.get('orderTypeId')?.value;
-    const name = (this.orderTypes.find(t => t.id === id)?.name || '').toLowerCase();
+    const id = this.orderForm.get('productInfo.formId')?.value;
+    const name = (this.shirtForms.find(f => f.id === id)?.name || '').toLowerCase();
     return name.includes('sẵn');
   }
 
@@ -306,7 +306,6 @@ export class OrderFormComponent implements OnInit {
     this.orderForm.get('orderDate')?.valueChanges.subscribe(() => this.recalcDates());
     this.orderForm.get('productInfo.collectionId')?.valueChanges.subscribe((id: string) => this.onCollectionChange(id));
     this.orderForm.get('productInfo.formId')?.valueChanges.subscribe(() => this.onFormModeChange());
-    this.orderForm.get('orderTypeId')?.valueChanges.subscribe(() => this.onFormModeChange());
     this.orderForm.get('productInfo.materialId')?.valueChanges.subscribe(() => this.onMaterialChange());
     this.orderForm.get('productInfo.collarId')?.valueChanges.subscribe(() => this.onCollarChange());
     this.orderForm.get('shippingProvinceCode')?.valueChanges.subscribe((code: string) => this.onProvinceChange(code));
@@ -779,7 +778,7 @@ export class OrderFormComponent implements OnInit {
 
         // Xác định form/dạng đơn để biết size lưu dạng chia giới tính, 1 dòng thường, hay áo sẵn (XS-3XL).
         const orderFormName = (this.shirtForms.find(f => f.id === firstItem?.formId)?.name || '').toLowerCase();
-        const orderIsReadyMade = (order.orderTypeName || '').toLowerCase().includes('sẵn');
+        const orderIsReadyMade = orderFormName.includes('sẵn');
         const orderGendered = !orderIsReadyMade && !(orderFormName.includes('oversize') || orderFormName.includes('unisex'));
         this.sizeQty = {};
         order.items.forEach(item => {
@@ -862,7 +861,7 @@ export class OrderFormComponent implements OnInit {
         }
 
         const orderFormName = (this.shirtForms.find(f => f.id === firstItem?.formId)?.name || '').toLowerCase();
-        const orderIsReadyMade = (order.orderTypeName || '').toLowerCase().includes('sẵn');
+        const orderIsReadyMade = orderFormName.includes('sẵn');
         const orderGendered = !orderIsReadyMade && !(orderFormName.includes('oversize') || orderFormName.includes('unisex'));
         this.sizeQty = {};
         order.items.forEach(item => {
