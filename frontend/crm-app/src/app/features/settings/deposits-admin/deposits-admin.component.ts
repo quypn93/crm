@@ -7,85 +7,93 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
   template: `
     <div class="page-container">
       <div class="page-header">
-        <h1>Lịch sử cộng tiền</h1>
+        <div class="page-header-text">
+          <h1>💰 Lịch sử cộng tiền</h1>
+          <p class="subtitle">Giao dịch từ Casso webhook sẽ tự động xuất hiện ở đây. Sale có thể nhìn vào danh sách này để biết mã giao dịch nào là của mình và điền vào đơn hàng.</p>
+        </div>
         <button class="btn btn-primary" (click)="showForm = true">+ Thêm thủ công</button>
       </div>
 
-      <p style="color:#64748b;font-size:13px;">
-        Giao dịch từ Casso webhook sẽ tự động xuất hiện ở đây. Sale có thể nhìn vào danh sách này để biết mã giao dịch nào là của mình và điền vào đơn hàng.
-      </p>
+      <div class="filter-card">
+        <div class="filter-bar">
+          <div class="filter-search-wrapper">
+            <svg class="filter-search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" class="filter-search" [(ngModel)]="searchText" (ngModelChange)="onFilterChange()"
+                   placeholder="Tìm mã GD, nội dung, ngân hàng, số tiền...">
+          </div>
+          <label class="filter-date">
+            <span>Từ ngày</span>
+            <input type="date" [(ngModel)]="dateFrom" (ngModelChange)="onFilterChange()">
+          </label>
+          <label class="filter-date">
+            <span>Đến ngày</span>
+            <input type="date" [(ngModel)]="dateTo" (ngModelChange)="onFilterChange()">
+          </label>
+          <button class="btn btn-outline" *ngIf="searchText || dateFrom || dateTo" (click)="clearFilters()">Xóa lọc</button>
+        </div>
 
-      <div class="filter-bar">
-        <input type="text" class="filter-search" [(ngModel)]="searchText" (ngModelChange)="onFilterChange()"
-               placeholder="Tìm mã GD, nội dung, ngân hàng, số tiền...">
-        <label class="filter-date">
-          <span>Từ ngày</span>
-          <input type="date" [(ngModel)]="dateFrom" (ngModelChange)="onFilterChange()">
-        </label>
-        <label class="filter-date">
-          <span>Đến ngày</span>
-          <input type="date" [(ngModel)]="dateTo" (ngModelChange)="onFilterChange()">
-        </label>
-        <button class="btn btn-secondary" *ngIf="searchText || dateFrom || dateTo" (click)="clearFilters()">Xóa lọc</button>
+        <div class="filter-summary" *ngIf="searchText || dateFrom || dateTo">
+          Tìm thấy <strong>{{ filteredDeposits.length }}</strong> giao dịch — tổng <strong class="amount-highlight">{{ filteredTotal | number }} đ</strong>
+        </div>
       </div>
 
-      <div class="filter-summary" *ngIf="searchText || dateFrom || dateTo">
-        Tìm thấy <strong>{{ filteredDeposits.length }}</strong> giao dịch —
-        tổng <strong>{{ filteredTotal | number }} đ</strong>
-      </div>
+      <div class="table-card">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Ngày</th>
+              <th>Mã GD</th>
+              <th class="text-right">Số tiền</th>
+              <th>Ngân hàng</th>
+              <th>Nội dung</th>
+              <th>Nguồn</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="filteredDeposits.length === 0" class="empty-row">
+              <td colspan="7">Không có giao dịch nào khớp bộ lọc.</td>
+            </tr>
+            <tr *ngFor="let d of pagedDeposits" [class.split-parent]="d.isSplit">
+              <td class="cell-date">{{ d.transactionDate | date:'dd/MM/yyyy' }}<span class="cell-time">{{ d.transactionDate | date:'HH:mm' }}</span></td>
+              <td>
+                <code>{{ d.code }}</code>
+                <span class="badge split" *ngIf="d.isSplit">Đã tách</span>
+                <span class="badge child" *ngIf="d.parentId">Tách</span>
+                <span class="badge matched" *ngIf="d.matchedOrderId">Đã gắn đơn</span>
+              </td>
+              <td class="text-right amount-cell">{{ d.amount | number }} đ</td>
+              <td>{{ d.bankName }}</td>
+              <td class="cell-desc">{{ d.description }}</td>
+              <td><span class="badge" [class.auto]="d.source==='casso'"><span class="badge-dot"></span>{{ d.source }}</span></td>
+              <td class="actions">
+                <button class="btn btn-sm" *ngIf="!d.isSplit && !d.matchedOrderId" (click)="openSplit(d)">Tách</button>
+                <button class="btn btn-sm btn-danger" *ngIf="!d.isSplit" (click)="remove(d)">Xóa</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Ngày</th>
-            <th>Mã GD</th>
-            <th>Số tiền</th>
-            <th>Ngân hàng</th>
-            <th>Nội dung</th>
-            <th>Nguồn</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngIf="filteredDeposits.length === 0">
-            <td colspan="7" style="text-align:center;color:#94a3b8;">Không có giao dịch nào khớp bộ lọc.</td>
-          </tr>
-          <tr *ngFor="let d of pagedDeposits" [class.split-parent]="d.isSplit">
-            <td>{{ d.transactionDate | date:'dd/MM/yyyy HH:mm' }}</td>
-            <td>
-              <code>{{ d.code }}</code>
-              <span class="badge split" *ngIf="d.isSplit">Đã tách</span>
-              <span class="badge child" *ngIf="d.parentId">Tách</span>
-              <span class="badge matched" *ngIf="d.matchedOrderId">Đã gắn đơn</span>
-            </td>
-            <td style="text-align:right;color:#16a34a;font-weight:600;">{{ d.amount | number }} đ</td>
-            <td>{{ d.bankName }}</td>
-            <td>{{ d.description }}</td>
-            <td><span class="badge" [class.auto]="d.source==='casso'">{{ d.source }}</span></td>
-            <td class="actions">
-              <button class="btn btn-sm" *ngIf="!d.isSplit && !d.matchedOrderId" (click)="openSplit(d)">Tách</button>
-              <button class="btn btn-sm btn-danger" *ngIf="!d.isSplit" (click)="remove(d)">Xóa</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="pagination" *ngIf="filteredDeposits.length > 0">
-        <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">Trước</button>
-        <button *ngFor="let page of pageNumbers" class="page-btn" [class.active]="page === currentPage" (click)="goToPage(page)">{{ page }}</button>
-        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">Sau</button>
-        <span class="page-info">
-          Hiển thị {{ (currentPage - 1) * pageSize + 1 }}–{{ Math.min(currentPage * pageSize, filteredDeposits.length) }} / {{ filteredDeposits.length }}
-        </span>
-        <label class="page-size-select">
-          <span>Mỗi trang</span>
-          <select [ngModel]="pageSize" (ngModelChange)="onPageSizeChange($event)">
-            <option [ngValue]="20">20</option>
-            <option [ngValue]="50">50</option>
-            <option [ngValue]="100">100</option>
-            <option [ngValue]="200">200</option>
-          </select>
-        </label>
+        <div class="pagination" *ngIf="filteredDeposits.length > 0">
+          <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">‹ Trước</button>
+          <button *ngFor="let page of pageNumbers" class="page-btn" [class.active]="page === currentPage" (click)="goToPage(page)">{{ page }}</button>
+          <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">Sau ›</button>
+          <span class="page-info">
+            Hiển thị {{ (currentPage - 1) * pageSize + 1 }}–{{ Math.min(currentPage * pageSize, filteredDeposits.length) }} / {{ filteredDeposits.length }}
+          </span>
+          <label class="page-size-select">
+            <span>Mỗi trang</span>
+            <select [ngModel]="pageSize" (ngModelChange)="onPageSizeChange($event)">
+              <option [ngValue]="20">20</option>
+              <option [ngValue]="50">50</option>
+              <option [ngValue]="100">100</option>
+              <option [ngValue]="200">200</option>
+            </select>
+          </label>
+        </div>
       </div>
 
       <!-- Modal tách giao dịch gộp thành nhiều khoản -->
@@ -98,7 +106,7 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
           <div class="modal-body">
             <p class="split-info">
               Mã gốc: <code>{{ splitting.code }}</code> —
-              <strong style="color:#16a34a;">{{ splitting.amount | number }} đ</strong>
+              <strong class="amount-highlight">{{ splitting.amount | number }} đ</strong>
             </p>
             <p class="muted">Mỗi khoản con sẽ có mã <code>{{ splitting.code }}-1</code>, <code>{{ splitting.code }}-2</code>... để điền vào từng đơn hàng.</p>
 
@@ -167,63 +175,116 @@ import { DepositTransaction } from '../../../core/models/lookup.model';
     </div>
   `,
   styles: [`
-    :host { display:block; padding:24px; }
-    .page-container { max-width:1200px; margin:0 auto; }
-    .page-header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; }
-    .page-header h1 { margin:0; font-size:22px; font-weight:600; }
-    .filter-bar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
-    .filter-search { flex:1; min-width:240px; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; box-sizing:border-box; }
+    :host { display:block; padding:24px; background:var(--bg-app, #f5f7fb); }
+    .page-container { max-width:1280px; margin:0 auto; }
+
+    .page-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
+    .page-header h1 { margin:0 0 4px; font-size:24px; font-weight:700; letter-spacing:-.02em; color:var(--text-primary, #1e293b); }
+    .subtitle { margin:0; font-size:13px; color:var(--text-secondary, #64748b); max-width:640px; line-height:1.5; }
+
+    .filter-card {
+      background:var(--bg-primary, #fff); border:1px solid var(--border-color, #e2e8f0); border-radius:var(--radius-lg, 12px);
+      box-shadow:var(--shadow-sm, 0 1px 2px rgba(15,23,42,.06)); padding:16px 18px; margin-bottom:18px;
+    }
+    .filter-bar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .filter-search-wrapper { position:relative; flex:1; min-width:260px; }
+    .filter-search-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted, #94a3b8); pointer-events:none; }
+    .filter-search {
+      width:100%; padding:9px 12px 9px 36px; border:1px solid var(--border-color, #e2e8f0); border-radius:var(--radius-sm, 6px);
+      font-size:14px; box-sizing:border-box; transition:border-color .15s, box-shadow .15s;
+    }
+    .filter-search:focus { outline:none; border-color:var(--primary-color, #6366f1); box-shadow:0 0 0 3px var(--primary-100, #e0e7ff); }
     .filter-date { display:flex; align-items:center; gap:6px; }
-    .filter-date span { font-size:13px; color:#64748b; white-space:nowrap; }
-    .filter-date input { padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; box-sizing:border-box; }
-    .filter-summary { margin-bottom:10px; font-size:13px; color:#475569; }
-    .filter-summary strong { color:#16a34a; }
-    .table { width:100%; border-collapse:collapse; font-size:14px; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.06); }
-    .table th { background:#f8fafc; font-weight:600; color:#475569; }
-    .table th, .table td { padding:12px; border-bottom:1px solid #e2e8f0; text-align:left; }
+    .filter-date span { font-size:13px; color:var(--text-secondary, #64748b); white-space:nowrap; }
+    .filter-date input {
+      padding:8px 10px; border:1px solid var(--border-color, #e2e8f0); border-radius:var(--radius-sm, 6px); font-size:14px; box-sizing:border-box;
+      transition:border-color .15s, box-shadow .15s;
+    }
+    .filter-date input:focus { outline:none; border-color:var(--primary-color, #6366f1); box-shadow:0 0 0 3px var(--primary-100, #e0e7ff); }
+    .filter-summary { margin-top:12px; padding-top:12px; border-top:1px dashed var(--border-color, #e2e8f0); font-size:13px; color:var(--text-secondary, #64748b); }
+    .amount-highlight { color:var(--success-color, #16a34a); font-weight:700; }
+
+    .table-card {
+      background:var(--bg-primary, #fff); border:1px solid var(--border-color, #e2e8f0); border-radius:var(--radius-lg, 12px);
+      box-shadow:var(--shadow-sm, 0 1px 2px rgba(15,23,42,.06)); overflow:hidden;
+    }
+    .table { width:100%; border-collapse:collapse; font-size:13.5px; }
+    .table th {
+      background:var(--gray-50, #f8fafc); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.04em;
+      color:var(--text-secondary, #64748b);
+    }
+    .table th, .table td { padding:13px 16px; border-bottom:1px solid var(--border-color, #e2e8f0); text-align:left; }
+    .table tbody tr { transition:background .12s; }
+    .table tbody tr:hover { background:var(--gray-50, #f8fafc); }
     .table tr:last-child td { border-bottom:none; }
-    .pagination { display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; margin-top:16px; }
-    .page-btn { min-width:34px; padding:6px 10px; border:1px solid #cbd5e1; background:#fff; border-radius:6px; font-size:13px; cursor:pointer; color:#334155; }
-    .page-btn:hover:not(:disabled) { background:#f1f5f9; }
-    .page-btn.active { background:#6366f1; border-color:#6366f1; color:#fff; }
-    .page-btn:disabled { opacity:.5; cursor:default; }
-    .page-info { margin-left:8px; font-size:13px; color:#64748b; white-space:nowrap; }
-    .page-size-select { display:flex; align-items:center; gap:6px; margin-left:12px; font-size:13px; color:#64748b; }
-    .page-size-select select { padding:5px 8px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; }
-    .badge { padding:2px 8px; border-radius:10px; font-size:11px; background:#e2e8f0; }
-    .badge.auto { background:#dbeafe; color:#1e40af; }
-    .badge.split { background:#fef3c7; color:#92400e; margin-left:6px; }
-    .badge.child { background:#dcfce7; color:#166534; margin-left:6px; }
-    .badge.matched { background:#ede9fe; color:#5b21b6; margin-left:6px; }
-    tr.split-parent td { color:#94a3b8; }
+    .text-right { text-align:right; }
+    .cell-date { white-space:nowrap; }
+    .cell-time { display:block; font-size:11.5px; color:var(--text-muted, #94a3b8); }
+    .cell-desc { max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .amount-cell { color:var(--success-color, #16a34a); font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .empty-row td { text-align:center; padding:48px 16px; color:var(--text-muted, #94a3b8); }
+
+    .pagination { display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; padding:16px; border-top:1px solid var(--border-color, #e2e8f0); }
+    .page-btn {
+      min-width:34px; padding:6px 10px; border:1px solid var(--border-color, #e2e8f0); background:var(--bg-primary, #fff);
+      border-radius:var(--radius-sm, 6px); font-size:13px; cursor:pointer; color:var(--text-secondary, #334155); transition:all .12s;
+    }
+    .page-btn:hover:not(:disabled) { background:var(--gray-100, #f1f5f9); }
+    .page-btn.active { background:var(--primary-color, #6366f1); border-color:var(--primary-color, #6366f1); color:#fff; font-weight:600; }
+    .page-btn:disabled { opacity:.45; cursor:default; }
+    .page-info { margin-left:8px; font-size:13px; color:var(--text-secondary, #64748b); white-space:nowrap; }
+    .page-size-select { display:flex; align-items:center; gap:6px; margin-left:12px; font-size:13px; color:var(--text-secondary, #64748b); }
+    .page-size-select select { padding:5px 8px; border:1px solid var(--border-color, #e2e8f0); border-radius:var(--radius-sm, 6px); font-size:13px; }
+
+    .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:var(--radius-pill, 999px); font-size:11px; font-weight:600; background:var(--gray-100, #f1f5f9); color:var(--text-secondary, #64748b); }
+    .badge-dot { width:5px; height:5px; border-radius:50%; background:currentColor; opacity:.8; }
+    .badge.auto { background:var(--info-soft, #dbeafe); color:var(--info-strong, #1e40af); }
+    .badge.split { background:var(--warning-soft, #fef3c7); color:var(--warning-strong, #92400e); margin-left:6px; }
+    .badge.child { background:var(--success-soft, #dcfce7); color:var(--success-strong, #166534); margin-left:6px; }
+    .badge.matched { background:var(--primary-100, #ede9fe); color:var(--accent-600, #5b21b6); margin-left:6px; }
+    tr.split-parent td { color:var(--text-muted, #94a3b8); }
     tr.split-parent code { opacity:.6; }
-    .actions { white-space:nowrap; }
-    .actions .btn-sm { margin-right:4px; }
+
+    .actions { white-space:nowrap; text-align:right; }
+    .actions .btn-sm { margin-left:6px; }
     .split-info { font-size:14px; margin:0 0 4px; }
-    .muted { color:#94a3b8; font-size:13px; margin:0 0 14px; }
+    .muted { color:var(--text-muted, #94a3b8); font-size:13px; margin:0 0 14px; }
     .split-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-    .split-code { font-family:monospace; font-size:12px; background:#f1f5f9; padding:4px 8px; border-radius:4px; white-space:nowrap; }
-    .split-row input { flex:1; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; }
-    .split-summary { margin-top:14px; font-size:13px; padding:8px 12px; border-radius:6px; }
-    .split-summary.ok { background:#f0fdf4; color:#166534; }
-    .split-summary.bad { background:#fef2f2; color:#b91c1c; }
-    .error { color:#ef4444; font-size:13px; margin-top:8px; }
-    .btn { padding:8px 16px; border:none; border-radius:6px; cursor:pointer; font-size:14px; }
-    .btn-primary { background:#6366f1; color:#fff; }
-    .btn-secondary { background:#e2e8f0; color:#1e293b; }
-    .btn-danger { background:#ef4444; color:#fff; }
-    .btn-sm { padding:4px 10px; font-size:12px; }
-    .btn-close { background:none; border:none; font-size:24px; cursor:pointer; color:#64748b; }
-    code { background:#f1f5f9; padding:2px 6px; border-radius:4px; }
-    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; z-index:1000; }
-    .modal { background:#fff; border-radius:8px; max-width:500px; width:90%; max-height:90vh; overflow-y:auto; }
-    .modal-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid #e2e8f0; }
-    .modal-header h3 { margin:0; font-size:18px; }
-    .modal-body { padding:20px; }
-    .modal-footer { display:flex; justify-content:flex-end; gap:8px; padding:16px 20px; border-top:1px solid #e2e8f0; }
+    .split-code { font-family:monospace; font-size:12px; background:var(--gray-100, #f1f5f9); padding:4px 8px; border-radius:4px; white-space:nowrap; }
+    .split-row input { flex:1; padding:8px 12px; border:1px solid var(--border-color, #e2e8f0); border-radius:var(--radius-sm, 6px); font-size:14px; }
+    .split-summary { margin-top:14px; font-size:13px; padding:10px 12px; border-radius:var(--radius-sm, 6px); font-weight:500; }
+    .split-summary.ok { background:var(--success-soft, #f0fdf4); color:var(--success-strong, #166534); }
+    .split-summary.bad { background:var(--danger-soft, #fef2f2); color:var(--danger-strong, #b91c1c); }
+    .error { color:var(--danger-color, #ef4444); font-size:13px; margin-top:8px; }
+
+    .btn { padding:9px 16px; border:none; border-radius:var(--radius-sm, 6px); cursor:pointer; font-size:14px; font-weight:500; transition:all .12s; }
+    .btn-primary { background:var(--primary-color, #6366f1); color:#fff; box-shadow:0 1px 2px rgba(79,70,229,.25); }
+    .btn-primary:hover { background:var(--primary-hover, #4f46e5); }
+    .btn-secondary { background:var(--gray-100, #e2e8f0); color:var(--text-primary, #1e293b); }
+    .btn-secondary:hover { background:var(--gray-200, #cbd5e1); }
+    .btn-outline { background:#fff; color:var(--text-secondary, #475569); border:1px solid var(--border-color, #e2e8f0); }
+    .btn-outline:hover { background:var(--gray-50, #f8fafc); }
+    .btn-danger { background:var(--danger-soft, #fef2f2); color:var(--danger-strong, #dc2626); }
+    .btn-danger:hover { background:var(--danger-soft-2, #fee2e2); }
+    .btn-sm { padding:5px 11px; font-size:12px; background:var(--gray-100, #f1f5f9); color:var(--text-secondary, #475569); }
+    .btn-sm:hover { background:var(--gray-200, #e2e8f0); }
+    .btn-sm.btn-danger:hover { background:var(--danger-soft-2, #fee2e2); }
+    .btn-close { background:none; border:none; font-size:22px; line-height:1; cursor:pointer; color:var(--text-muted, #94a3b8); padding:2px 6px; border-radius:6px; }
+    .btn-close:hover { background:var(--gray-100, #f1f5f9); color:var(--text-primary, #1e293b); }
+    code { background:var(--gray-100, #f1f5f9); padding:2px 6px; border-radius:4px; font-size:12.5px; }
+
+    .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,.5); display:flex; align-items:center; justify-content:center; z-index:1000; backdrop-filter:blur(1px); }
+    .modal { background:#fff; border-radius:var(--radius-lg, 12px); max-width:500px; width:90%; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow-lg, 0 20px 40px rgba(15,23,42,.2)); }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; padding:18px 22px; border-bottom:1px solid var(--border-color, #e2e8f0); }
+    .modal-header h3 { margin:0; font-size:17px; font-weight:700; }
+    .modal-body { padding:22px; }
+    .modal-footer { display:flex; justify-content:flex-end; gap:8px; padding:16px 22px; border-top:1px solid var(--border-color, #e2e8f0); background:var(--gray-50, #f8fafc); border-radius:0 0 var(--radius-lg, 12px) var(--radius-lg, 12px); }
     .form-group { margin-bottom:16px; }
-    .form-group label { display:block; margin-bottom:6px; font-size:13px; color:#475569; font-weight:500; }
-    .form-group input, .form-group textarea, .form-group select { width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; }
+    .form-group label { display:block; margin-bottom:6px; font-size:13px; color:var(--text-secondary, #475569); font-weight:500; }
+    .form-group input, .form-group textarea, .form-group select {
+      width:100%; padding:9px 12px; border:1px solid var(--border-color, #e2e8f0); border-radius:var(--radius-sm, 6px); font-size:14px; box-sizing:border-box; transition:border-color .15s, box-shadow .15s;
+    }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline:none; border-color:var(--primary-color, #6366f1); box-shadow:0 0 0 3px var(--primary-100, #e0e7ff); }
     .cb { display:flex; gap:6px; align-items:center; font-size:14px; }
   `]
 })
