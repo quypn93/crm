@@ -591,6 +591,17 @@ export class OrderFormComponent implements OnInit {
     clearIfMissing('mainColorId');
   }
 
+  // Cộng ngày sản xuất nhưng bỏ qua Chủ nhật (ngày nghỉ) — khớp logic AddBusinessDays ở backend.
+  private addBusinessDays(start: Date, days: number): Date {
+    const date = new Date(start);
+    let remaining = days;
+    while (remaining > 0) {
+      date.setDate(date.getDate() + 1);
+      if (date.getDay() !== 0) remaining--; // getDay() === 0 là Chủ nhật
+    }
+    return date;
+  }
+
   private recalcDates(): void {
     const optId = this.orderForm.get('productionDaysOptionId')?.value;
     const orderDateStr = this.orderForm.get('orderDate')?.value;
@@ -602,8 +613,8 @@ export class OrderFormComponent implements OnInit {
     const opt = this.productionDaysOptions.find(o => o.id === optId);
     if (!opt) return;
     const base = new Date(orderDateStr);
-    const completion = new Date(base); completion.setDate(base.getDate() + opt.days);
-    const ret = new Date(completion); ret.setDate(completion.getDate() + 1);
+    const completion = this.addBusinessDays(base, opt.days);
+    const ret = this.addBusinessDays(completion, 1);
     this.orderForm.get('completionDate')?.setValue(this.formatDate(completion));
     this.orderForm.get('returnDate')?.setValue(this.formatDate(ret));
   }

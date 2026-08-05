@@ -33,6 +33,19 @@ public class OrderService : IOrderService
         _logger = logger;
     }
 
+    // Cộng ngày sản xuất nhưng bỏ qua Chủ nhật (ngày nghỉ) — Chủ nhật không tính là 1 ngày sản xuất.
+    private static DateTime AddBusinessDays(DateTime start, int days)
+    {
+        var date = start;
+        var remaining = days;
+        while (remaining > 0)
+        {
+            date = date.AddDays(1);
+            if (date.DayOfWeek != DayOfWeek.Sunday) remaining--;
+        }
+        return date;
+    }
+
     public async Task<OrderDto?> GetByIdAsync(Guid id)
     {
         var order = await _unitOfWork.Orders.GetByIdWithDetailsAsync(id);
@@ -151,9 +164,9 @@ public class OrderService : IOrderService
         {
             prodOption = await _unitOfWork.ProductionDaysOptions.GetByIdAsync(dto.ProductionDaysOptionId.Value);
             if (prodOption != null)
-                completionDate = DateTime.UtcNow.AddDays(prodOption.Days);
+                completionDate = AddBusinessDays(DateTime.UtcNow, prodOption.Days);
         }
-        var returnDate = completionDate?.AddDays(1);
+        var returnDate = completionDate.HasValue ? AddBusinessDays(completionDate.Value, 1) : (DateTime?)null;
         OrderType? orderType = null;
         if (dto.OrderTypeId.HasValue)
         {
@@ -249,13 +262,13 @@ public class OrderService : IOrderService
         {
             prodOption = await _unitOfWork.ProductionDaysOptions.GetByIdAsync(dto.ProductionDaysOptionId.Value);
             if (prodOption != null)
-                completionDate = order.OrderDate.AddDays(prodOption.Days);
+                completionDate = AddBusinessDays(order.OrderDate, prodOption.Days);
         }
 
         // Update basic info — order được tracked, EF tự detect thay đổi field.
         order.ExpectedDeliveryDate = dto.ExpectedDeliveryDate;
         order.CompletionDate = completionDate;
-        order.ReturnDate = completionDate?.AddDays(1);
+        order.ReturnDate = completionDate.HasValue ? AddBusinessDays(completionDate.Value, 1) : (DateTime?)null;
         order.ProductionDaysOptionId = dto.ProductionDaysOptionId;
         order.ProductionDays = prodOption?.Days ?? order.ProductionDays;
         order.DepositCode = dto.DepositCode;
