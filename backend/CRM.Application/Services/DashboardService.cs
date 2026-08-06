@@ -95,9 +95,10 @@ public class DashboardService : IDashboardService
 
     public async Task<IEnumerable<RevenueReportDto>> GetRevenueReportAsync(ReportFilterDto filter)
     {
-        var revenueStatuses = new[] { OrderStatus.Delivered, OrderStatus.Completed };
+        // Doanh thu = doanh số đơn từ Đã xác nhận trở lên (khớp định nghĩa "doanh số" ở Bảng xếp hạng) —
+        // trước đây chỉ tính đơn Đã giao/Hoàn thành nên gần như luôn ra 0đ vì đơn còn đang sản xuất.
         var orders = await _unitOfWork.Orders.FindAsync(o =>
-            revenueStatuses.Contains(o.Status) &&
+            o.Status != OrderStatus.Draft && o.Status != OrderStatus.Cancelled &&
             (!filter.DateFrom.HasValue || o.OrderDate >= filter.DateFrom.Value) &&
             (!filter.DateTo.HasValue || o.OrderDate <= filter.DateTo.Value) &&
             (!filter.UserId.HasValue || o.CreatedByUserId == filter.UserId.Value));
