@@ -662,11 +662,11 @@ public class OrderService : IOrderService
         }
         if (itemDto.MainColorId.HasValue)
             item.MainColorName = (await _unitOfWork.ColorFabrics.GetByIdAsync(itemDto.MainColorId.Value))?.Name;
-        // Màu phối (1 & 2) chọn tự do từ danh mục AccentColor — không còn phụ thuộc chất liệu.
+        // Màu phối (1 & 2) dùng chung danh mục ColorFabric với Màu sắc chính (cùng danh sách giá trị).
         if (itemDto.AccentColorId.HasValue)
-            item.AccentColorName = (await _unitOfWork.AccentColors.GetByIdAsync(itemDto.AccentColorId.Value))?.Name;
+            item.AccentColorName = (await _unitOfWork.ColorFabrics.GetByIdAsync(itemDto.AccentColorId.Value))?.Name;
         if (itemDto.AccentColor2Id.HasValue)
-            item.AccentColor2Name = (await _unitOfWork.AccentColors.GetByIdAsync(itemDto.AccentColor2Id.Value))?.Name;
+            item.AccentColor2Name = (await _unitOfWork.ColorFabrics.GetByIdAsync(itemDto.AccentColor2Id.Value))?.Name;
         if (itemDto.CollarId.HasValue)
             item.CollarName = (await _unitOfWork.Collars.GetByIdAsync(itemDto.CollarId.Value))?.Name;
         // Màu bo cổ chính — danh mục MainColor riêng, chọn tự do như Màu phối (không ăn theo chất liệu).

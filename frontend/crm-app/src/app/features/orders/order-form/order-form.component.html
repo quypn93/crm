@@ -163,20 +163,20 @@
             </select>
           </div>
 
-          <!-- Màu phối 1 & 2 — chọn tự do, không phụ thuộc chất liệu -->
+          <!-- Màu phối 1 & 2 — cùng danh sách giá trị với Màu sắc chính -->
           <div class="form-group">
             <label>Màu phối 1</label>
             <select formControlName="accentColorId">
-              <option value="">-- Chọn màu phối --</option>
-              <option *ngFor="let c of accentColors" [value]="c.id">{{ c.name }}</option>
+              <option value="">{{ hasMaterialSelected() ? '-- Chọn màu --' : '-- Chọn chất liệu trước --' }}</option>
+              <option *ngFor="let c of filteredColors" [value]="c.id">{{ c.name }}</option>
             </select>
           </div>
 
           <div class="form-group">
             <label>Màu phối 2</label>
             <select formControlName="accentColor2Id">
-              <option value="">-- Chọn màu phối --</option>
-              <option *ngFor="let c of accentColors" [value]="c.id">{{ c.name }}</option>
+              <option value="">{{ hasMaterialSelected() ? '-- Chọn màu --' : '-- Chọn chất liệu trước --' }}</option>
+              <option *ngFor="let c of filteredColors" [value]="c.id">{{ c.name }}</option>
             </select>
           </div>
 

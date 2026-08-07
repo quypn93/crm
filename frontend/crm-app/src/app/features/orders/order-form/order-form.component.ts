@@ -603,6 +603,9 @@ export class OrderFormComponent implements OnInit {
       if (v && !this.filteredColors.find(x => x.id === v)) pi?.get(key)?.setValue('');
     };
     clearIfMissing('mainColorId');
+    // Màu phối 1 & 2 dùng chung danh sách với Màu sắc chính nên cũng phải clear nếu không còn hợp lệ.
+    clearIfMissing('accentColorId');
+    clearIfMissing('accentColor2Id');
   }
 
   // Cộng ngày sản xuất nhưng bỏ qua Chủ nhật (ngày nghỉ) — khớp logic AddBusinessDays ở backend.
