@@ -70,21 +70,28 @@ import {
               <th>Ngày</th>
               <th>Trạng thái</th>
               <th class="num">Doanh thu</th>
-              <th class="num edit-col">Giá cost</th>
+              <th class="num">SL</th>
+              <th class="num edit-col">Đơn giá cost</th>
+              <th class="num">Thành tiền</th>
+              <th class="num edit-col">Đơn giá quà</th>
+              <th class="num edit-col">SL quà</th>
+              <th class="num">Tiền quà</th>
               <th class="num edit-col">CP ship hàng</th>
               <th class="num edit-col">CP gửi hàng đi</th>
               <th class="num edit-col">CP khác</th>
               <th class="num">Tổng cost</th>
+              <th class="edit-col">Mã giao hàng</th>
+              <th class="num edit-col">Tiền thanh toán</th>
               <th class="num">Lãi/lỗ</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             <tr *ngIf="!loading && rows.length === 0">
-              <td colspan="12" class="empty">Không có đơn hàng nào khớp bộ lọc.</td>
+              <td colspan="19" class="empty">Không có đơn hàng nào khớp bộ lọc.</td>
             </tr>
             <tr *ngIf="loading">
-              <td colspan="12" class="empty">Đang tải...</td>
+              <td colspan="19" class="empty">Đang tải...</td>
             </tr>
             <tr *ngFor="let r of rows; trackBy: trackByOrderId" [class.dirty]="isDirty(r)">
               <td>
@@ -95,12 +102,26 @@ import {
               <td>{{ r.customerName || '—' }}</td>
               <td class="nowrap">{{ (r.confirmedDate || r.orderDate) | date:'dd/MM/yyyy' }}</td>
               <td><span class="status">{{ r.statusName }}</span></td>
-              <td class="num">{{ r.revenue | number }}</td>
-              <td class="num"><input type="number" min="0" [(ngModel)]="r.costAmount" (ngModelChange)="onEdit(r)" [disabled]="isLocked(r)"></td>
+              <td class="num" [class.zero-revenue]="!r.revenue">
+                {{ r.revenue | number }}
+                <span class="badge missing" *ngIf="!r.revenue" title="Đơn chưa có giá bán — biên lợi nhuận sẽ vô nghĩa">!</span>
+              </td>
+              <td class="num qty">{{ r.totalQuantity | number }}</td>
+              <td class="num"><input type="number" min="0" [(ngModel)]="r.unitCost" (ngModelChange)="onEdit(r)" [disabled]="isLocked(r)"></td>
+              <td class="num sub">{{ lineCost(r) | number }}</td>
+              <td class="num"><input type="number" min="0" [(ngModel)]="r.giftUnitCost" (ngModelChange)="onEdit(r)" [disabled]="isLocked(r)"></td>
+              <td class="num"><input type="number" min="0" step="1" class="narrow" [(ngModel)]="r.giftQuantity" (ngModelChange)="onEdit(r)" [disabled]="isLocked(r)"></td>
+              <td class="num sub">{{ giftCost(r) | number }}</td>
               <td class="num"><input type="number" min="0" [(ngModel)]="r.shippingCost" (ngModelChange)="onEdit(r)" [disabled]="isLocked(r)"></td>
               <td class="num"><input type="number" min="0" [(ngModel)]="r.outboundShippingCost" (ngModelChange)="onEdit(r)" [disabled]="isLocked(r)"></td>
               <td class="num"><input type="number" min="0" [(ngModel)]="r.otherCost" (ngModelChange)="onEdit(r)" [disabled]="isLocked(r)"></td>
               <td class="num strong">{{ rowTotal(r) | number }}</td>
+              <td>
+                <input type="text" class="code" [(ngModel)]="r.shippingCode" (ngModelChange)="onEdit(r)"
+                       [disabled]="isLocked(r) || r.shippingCodeFromCarrier"
+                       [title]="r.shippingCodeFromCarrier ? 'Mã do hãng vận chuyển tạo — không sửa được' : 'Nhập mã giao hàng'">
+              </td>
+              <td class="num"><input type="number" min="0" [(ngModel)]="r.settlementAmount" (ngModelChange)="onEdit(r)" [disabled]="isLocked(r)"></td>
               <td class="num strong" [class.profit]="rowProfit(r) >= 0" [class.loss]="rowProfit(r) < 0">
                 {{ r.hasCost || isDirty(r) ? (rowProfit(r) | number) : '—' }}
               </td>
@@ -115,8 +136,10 @@ import {
             <tr>
               <td colspan="4">Tổng trang này</td>
               <td class="num strong">{{ pageRevenue | number }}</td>
-              <td colspan="4"></td>
+              <td colspan="9"></td>
               <td class="num strong">{{ pageCost | number }}</td>
+              <td></td>
+              <td class="num strong">{{ pageSettlement | number }}</td>
               <td class="num strong" [class.profit]="pageProfit >= 0" [class.loss]="pageProfit < 0">{{ pageProfit | number }}</td>
               <td></td>
             </tr>
@@ -186,6 +209,11 @@ import {
     .table th.edit-col { background:#eef2ff; }
     .table tfoot td { background:#f8fafc; font-weight:600; }
     .table tr.dirty { background:#fefce8; }
+    .table td input.narrow { width:70px; }
+    .table td input.code { width:130px; text-align:left; }
+    .table td.qty { font-weight:600; color:#475569; }
+    .table td.sub { color:#64748b; }
+    .zero-revenue { color:#b45309; }
     .table td input { width:110px; padding:5px 8px; border:1px solid #cbd5e1; border-radius:5px; font-size:13px; text-align:right; }
     .table td input:disabled { background:#f1f5f9; color:#94a3b8; }
     .empty { text-align:center; color:#94a3b8; padding:24px; }
@@ -297,6 +325,8 @@ export class OrderCostsComponent implements OnInit {
 
   // ── Sửa inline ────────────────────────────────────────────────────────
   onEdit(row: OrderCostListItem): void {
+    row.costAmount = this.lineCost(row);
+    row.giftAmount = this.giftCost(row);
     row.totalCost = this.rowTotal(row);
     row.profit = this.rowProfit(row);
   }
@@ -311,8 +341,19 @@ export class OrderCostsComponent implements OnInit {
     return this.rows.filter(r => this.isDirty(r)).length;
   }
 
+  /** Thành tiền giá vốn = đơn giá × TỔNG SL của đơn (đơn tách nhiều dòng theo size). */
+  lineCost(r: OrderCostListItem): number {
+    return this.n(r.unitCost) * this.n(r.totalQuantity);
+  }
+
+  /** Tiền quà = đơn giá quà × SL quà (SL quà nhập riêng, khác SL áo). */
+  giftCost(r: OrderCostListItem): number {
+    return this.n(r.giftUnitCost) * this.n(r.giftQuantity);
+  }
+
   rowTotal(r: OrderCostListItem): number {
-    return this.n(r.costAmount) + this.n(r.shippingCost) + this.n(r.outboundShippingCost) + this.n(r.otherCost);
+    return this.lineCost(r) + this.giftCost(r)
+      + this.n(r.shippingCost) + this.n(r.outboundShippingCost) + this.n(r.otherCost);
   }
 
   rowProfit(r: OrderCostListItem): number {
@@ -322,6 +363,7 @@ export class OrderCostsComponent implements OnInit {
   get pageRevenue(): number { return this.rows.reduce((s, r) => s + this.n(r.revenue), 0); }
   get pageCost(): number { return this.rows.reduce((s, r) => s + this.rowTotal(r), 0); }
   get pageProfit(): number { return this.pageRevenue - this.pageCost; }
+  get pageSettlement(): number { return this.rows.reduce((s, r) => s + this.n(r.settlementAmount), 0); }
 
   saveAll(): void {
     const dirty = this.rows.filter(r => this.isDirty(r));
@@ -329,10 +371,15 @@ export class OrderCostsComponent implements OnInit {
 
     const items: BulkOrderCostItem[] = dirty.map(r => ({
       orderId: r.orderId,
-      costAmount: this.n(r.costAmount),
+      unitCost: this.n(r.unitCost),
+      giftUnitCost: this.n(r.giftUnitCost),
+      giftQuantity: this.n(r.giftQuantity),
       shippingCost: this.n(r.shippingCost),
       outboundShippingCost: this.n(r.outboundShippingCost),
       otherCost: this.n(r.otherCost),
+      // Mã do hãng vận chuyển sinh thì backend bỏ qua, không gửi lên để khỏi ghi đè.
+      shippingCode: r.shippingCodeFromCarrier ? undefined : r.shippingCode,
+      settlementAmount: this.n(r.settlementAmount),
       notes: r.notes,
       isFinalized: r.isFinalized
     }));
@@ -404,8 +451,10 @@ export class OrderCostsComponent implements OnInit {
   private n(v: any): number { return Number(v) || 0; }
 
   private snapshot(r: OrderCostListItem): string {
-    return [r.costAmount, r.shippingCost, r.outboundShippingCost, r.otherCost, r.isFinalized]
+    const nums = [r.unitCost, r.giftUnitCost, r.giftQuantity, r.shippingCost,
+                  r.outboundShippingCost, r.otherCost, r.settlementAmount, r.isFinalized]
       .map(v => this.n(v)).join('|');
+    return `${nums}|${r.shippingCode ?? ''}`;
   }
 
   private toDateInput(d: Date): string {

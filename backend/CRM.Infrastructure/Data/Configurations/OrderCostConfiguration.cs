@@ -15,12 +15,17 @@ public class OrderCostConfiguration : IEntityTypeConfiguration<OrderCost>
         // 1 đơn chỉ có 1 bản ghi chi phí.
         builder.HasIndex(x => x.OrderId).IsUnique();
 
+        builder.Property(x => x.UnitCost).HasPrecision(18, 2);
         builder.Property(x => x.CostAmount).HasPrecision(18, 2);
+        builder.Property(x => x.GiftUnitCost).HasPrecision(18, 2);
+        builder.Property(x => x.GiftAmount).HasPrecision(18, 2);
         builder.Property(x => x.ShippingCost).HasPrecision(18, 2);
         builder.Property(x => x.OutboundShippingCost).HasPrecision(18, 2);
         builder.Property(x => x.OtherCost).HasPrecision(18, 2);
         builder.Property(x => x.TotalCost).HasPrecision(18, 2);
+        builder.Property(x => x.SettlementAmount).HasPrecision(18, 2);
 
+        builder.Property(x => x.ShippingCode).HasMaxLength(100);
         builder.Property(x => x.CostFileUrl).HasMaxLength(500);
         builder.Property(x => x.CostFileName).HasMaxLength(255);
         builder.Property(x => x.Notes).HasMaxLength(1000);

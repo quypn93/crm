@@ -43,13 +43,17 @@ public abstract class FinanceTestBase : IDisposable
         IsActive = true
     };
 
-    /// <summary>Đơn hàng mặc định: đã lên sản xuất (được tính vào báo cáo chi phí).</summary>
+    /// <summary>
+    /// Đơn hàng mặc định: đã lên sản xuất (được tính vào báo cáo chi phí).
+    /// <paramref name="quantities"/> mô phỏng các dòng size của cùng 1 sản phẩm — mặc định 1 dòng, SL 1.
+    /// </summary>
     protected Order AddOrder(
         string orderNumber,
         decimal total,
         DateTime confirmedDate,
         OrderStatus status = OrderStatus.InProduction,
-        string customerName = "Khách A")
+        string customerName = "Khách A",
+        int[]? quantities = null)
     {
         var order = new Order
         {
@@ -62,24 +66,29 @@ public abstract class FinanceTestBase : IDisposable
             ConfirmedDate = confirmedDate,
             CreatedByUserId = AccountantId
         };
+        foreach (var q in quantities ?? new[] { 1 })
+            order.Items.Add(new OrderItem { Quantity = q, Unit = "cái" });
+
         Db.Orders.Add(order);
         Db.SaveChanges();
         return order;
     }
 
+    /// <summary>Ghi nhanh chi phí cho test báo cáo — <paramref name="cost"/> là THÀNH TIỀN giá vốn.</summary>
     protected OrderCost AddCost(Guid orderId, decimal cost, decimal ship = 0, decimal outbound = 0, decimal other = 0)
     {
         var entity = new OrderCost
         {
             OrderId = orderId,
-            CostAmount = cost,
+            UnitCost = cost,        // × TotalQuantity = 1 → CostAmount = cost
+            TotalQuantity = 1,
             ShippingCost = ship,
             OutboundShippingCost = outbound,
             OtherCost = other,
             EnteredByUserId = AccountantId,
             EnteredAt = DateTime.UtcNow
         };
-        entity.RecalculateTotal();
+        entity.Recalculate();
         Db.OrderCosts.Add(entity);
         Db.SaveChanges();
         return entity;

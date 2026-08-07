@@ -18,12 +18,26 @@ public class OrderCostListItemDto
     public decimal Revenue { get; set; }          // Order.TotalAmount
     public decimal PaidAmount { get; set; }
 
+    /// <summary>Tổng SL sản phẩm hiện tại của đơn (cộng mọi dòng size) — dùng nhân với đơn giá.</summary>
+    public int TotalQuantity { get; set; }
+
     // Chi phí — 0 khi chưa nhập
-    public decimal CostAmount { get; set; }
+    public decimal UnitCost { get; set; }        // đơn giá 1 sản phẩm
+    public decimal CostAmount { get; set; }      // = UnitCost × TotalQuantity
+    public decimal GiftUnitCost { get; set; }    // đơn giá 1 phần quà
+    public int GiftQuantity { get; set; }        // SL quà, khác SL áo
+    public decimal GiftAmount { get; set; }      // = GiftUnitCost × GiftQuantity
     public decimal ShippingCost { get; set; }
     public decimal OutboundShippingCost { get; set; }
     public decimal OtherCost { get; set; }
     public decimal TotalCost { get; set; }
+
+    /// <summary>Mã giao hàng: ưu tiên mã do hãng vận chuyển trả về, không có thì lấy mã nhập tay.</summary>
+    public string? ShippingCode { get; set; }
+    /// <summary>true = mã do API hãng vận chuyển sinh, UI để chỉ đọc.</summary>
+    public bool ShippingCodeFromCarrier { get; set; }
+
+    public decimal SettlementAmount { get; set; }   // số tiền thanh toán để đối soát
 
     public decimal Profit { get; set; }           // Revenue - TotalCost (chỉ có nghĩa khi HasCost)
     public decimal ProfitMargin { get; set; }     // %
@@ -74,10 +88,14 @@ public class OrderCostListResultDto
 
 public class UpsertOrderCostDto
 {
-    public decimal CostAmount { get; set; }
+    public decimal UnitCost { get; set; }
+    public decimal GiftUnitCost { get; set; }
+    public int GiftQuantity { get; set; }
     public decimal ShippingCost { get; set; }
     public decimal OutboundShippingCost { get; set; }
     public decimal OtherCost { get; set; }
+    public string? ShippingCode { get; set; }
+    public decimal SettlementAmount { get; set; }
     public string? Notes { get; set; }
     public bool IsFinalized { get; set; }
 }

@@ -14,11 +14,23 @@ export interface OrderCostListItem {
   revenue: number;
   paidAmount: number;
 
-  costAmount: number;
+  /** Tổng SL sản phẩm của đơn (cộng mọi dòng size) — nhân với đơn giá cost. */
+  totalQuantity: number;
+
+  unitCost: number;          // đơn giá 1 sản phẩm
+  costAmount: number;        // = unitCost × totalQuantity
+  giftUnitCost: number;      // đơn giá 1 phần quà
+  giftQuantity: number;      // SL quà, khác SL áo
+  giftAmount: number;        // = giftUnitCost × giftQuantity
   shippingCost: number;
   outboundShippingCost: number;
   otherCost: number;
   totalCost: number;
+
+  shippingCode?: string;
+  /** true = mã do hãng vận chuyển sinh → ô chỉ đọc. */
+  shippingCodeFromCarrier: boolean;
+  settlementAmount: number;
 
   profit: number;
   profitMargin: number;
@@ -51,10 +63,14 @@ export interface OrderCostListResult {
 }
 
 export interface UpsertOrderCost {
-  costAmount: number;
+  unitCost: number;
+  giftUnitCost: number;
+  giftQuantity: number;
   shippingCost: number;
   outboundShippingCost: number;
   otherCost: number;
+  shippingCode?: string;
+  settlementAmount: number;
   notes?: string;
   isFinalized: boolean;
 }

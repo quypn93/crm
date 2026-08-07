@@ -308,7 +308,7 @@ Theo bài học đã ghi trong memory của dự án:
 | # | Vấn đề | Đề xuất mặc định |
 |---|---|---|
 | 1 | "Tải file giá cost" nghĩa là **import số liệu** hay chỉ **đính kèm file**? | Làm **cả hai** (import Excel + đính kèm) — plan đã bao gồm |
-| 2 | Giá cost nhập **theo cả đơn** hay **theo từng dòng sản phẩm**? | Theo **cả đơn** (Phase 1-5); per-item để Phase 6 nếu khách cần |
+| 2 | Giá cost nhập **theo cả đơn** hay **theo từng dòng sản phẩm**? | ✅ **ĐÃ CHỐT 2026-08-06**: giá cost là **đơn giá 1 sản phẩm**, tổng = SL × đơn giá — xem §13 |
 | 3 | Doanh thu tính theo mốc ngày nào? | `ConfirmedDate ?? OrderDate`, có tùy chọn đổi |
 | 4 | Doanh thu = `TotalAmount` (đã xuất hóa đơn) hay `PaidAmount` (thực thu)? | `TotalAmount`; hiển thị thêm cột đã thu để đối chiếu |
 | 5 | Đơn hủy đã phát sinh cost thì tính sao? | Loại khỏi doanh thu, cost đưa vào mục "chi phí phát sinh khác" của tháng |
@@ -402,3 +402,117 @@ docker stop crm-postgres && docker start giavang-db   # quay lại project giava
 Hỗ trợ **cả `.xlsx`** (qua ClosedXML 0.104.2, package mới thêm vào `CRM.Infrastructure`) **và `.csv`**
 (tự đoán dấu phân cách `,` `;` `Tab`). Đọc được số kiểu VN `1.200.000` lẫn kiểu Mỹ `1,200,000`.
 Ô để trống → **giữ nguyên giá trị cũ**, không ghi đè về 0.
+
+---
+
+## 13. Yêu cầu bổ sung từ kế toán (Trang Vũ — 2026-08-06) — CHƯA LÀM
+
+Phản hồi sau khi kế toán dùng thật màn "Chi phí sản xuất hàng hóa" trên production.
+
+### 13.1 Giá cost là ĐƠN GIÁ, không phải tổng
+> *"em cần giá cost là giá của 1 sản phẩm, tổng giá cost sẽ là số lượng sản phẩm × giá cost"*
+
+Hiện ô "Giá cost" đang nhập **tổng tiền cả đơn**. Cần đổi thành **đơn giá 1 sản phẩm**,
+hệ thống tự nhân với số lượng để ra tổng.
+
+**✅ ĐÃ CHỐT — công thức:** `Tổng giá cost = Đơn giá cost × TỔNG số lượng của đơn`
+
+Kiểm chứng trên dữ liệu production (107 đơn, 2026-08-06):
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Số **loại sản phẩm** (Collection) mỗi đơn | **1 — cả 107/107 đơn** |
+| Số **mức giá** (UnitPrice) mỗi đơn | **1 — cả 107/107 đơn** |
+| Số **dòng** `OrderItems` mỗi đơn | 1 đến 15 (chỉ 17 đơn có đúng 1 dòng) |
+
+Nhiều dòng **không phải nhiều sản phẩm** mà là **một sản phẩm tách theo size**.
+Ví dụ `XA-000076`: 15 dòng đều là `POLO CỔ BẺ`, chất liệu `X-FIT`, giá `72.000` — chỉ khác
+`NAM:S/M/L/XL/XXL/NC1/NC2` và `NU:S/M/L/...`.
+
+→ Nên **KHÔNG cần** bảng `OrderCostItem` (§2.2). Chỉ cần thêm `UnitCost` vào `OrderCost`
+và nhân với `SUM(OrderItems.Quantity)` của đơn.
+
+⚠️ Khi code nhớ lấy **tổng số lượng của tất cả các dòng**, không phải `Quantity` của dòng đầu tiên —
+84% đơn có nhiều hơn 1 dòng.
+
+### 13.2 Thêm mục Quà tặng
+> *"có thêm 1 phần quà tặng, giá quà tặng cũng nhân với sl như vậy"*
+
+**✅ ĐÃ CHỐT (2026-08-06): số lượng quà tặng KHÁC số lượng áo** → phải nhập số lượng riêng,
+không tái dùng `SUM(OrderItems.Quantity)` như §13.1.
+
+`Tổng quà tặng = Đơn giá quà tặng × Số lượng quà tặng` (cả hai đều kế toán nhập tay).
+
+Lý do quan trọng: tặng 1 lá cờ cho đơn 200 áo mà nhân với 200 thì tổng cost sai gấp 200 lần.
+
+### 13.3 Trường Mã giao hàng
+> *"cho em 1 trường em gắn lại mã giao hàng lên hệ thống"* — nhãn hiển thị: **"Mã giao hàng"**
+
+`Order` đã có `GhtkLabel` / `ViettelPostLabel`, nhưng **chỉ được điền tự động** khi tạo vận đơn
+qua API hãng vận chuyển. Đơn gửi ngoài hệ thống thì không có chỗ nhập.
+
+**Đề xuất:** một cột "Mã giao hàng" trên màn chi phí, hiển thị `GhtkLabel ?? ViettelPostLabel`
+khi đã tạo vận đơn qua API (chỉ đọc), và cho **nhập tay** khi cả hai đều trống — lưu vào field
+riêng để lần sync tiếp theo của API không ghi đè mất giá trị kế toán nhập.
+
+### 13.4 Cột số tiền thanh toán (đối soát) — TRƯỜNG ĐỘC LẬP
+> *"em xin thêm 1 cột gắn số tiền thanh toán vào nữa, để xử lí phần đối soát"*
+>
+> *"nếu có lệnh chuyển khoản thì em gắn ck, còn nếu từ viettel thì em chỉ có lệnh tổng
+> em phải nhập số tiền"*
+
+**✅ ĐÃ CHỐT: trường độc lập, KHÔNG dùng lại `Order.PaidAmount`.**
+
+Đã kiểm tra `Order.PaidAmount` — **đang được dùng thật và ở chỗ nhạy cảm**, không thể tái sử dụng:
+
+| Nơi dùng | Chi tiết |
+|---|---|
+| `OrderService:761` | Gắn mã cọc → `PaidAmount += deposit.Amount` (gỡ mã thì trừ lại, dòng 727) |
+| `OrderService:544` | Màn "Cập nhật thanh toán" ghi trực tiếp |
+| `OrderService:393` | Đơn hoàn thành → tự set bằng `TotalAmount` |
+| `OrderService:548,769` | Quyết định `PaymentStatus` (Pending/Partial/Paid) |
+| **`GhtkShipmentService:89`** | **`PickMoney = TotalAmount − PaidAmount`** — số tiền GHTK thu hộ khách |
+| **`ViettelPostShipmentService:45`** | **`MoneyCollection = TotalAmount − PaidAmount`** — tương tự |
+| `order-list`, `order-detail` | Cột "Đã thanh toán" / "Còn nợ" |
+
+Dữ liệu prod: **46/107 đơn có `PaidAmount > 0`**.
+
+⚠️ Nếu kế toán ghi đè `PaidAmount` để đối soát thì **sẽ đổi số tiền hãng vận chuyển thu hộ khách**
+ở các đơn COD tạo sau đó. Bắt buộc dùng field mới trên `OrderCost` (VD `SettlementAmount`),
+không đụng `Order.PaidAmount`.
+
+### 13.5 Đơn XA-000072 doanh thu 0 — đã xác minh
+Không phải lỗi hiển thị: đơn có **7 dòng, tổng 10 sản phẩm, nhưng `TotalAmount = 0.00`**
+(chưa điền đơn giá bán). Cần sale bổ sung giá, nếu không biên lợi nhuận của đơn này vô nghĩa
+và kéo lệch báo cáo tháng.
+
+**Đề xuất kèm theo:** cảnh báo trên màn chi phí với các đơn `TotalAmount = 0`, giống badge
+"Chưa nhập cost" hiện có.
+
+### 13.6 Tóm tắt thay đổi schema cần làm (gộp §13.1–13.4)
+
+Thêm vào entity `OrderCost` — **cần EF migration**:
+
+| Field mới | Kiểu | Ý nghĩa |
+|---|---|---|
+| `UnitCost` | decimal(18,2) | Đơn giá cost 1 sản phẩm (thay cách hiểu cũ của `CostAmount`) |
+| `GiftUnitCost` | decimal(18,2) | Đơn giá 1 phần quà tặng |
+| `GiftQuantity` | int | Số lượng quà tặng — nhập tay, KHÁC số lượng áo |
+| `ShippingCode` | string?(100) | Mã giao hàng nhập tay (khi không tạo vận đơn qua API) |
+| `SettlementAmount` | decimal(18,2) | Số tiền thanh toán để đối soát — **độc lập với `Order.PaidAmount`** |
+
+Công thức `TotalCost` mới:
+```
+TotalCost = UnitCost      × SUM(OrderItems.Quantity)     ← tổng SL mọi dòng size
+          + GiftUnitCost  × GiftQuantity                  ← số lượng riêng
+          + ShippingCost
+          + OutboundShippingCost
+          + OtherCost
+```
+
+Xử lý dữ liệu cũ: `CostAmount` hiện đang lưu **tổng tiền**, không phải đơn giá. Khi migrate
+cần quyết định — hoặc giữ `CostAmount` làm cột tổng (tính lại từ `UnitCost`), hoặc backfill
+`UnitCost = CostAmount / SUM(Quantity)`. Số bản ghi hiện rất ít nên nhập lại tay cũng được.
+
+Việc kèm theo: file mẫu import (.xlsx/.csv) và `OrderCostService.ImportAsync` phải đổi cột
+"Giá cost" → "Đơn giá cost", thêm cột quà tặng, mã giao hàng, số tiền thanh toán.
