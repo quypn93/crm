@@ -546,17 +546,21 @@ export class OrderFormComponent implements OnInit {
     return !!this.orderForm.get('productInfo.materialId')?.value;
   }
 
-  // Khoá ô màu chính khi chưa chọn chất liệu. Màu phối (1 & 2), Bo cổ và cả 3 màu bo cổ (chính + phối 1/2)
-  // chọn tự do, không phụ thuộc chất liệu nên không bị khoá/xoá ở đây.
+  // Khoá Màu sắc chính + Màu phối (1 & 2) khi chưa chọn chất liệu — cả 3 dùng chung danh sách
+  // ColorFabric lọc theo chất liệu. Bo cổ và 3 màu bo cổ (chính + phối 1/2) chọn tự do, không
+  // phụ thuộc chất liệu nên không bị khoá/xoá ở đây.
   private updateColorControlsState(): void {
     const pi = this.orderForm.get('productInfo');
-    const main = pi?.get('mainColorId');
-    if (this.hasMaterialSelected()) {
-      main?.enable({ emitEvent: false });
-    } else {
-      main?.setValue('', { emitEvent: false });
-      main?.disable({ emitEvent: false });
-    }
+    const keys = ['mainColorId', 'accentColorId', 'accentColor2Id'] as const;
+    keys.forEach(key => {
+      const ctrl = pi?.get(key);
+      if (this.hasMaterialSelected()) {
+        ctrl?.enable({ emitEvent: false });
+      } else {
+        ctrl?.setValue('', { emitEvent: false });
+        ctrl?.disable({ emitEvent: false });
+      }
+    });
   }
 
   // Bo cổ đang chọn ở form sản phẩm (dùng để biết cần hiện bao nhiêu ô "Màu bo cổ").
